@@ -1,0 +1,94 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+
+
+
+
+model User {
+  id                String   @id @default(cuid())
+  username          String   @unique
+  name              String
+  firstName         String
+  lastName          String
+  email             String   @unique
+  password          String
+  phone             String   @unique
+
+  // Profile
+  bio               String?
+  websiteUrl        String?
+  avatarUrl         String?
+  coverUrl          String?
+  gender            Gender
+  birthDate         DateTime
+
+  // Privacy & status
+  isPrivate         Boolean  @default(false)
+  isVerified        Boolean  @default(false)
+  role              UserRole @default(USER)
+  isSuspended       Boolean  @default(false)
+  suspendedUntil    DateTime?
+  deactivatedAt     DateTime?
+
+  // Activity & counters
+  followersCount    Int      @default(0)
+  followingCount    Int      @default(0)
+  postsCount        Int      @default(0)
+  lastLoginAt       DateTime?
+  lastSeenAt        DateTime?
+  language          String?
+  timezone          String?
+
+  // Account security
+  emailVerified     Boolean  @default(false)
+  verificationToken String?
+  verificationTokenExpiry DateTime?
+  // Password reset & account security
+  resetToken        String?
+  resetTokenExpiry  DateTime?
+  failedAttempts    Int      @default(0)
+  lockedUntil       DateTime?
+  tempToken         String?
+  tempEmail         String?
+  tempTokenExpiry   DateTime?
+
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([createdAt])
+  @@index([lastSeenAt])
+  @@index([role])
+}
+
+
+  /// Global settings (singleton row)
+  model Setting {
+    id       String  @id @default("default")
+    siteName String  @default("MYBOOK")
+    senderEmail String? // Resend sender address
+    updatedAt DateTime @updatedAt
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
