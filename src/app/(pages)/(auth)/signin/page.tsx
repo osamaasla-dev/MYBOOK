@@ -1,7 +1,7 @@
 import {
   SignInManager,
   getSignInPageMetadata,
-} from "@/features/auth/signin/page";
+} from "@/features/Auth/SignIn/page";
 import { getCachedSiteName } from "@/lib/settings";
 
 export default async function SigninPage() {

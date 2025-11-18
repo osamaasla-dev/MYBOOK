@@ -8,6 +8,108 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model MessageReaction {
+  id         String   @id @default(cuid())
+  messageId  String
+  message    Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation("UserMessageReactions", fields: [userId], references: [id], onDelete: Restrict)
+  emoji      String
+  createdAt  DateTime @default(now())
+
+  @@unique([messageId, userId, emoji])
+  @@index([messageId, emoji])
+  @@index([userId, createdAt])
+}
+
+model Follow {
+  id         String   @id @default(cuid())
+
+  followerId String
+  follower   User     @relation("UserFollowing", fields: [followerId], references: [id])
+
+  followingId String
+  following    User    @relation("UserFollowers", fields: [followingId], references: [id])
+
+  createdAt  DateTime @default(now())
+
+  @@unique([followerId, followingId])
+  @@index([followingId, createdAt])
+}
+
+model Comment {
+  id          String   @id @default(cuid())
+
+  postId      String
+  post        Post     @relation(fields: [postId], references: [id], onDelete: Restrict)
+
+  authorId    String
+  author      User     @relation("UserComments", fields: [authorId], references: [id], onDelete: Restrict)
+
+  content     String
+  richContent Json?
+
+  parentId    String?
+  parent      Comment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
+  replies     Comment[] @relation("CommentReplies")
+
+  depth       Int      @default(0)
+  path        String?
+
+  reactions   CommentReaction[]
+  reactionsCount Int  @default(0)
+  reactionSummary Json?
+  replyCount  Int     @default(0)
+
+  isEdited    Boolean @default(false)
+  isDeleted   Boolean @default(false)
+  metadata    Json?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([postId, createdAt])
+  @@index([authorId, createdAt])
+  @@index([parentId])
+}
+
+model CommentReaction {
+  id         String   @id @default(cuid())
+
+  commentId  String
+  comment    Comment  @relation(fields: [commentId], references: [id], onDelete: Restrict)
+
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  emoji      String
+  createdAt  DateTime @default(now())
+
+  @@unique([commentId, userId, emoji])
+  @@index([commentId, emoji])
+  @@index([commentId, createdAt])
+  @@index([userId, createdAt])
+}
+
+model PostShare {
+  id          String        @id @default(cuid())
+
+  postId      String
+  post        Post          @relation(fields: [postId], references: [id])
+
+  sharedById  String
+  sharedBy    User          @relation(fields: [sharedById], references: [id])
+
+  channel     ShareChannel  @default(FEED)
+  message     String?
+  metadata    Json?
+
+  createdAt   DateTime      @default(now())
+
+  @@index([postId, createdAt])
+  @@index([sharedById, createdAt])
+}
+
 datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
@@ -65,6 +167,26 @@ model User {
   tempEmail         String?
   tempTokenExpiry   DateTime?
 
+  // Notifications
+  notificationsReceived Notification[] @relation("NotificationRecipient")
+  notificationsTriggered Notification[] @relation("NotificationActor")
+  posts              Post[]   @relation("UserPosts")
+  postReactions      PostReaction[]
+  commentReactions   CommentReaction[]
+  postShares         PostShare[]
+  postBookmarks      Bookmark[]
+  comments           Comment[] @relation("UserComments")
+  followers          Follow[]  @relation("UserFollowers")
+  following          Follow[]  @relation("UserFollowing")
+  conversationsOwned Conversation[] @relation("UserCreatedConversations")
+  conversationMemberships ConversationParticipant[] @relation("UserConversations")
+  messagesSent       Message[] @relation("UserMessages")
+  messageReceipts    MessageReceipt[] @relation("UserMessageReceipts")
+  messageReactions   MessageReaction[] @relation("UserMessageReactions")
+  supportTicketsCreated SupportTicket[] @relation("UserCreatedTickets")
+  supportTicketsAssigned SupportTicketAssignment[] @relation("UserAssignedTickets")
+  supportTicketMessages SupportTicketMessage[] @relation("UserTicketMessages")
+
   // Timestamps
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -72,6 +194,8 @@ model User {
   @@index([createdAt])
   @@index([lastSeenAt])
   @@index([role])
+  @@index([username, email])
+  @@index([firstName, lastName])
 }
 
 
@@ -90,5 +214,394 @@ enum Gender {
 
 enum UserRole {
   USER
+  ADMIN
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+
+  // person who received the notification
+  userId      String
+  user        User     @relation("NotificationRecipient", fields: [userId], references: [id])
+
+  // person who triggered the notification (like - comment - follow)
+  actorId     String
+  actor       User     @relation("NotificationActor", fields: [actorId], references: [id])
+
+  type        NotificationType
+
+  // links based on notification type
+  postId      String? 
+  commentId   String?
+  followId    String?
+
+  // arbitrary payload for future-proofing (e.g. snippets, counts)
+  metadata    Json?
+
+  // is read or not
+  isRead      Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+
+  @@index([userId, isRead, createdAt])
+  @@index([actorId, createdAt])
+  @@index([postId, createdAt])
+  @@index([commentId, createdAt])
+  @@index([followId, createdAt])
+}
+
+model Post {
+  id            String        @id @default(cuid())
+
+  authorId      String
+  author        User          @relation("UserPosts", fields: [authorId], references: [id], onDelete: Restrict)
+
+  content       String?
+  richContent   Json?
+  media         Media[]
+  linkPreview   Json?
+
+  visibility    PostVisibility @default(PUBLIC)
+  type          PostType       @default(ORIGINAL)
+
+  replyToId     String?
+  replyTo       Post?         @relation("PostReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies       Post[]        @relation("PostReplies")
+
+  repostOfId    String?
+  repostOf      Post?         @relation("PostReposts", fields: [repostOfId], references: [id], onDelete: SetNull)
+  reposts       Post[]        @relation("PostReposts")
+
+  reactions     PostReaction[]
+  reactionsCount Int          @default(0)
+  reactionSummary Json?       // aggregate counts per emoji
+  commentsCount Int           @default(0)
+  sharesCount   Int           @default(0)
+  bookmarksCount Int          @default(0)
+  shares        PostShare[]
+  bookmarks     Bookmark[]
+  comments      Comment[]
+
+  isPinned      Boolean       @default(false)
+  isDeleted     Boolean       @default(false)
+
+  location      String?
+  language      String?
+
+  publishedAt   DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  metadata      Json?
+
+  @@index([authorId, publishedAt])
+  @@index([visibility, publishedAt])
+  @@index([isDeleted, publishedAt])
+  @@index([isDeleted, authorId, publishedAt])
+  @@index([isDeleted, visibility, publishedAt])
+  @@index([replyToId])
+  @@index([repostOfId])
+}
+
+model Media {
+  id        String    @id @default(cuid())
+
+  postId    String
+  post      Post      @relation(fields: [postId], references: [id])
+
+  url       String
+  type      MediaType @default(IMAGE)
+  width     Int?
+  height    Int?
+  duration  Int?
+
+  createdAt DateTime  @default(now())
+
+  @@index([postId, createdAt])
+}
+
+model PostReaction {
+  id        String   @id @default(cuid())
+
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id])
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  emoji     String   // store unicode emoji or shortcode
+
+  createdAt DateTime @default(now())
+
+  @@unique([postId, userId, emoji])
+  @@index([postId, emoji])
+  @@index([postId, createdAt])
+  @@index([userId, createdAt])
+}
+
+model Bookmark {
+  id        String   @id @default(cuid())
+
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id])
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([postId, userId])
+  @@index([userId, createdAt])
+}
+
+model SupportTicket {
+  id             String              @id @default(cuid())
+  subject        String
+  description    String
+  status         SupportTicketStatus @default(OPEN)
+  priority       SupportTicketPriority @default(MEDIUM)
+  category       SupportTicketCategory @default(GENERAL)
+  createdById    String
+  createdBy      User                @relation("UserCreatedTickets", fields: [createdById], references: [id], onDelete: Restrict)
+  assignedTo     SupportTicketAssignment[]
+  messages       SupportTicketMessage[]
+  tags           Json?
+  metadata       Json?
+  closedAt       DateTime?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@index([status, priority, createdAt])
+  @@index([createdById, createdAt])
+  @@index([category, createdAt])
+}
+
+model SupportTicketAssignment {
+  id          String        @id @default(cuid())
+  ticketId    String
+  ticket      SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User          @relation("UserAssignedTickets", fields: [userId], references: [id], onDelete: Restrict)
+  role        SupportAgentRole @default(AGENT)
+  assignedAt  DateTime      @default(now())
+  unassignedAt DateTime?
+  metadata    Json?
+
+  @@unique([ticketId, userId])
+  @@index([userId, assignedAt])
+}
+
+model SupportTicketMessage {
+  id          String        @id @default(cuid())
+  ticketId    String
+  ticket      SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  senderId    String
+  sender      User          @relation("UserTicketMessages", fields: [senderId], references: [id], onDelete: Restrict)
+  body        String
+  attachments Json?
+  internal    Boolean       @default(false)
+  metadata    Json?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([ticketId, createdAt])
+  @@index([senderId, createdAt])
+}
+
+model Conversation {
+  id              String             @id @default(cuid())
+  type            ConversationType   @default(DIRECT)
+  title           String?
+  description     String?
+  avatarUrl       String?
+  createdById     String
+  createdBy       User               @relation("UserCreatedConversations", fields: [createdById], references: [id], onDelete: Restrict)
+  participants    ConversationParticipant[]
+  messages        Message[]          @relation("ConversationMessages")
+  lastMessageId   String?           @unique
+  lastMessage     Message?           @relation("ConversationLastMessage", fields: [lastMessageId], references: [id], onDelete: SetNull)
+  lastMessageSentAt DateTime?
+  isArchived      Boolean            @default(false)
+  lastActivityAt  DateTime           @default(now())
+  metadata        Json?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@index([type, createdAt])
+  @@index([createdById, createdAt])
+  @@index([lastActivityAt])
+  @@index([lastMessageSentAt])
+}
+
+model ConversationParticipant {
+  id                 String                  @id @default(cuid())
+  conversationId     String
+  conversation       Conversation            @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId             String
+  user               User                    @relation("UserConversations", fields: [userId], references: [id], onDelete: Restrict)
+  role               ConversationParticipantRole @default(MEMBER)
+  joinedAt           DateTime                @default(now())
+  lastReadAt         DateTime?
+  mutedUntil         DateTime?
+  isPinned           Boolean                 @default(false)
+  metadata           Json?
+  createdAt          DateTime                @default(now())
+
+  @@unique([conversationId, userId])
+  @@index([userId, createdAt])
+}
+
+model Message {
+  id               String        @id @default(cuid())
+  conversationId   String
+  conversation     Conversation  @relation("ConversationMessages", fields: [conversationId], references: [id], onDelete: Restrict)
+  featuredInConversation Conversation? @relation("ConversationLastMessage")
+  senderId         String
+  sender           User          @relation("UserMessages", fields: [senderId], references: [id], onDelete: Restrict)
+  body             String?
+  richContent      Json?
+  type             MessageType   @default(TEXT)
+  replyToMessageId String?
+  replyTo          Message?      @relation("MessageReplies", fields: [replyToMessageId], references: [id], onDelete: SetNull)
+  replies          Message[]     @relation("MessageReplies")
+  attachments      MessageAttachment[]
+  receipts         MessageReceipt[]
+  reactions        MessageReaction[]
+  metadata         Json?
+  isEdited         Boolean       @default(false)
+  isDeleted        Boolean       @default(false)
+  sentAt           DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([conversationId, sentAt])
+  @@index([senderId, sentAt])
+  @@index([replyToMessageId])
+}
+
+model MessageAttachment {
+  id         String                 @id @default(cuid())
+  messageId  String
+  message    Message                @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  type       MessageAttachmentType  @default(FILE)
+  url        String
+  publicId   String?
+  previewUrl String?
+  size       Int?
+  mimeType   String?
+  width      Int?
+  height     Int?
+  duration   Int?
+  metadata   Json?
+  createdAt  DateTime               @default(now())
+
+  @@index([messageId, createdAt])
+}
+
+model MessageReceipt {
+  id         String                @id @default(cuid())
+  messageId  String
+  message    Message               @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User                  @relation("UserMessageReceipts", fields: [userId], references: [id], onDelete: Restrict)
+  status     MessageReceiptStatus  @default(DELIVERED)
+  deliveredAt DateTime?
+  readAt     DateTime?
+  createdAt  DateTime              @default(now())
+  updatedAt  DateTime              @updatedAt
+
+  @@unique([messageId, userId])
+  @@index([userId, status, createdAt])
+  @@index([messageId, status])
+}
+
+enum NotificationType {
+  LIKE
+  COMMENT
+  FOLLOW
+  MENTION
+  REPLY
+}
+
+enum PostVisibility {
+  PUBLIC
+  FOLLOWERS
+  PRIVATE
+}
+
+enum PostType {
+  ORIGINAL
+  REPLY
+  REPOST
+}
+
+enum ShareChannel {
+  FEED
+  DIRECT
+  EXTERNAL
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  AUDIO
+  DOCUMENT
+}
+
+enum ConversationType {
+  DIRECT
+  GROUP
+}
+
+enum ConversationParticipantRole {
+  MEMBER
+  ADMIN
+  OWNER
+}
+
+enum MessageType {
+  TEXT
+  SYSTEM
+  MEDIA
+}
+
+enum MessageAttachmentType {
+  FILE
+  IMAGE
+  VIDEO
+  AUDIO
+  DOCUMENT
+}
+
+enum MessageReceiptStatus {
+  SENT
+  DELIVERED
+  READ
+}
+
+enum SupportTicketStatus {
+  OPEN
+  IN_PROGRESS
+  PENDING_USER
+  RESOLVED
+  CLOSED
+}
+
+enum SupportTicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum SupportTicketCategory {
+  GENERAL
+  BILLING
+  TECHNICAL
+  ABUSE
+  FEEDBACK
+}
+
+enum SupportAgentRole {
+  AGENT
+  SUPERVISOR
   ADMIN
 }

@@ -1,6 +1,6 @@
 {
-  "name": "ASLA",
-  "short_name": "ASLA",
+  "name": "MYBOOK",
+  "short_name": "MYBOOK",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

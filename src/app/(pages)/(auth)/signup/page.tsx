@@ -1,4 +1,7 @@
-import { SignUpManager, getSignUpPageMetadata } from "@/features/auth/signup/page";
+import {
+  SignUpManager,
+  getSignUpPageMetadata,
+} from "@/features/Auth/SignUp/page";
 import { getCachedSiteName } from "@/lib/settings";
 
 export default async function SignupPage() {

@@ -1,5 +1,5 @@
-import { signUpSchema } from "@/features/auth/signup/schemas";
-import { registerUser } from "@/features/auth/signup/utils";
+import { signUpSchema } from "@/features/Auth/SignUp/schemas";
+import { registerUser } from "@/features/Auth/SignUp/utils";
 import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
 import { sendMail } from "@/lib/mail";

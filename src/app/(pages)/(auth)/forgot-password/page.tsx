@@ -1,4 +1,7 @@
-import { ForgotPasswordManager, getForgotPasswordPageMetadata } from "@/features/auth/forgotPassword/page";
+import {
+  ForgotPasswordManager,
+  getForgotPasswordPageMetadata,
+} from "@/features/Auth/ForgotPassword/page";
 
 export default function ForgotPasswordPage() {
   return <ForgotPasswordManager />;

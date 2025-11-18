@@ -1,4 +1,7 @@
-import { VerifyEmailManager, getVerifyEmailPageMetadata } from "@/features/auth/verify-Email/page";
+import {
+  VerifyEmailManager,
+  getVerifyEmailPageMetadata,
+} from "@/features/Auth/VerifyEmail/page";
 
 export default function VerifyEmailPage() {
   return <VerifyEmailManager />;

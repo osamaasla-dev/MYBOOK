@@ -1,4 +1,7 @@
-import { ResetPasswordManager, getResetPasswordPageMetadata } from "@/features/auth/reset-Password/page";
+import {
+  ResetPasswordManager,
+  getResetPasswordPageMetadata,
+} from "@/features/Auth/ResetPassword/page";
 
 export default function ResetPasswordPage() {
   return <ResetPasswordManager />;

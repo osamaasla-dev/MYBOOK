@@ -31,7 +31,6 @@ export function useSignIn() {
           toast.error(authMessages.signin.emailNotVerified);
           router.push("/verify-email?pending=1");
         } else if (res?.error === "OAUTH_ONLY") {
-          toast.error(authMessages.signin.oauthOnlyUseGoogle);
           setLoading(false);
         } else if (res?.error && res.error.startsWith("ACCOUNT_LOCKED:")) {
           const minutes = Number(res.error.split(":")[1] || "15");

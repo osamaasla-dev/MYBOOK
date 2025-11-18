@@ -14,8 +14,7 @@ export async function getSignInPageMetadata(): Promise<Metadata> {
   const base = resolveBase();
 
   const title = "Sign In";
-  const description =
-    "Sign in to access your account, track orders, and enjoy a personalized shopping experience.";
+  const description = `Sign in to ${siteName} to see updates from friends, share posts, and stay connected.`;
 
   return {
     title: { default: title, template: `%s | ${siteName}` },
@@ -28,7 +27,9 @@ export async function getSignInPageMetadata(): Promise<Metadata> {
       url: new URL("/signin", base).toString(),
       siteName,
       type: "website",
-      images: [{ url: "/og-image.png", width: 1200, height: 630, alt: siteName }],
+      images: [
+        { url: "/og-image.png", width: 1200, height: 630, alt: siteName },
+      ],
     },
     twitter: {
       card: "summary_large_image",

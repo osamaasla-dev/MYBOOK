@@ -14,8 +14,7 @@ export async function getSignUpPageMetadata(): Promise<Metadata> {
   const base = resolveBase();
 
   const title = "Create Account";
-  const description =
-    "Create your account to track orders, save favorites, and enjoy a personalized shopping experience.";
+  const description = `${siteName} - Create your account to connect with friends, share posts, and enjoy a modern social experience.`;
 
   return {
     title: { default: title, template: `%s | ${siteName}` },
@@ -28,7 +27,9 @@ export async function getSignUpPageMetadata(): Promise<Metadata> {
       url: new URL("/signup", base).toString(),
       siteName,
       type: "website",
-      images: [{ url: "/og-image.png", width: 1200, height: 630, alt: siteName }],
+      images: [
+        { url: "/og-image.png", width: 1200, height: 630, alt: siteName },
+      ],
     },
     twitter: {
       card: "summary_large_image",
