@@ -37,6 +37,38 @@ model Follow {
   @@index([followingId, createdAt])
 }
 
+model FollowRequest {
+  id          String               @id @default(cuid())
+
+  requesterId String
+  requester   User                 @relation("FollowRequestRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+
+  receiverId  String
+  receiver    User                 @relation("FollowRequestReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  status      FollowRequestStatus  @default(PENDING)
+  createdAt   DateTime             @default(now())
+  respondedAt DateTime?
+
+  @@unique([requesterId, receiverId])
+  @@index([receiverId, status, createdAt])
+}
+
+model Block {
+  id        String @id @default(cuid())
+
+  blockerId String
+  blocker   User   @relation("UserBlocks", fields: [blockerId], references: [id], onDelete: Cascade)
+
+  blockedId String
+  blocked   User   @relation("UserBlockedBy", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([blockerId, blockedId])
+  @@index([blockedId, createdAt])
+}
+
 model Comment {
   id          String   @id @default(cuid())
 
@@ -178,6 +210,10 @@ model User {
   comments           Comment[] @relation("UserComments")
   followers          Follow[]  @relation("UserFollowers")
   following          Follow[]  @relation("UserFollowing")
+  followRequestsSent     FollowRequest[] @relation("FollowRequestRequester")
+  followRequestsReceived FollowRequest[] @relation("FollowRequestReceiver")
+  blocks             Block[]  @relation("UserBlocks")
+  blockedBy          Block[]  @relation("UserBlockedBy")
   conversationsOwned Conversation[] @relation("UserCreatedConversations")
   conversationMemberships ConversationParticipant[] @relation("UserConversations")
   messagesSent       Message[] @relation("UserMessages")
@@ -215,6 +251,12 @@ enum Gender {
 enum UserRole {
   USER
   ADMIN
+}
+
+enum FollowRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
 }
 
 model Notification {

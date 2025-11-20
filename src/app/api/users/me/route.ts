@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getRequestLog } from "@/lib/request-log";
 import { ServerSession } from "@/utils/session";
 import { userMessages } from "@/lib/messages";
+import { CurrentUser } from "@/features/User/types";
 
 const ROUTE = "/api/users/navbar/user";
 
@@ -21,9 +22,14 @@ export async function GET() {
       return res;
     }
 
-    const user = await prisma.user.findUnique({
+    const user: CurrentUser | null = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { username: true, avatarUrl: true, role: true },
+      select: {
+        name: true,
+        username: true,
+        avatarUrl: true,
+        role: true,
+      },
     });
 
     if (!user) {

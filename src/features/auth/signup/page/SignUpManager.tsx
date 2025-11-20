@@ -1,8 +1,8 @@
 "use client";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import QueryProvider from "@/components/QueryProvider";
-import SignUpForm from "@/features/auth/signup/components/SignUpForm";
-import type { SignUpInput } from "@/features/auth/signup/schemas";
+import SignUpForm from "@/features/Auth/SignUp/components/SignUpForm";
+import type { SignUpInput } from "@/features/Auth/SignUp/schemas";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSignUp } from "../hooks/useSignUp";

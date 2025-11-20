@@ -28,25 +28,25 @@
   :root {
     --color-primary: #1877f2;
     --color-primary-dark: #1461c4;
-    --color-primary-light: #0f2d57;
+    --color-primary-light: #e8f1fe;
     --color-accent: #1b74e4;
-    --color-accent-light: #123974;
-    --color-secondary: #0f172a;
+    --color-accent-light: #d6e6ff;
+    --color-secondary: #f0f2f5;
     --color-danger: #e11d48;
     --color-success: #22c55e;
-    --color-foreground: #e5e7eb;
-    --color-muted-foreground: #9ca3af;
-    --color-border: #374151;
+    --color-foreground: #111827;
+    --color-muted-foreground: #6b7280;
+    --color-border: #e5e7eb;
     --color-warning: #f59e0b;
-    --color-info: #60a5fa;
+    --color-info: #3b82f6;
     --color-whatsapp: #25d366;
     --color-whatsapp-dark: #1da851;
     --color-twitter: #000000;
     --color-twitter-dark: #111827;
     --color-facebook: #1877f2;
     --color-facebook-dark: #1461c4;
-    --color-surface-strong: #111827;
-    --color-surface-strong-2: #0b1220;
+    --color-surface-strong: #1f2937;
+    --color-surface-strong-2: #374151;
     --color-white: #ffffff;
   }
 }
