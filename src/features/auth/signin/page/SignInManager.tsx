@@ -1,6 +1,6 @@
 "use client";
-import LoadingSpinner from "@/components/LoadingSpinner";
-import SignInForm from "@/features/auth/signin/components/SignInForm";
+import { LoadingSpinner } from "@/components";
+import SignInForm from "@/features/Auth/SignIn/components/SignInForm";
 import Link from "next/link";
 import { useSignIn } from "../hooks/useSignIn";
 

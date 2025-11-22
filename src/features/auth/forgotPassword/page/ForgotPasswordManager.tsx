@@ -1,6 +1,6 @@
 "use client";
-import LoadingSpinner from "@/components/LoadingSpinner";
-import QueryProvider from "@/components/QueryProvider";
+import { LoadingSpinner } from "@/components";
+import { QueryProvider } from "@/components";
 import ForgotPasswordForm from "../components/ForgotPasswordForm";
 import { useForgotPassword } from "../hooks/useForgotPassword";
 import type { ForgotPasswordValues } from "../schemas";

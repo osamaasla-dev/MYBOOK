@@ -27,9 +27,9 @@ export async function POST(request: Request) {
         false,
         {},
         authMessages.password.invalidToken,
-        400
+        400,
+        requestId
       );
-      res.headers.set("x-request-id", requestId);
       return res;
     }
 
@@ -44,9 +44,9 @@ export async function POST(request: Request) {
         false,
         {},
         authMessages.signup.fieldsRequired,
-        400
+        400,
+        requestId
       );
-      res.headers.set("x-request-id", requestId);
       return res;
     }
 
@@ -56,9 +56,9 @@ export async function POST(request: Request) {
         false,
         {},
         authMessages.signup.invalidPassword,
-        400
+        400,
+        requestId
       );
-      res.headers.set("x-request-id", requestId);
       return res;
     }
 
@@ -68,9 +68,9 @@ export async function POST(request: Request) {
         false,
         {},
         authMessages.signup.passwordsMismatch,
-        400
+        400,
+        requestId
       );
-      res.headers.set("x-request-id", requestId);
       return res;
     }
 
@@ -84,9 +84,9 @@ export async function POST(request: Request) {
         false,
         {},
         authMessages.password.invalidToken,
-        400
+        400,
+        requestId
       );
-      res.headers.set("x-request-id", requestId);
       return res;
     }
 
@@ -104,8 +104,13 @@ export async function POST(request: Request) {
     });
 
     log.info({ userId: user.id }, "Password reset successful");
-    const res = apiResponse(true, {}, authMessages.password.resetSuccess, 200);
-    res.headers.set("x-request-id", requestId);
+    const res = apiResponse(
+      true,
+      {},
+      authMessages.password.resetSuccess,
+      200,
+      requestId
+    );
     return res;
   } catch (err) {
     const error = normalizeError(err);
@@ -114,9 +119,9 @@ export async function POST(request: Request) {
       false,
       {},
       error.message ?? authMessages.signup.serverError,
-      error.status ?? 500
+      error.status ?? 500,
+      requestId
     );
-    res.headers.set("x-request-id", requestId);
     return res;
   }
 }

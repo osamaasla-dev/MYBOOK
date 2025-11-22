@@ -18,9 +18,9 @@ export async function GET(request: Request) {
         false,
         { valid: false },
         authMessages.password.invalidToken,
-        400
+        400,
+        requestId
       );
-      res.headers.set("x-request-id", requestId);
       return res;
     }
 
@@ -38,15 +38,14 @@ export async function GET(request: Request) {
         false,
         { valid: false },
         authMessages.password.invalidToken,
-        400
+        400,
+        requestId
       );
-      res.headers.set("x-request-id", requestId);
       return res;
     }
 
     log.info({ userId: user.id }, "Token valid");
-    const res = apiResponse(true, { valid: true }, "OK", 200);
-    res.headers.set("x-request-id", requestId);
+    const res = apiResponse(true, { valid: true }, "OK", 200, requestId);
     return res;
   } catch (err) {
     const error = normalizeError(err);
@@ -55,9 +54,9 @@ export async function GET(request: Request) {
       false,
       { valid: false },
       error.message ?? authMessages.signup.serverError,
-      error.status ?? 500
+      error.status ?? 500,
+      requestId
     );
-    res.headers.set("x-request-id", requestId);
     return res;
   }
 }

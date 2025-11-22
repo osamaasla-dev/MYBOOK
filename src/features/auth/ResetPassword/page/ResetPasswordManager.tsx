@@ -1,6 +1,6 @@
 "use client";
-import LoadingSpinner from "@/components/LoadingSpinner";
-import QueryProvider from "@/components/QueryProvider";
+import { LoadingSpinner } from "@/components";
+import { QueryProvider } from "@/components";
 import { authMessages } from "@/lib/messages";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -9,7 +9,7 @@ import ResetPasswordForm from "../components/ResetPasswordForm";
 import { useResetPassword } from "../hooks/useResetPassword";
 import type { ResetPasswordValues } from "../schemas";
 import { validateResetToken } from "../services";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui";
 
 export function ResetPasswordManager() {
   return (
@@ -69,7 +69,11 @@ function ResetPasswordInner() {
         data-testid="reset-password-invalid"
       >
         <div className="max-w-md w-full bg-white rounded shadow p-6 text-center">
-          <h1 className="text-xl font-semibold mb-2" role="alert" aria-live="assertive">
+          <h1
+            className="text-xl font-semibold mb-2"
+            role="alert"
+            aria-live="assertive"
+          >
             {authMessages.password.invalidToken}
           </h1>
           <Button asChild className="mt-4">

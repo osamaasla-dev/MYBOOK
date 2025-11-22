@@ -1,0 +1,180 @@
+import { apiResponse } from "@/lib/apiResponse";
+import { userMessages } from "@/lib/messages";
+import { getRequestLog } from "@/lib/request-log";
+import type { Logger } from "pino";
+
+import {
+  fetchProfileUserByUsername,
+  consumeProfileRateLimit,
+  getViewerSession,
+} from "@/features/pages/profile/utils";
+import {
+  extractClientIp,
+  fetchViewerUsername,
+  normalizeFollowUsername,
+  validateFollowTarget,
+} from "@/features/parts/follow/utils";
+import type { ProfileUserRecord } from "@/features/pages/profile/types";
+
+export type FollowRouteParams = { username?: string };
+
+export type FollowRouteContext = {
+  params: Promise<FollowRouteParams>;
+};
+
+export type PreparedFollowAction = {
+  requestId: string;
+  log: Logger;
+  viewerId: string;
+  viewerUsername: string;
+  target: ProfileUserRecord;
+};
+
+type PrepareFollowActionOptions = {
+  route: string;
+  action: "follow" | "unfollow";
+};
+
+type PrepareFollowActionResult =
+  | { ok: true; context: PreparedFollowAction }
+  | { ok: false; response: Response };
+
+export async function prepareFollowAction(
+  request: Request,
+  paramsPromise: FollowRouteContext["params"],
+  options: PrepareFollowActionOptions
+): Promise<PrepareFollowActionResult> {
+  const { requestId, log } = await getRequestLog({ route: options.route });
+  const actionLabel = options.action === "follow" ? "Follow" : "Unfollow";
+
+  try {
+    log.info(`${actionLabel} request started`);
+    const { viewerId } = await getViewerSession();
+    const clientIp = extractClientIp(request);
+    const params = await paramsPromise;
+
+    const limited = await consumeProfileRateLimit({
+      userId: viewerId,
+      ip: clientIp,
+    });
+
+    if (limited) {
+      log.warn({ viewerId, clientIp }, `${actionLabel} request rate-limited`);
+      return {
+        ok: false,
+        response: apiResponse(
+          false,
+          {},
+          userMessages.rateLimited,
+          429,
+          requestId
+        ),
+      };
+    }
+
+    if (!viewerId) {
+      log.warn(`${actionLabel} request unauthorized`);
+      return {
+        ok: false,
+        response: apiResponse(
+          false,
+          {},
+          userMessages.unauthorized,
+          401,
+          requestId
+        ),
+      };
+    }
+
+    const viewerUsername = await fetchViewerUsername(viewerId);
+    if (!viewerUsername) {
+      log.error({ viewerId }, "Viewer record missing");
+      return {
+        ok: false,
+        response: apiResponse(false, {}, userMessages.failed, 500, requestId),
+      };
+    }
+
+    const normalizedUsername = normalizeFollowUsername(params.username);
+    if (!normalizedUsername) {
+      log.warn(`Invalid ${options.action} params`);
+      return {
+        ok: false,
+        response: apiResponse(
+          false,
+          {},
+          userMessages.invalidParams,
+          400,
+          requestId
+        ),
+      };
+    }
+
+    const targetProfile = await fetchProfileUserByUsername(normalizedUsername);
+    const validation = validateFollowTarget(targetProfile, viewerId);
+    if (!validation.ok) {
+      switch (validation.reason) {
+        case "NOT_FOUND": {
+          log.warn("Target profile not found");
+          return {
+            ok: false,
+            response: apiResponse(
+              false,
+              {},
+              userMessages.notFound,
+              404,
+              requestId
+            ),
+          };
+        }
+        case "SELF": {
+          log.warn("Viewer attempted to follow self");
+          return {
+            ok: false,
+            response: apiResponse(
+              false,
+              {},
+              "FOLLOW_SELF_NOT_ALLOWED",
+              400,
+              requestId
+            ),
+          };
+        }
+        case "PRIVATE": {
+          log.warn(
+            "Target profile is private - follow requests not implemented yet"
+          );
+          return {
+            ok: false,
+            response: apiResponse(
+              false,
+              {},
+              "FOLLOW_PRIVATE_NOT_SUPPORTED",
+              400,
+              requestId
+            ),
+          };
+        }
+      }
+    }
+
+    const target = validation.profile;
+
+    return {
+      ok: true,
+      context: {
+        requestId,
+        log,
+        viewerId,
+        viewerUsername,
+        target,
+      },
+    };
+  } catch (error) {
+    log.error({ error }, `${actionLabel} prechecks failed`);
+    return {
+      ok: false,
+      response: apiResponse(false, {}, userMessages.failed, 500, requestId),
+    };
+  }
+}

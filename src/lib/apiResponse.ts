@@ -4,9 +4,10 @@ export function apiResponse<T>(
   success: boolean,
   data: T,
   message: string,
-  status = 200
+  status = 200,
+  requestId: string
 ) {
-  return NextResponse.json(
+  const res = NextResponse.json(
     {
       success,
       data,
@@ -14,4 +15,6 @@ export function apiResponse<T>(
     },
     { status }
   );
+  res.headers.set("x-request-id", requestId);
+  return res;
 }

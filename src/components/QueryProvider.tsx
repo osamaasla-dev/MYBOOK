@@ -9,7 +9,7 @@ import {
 
 const queryClient = new QueryClient();
 
-export default function QueryProvider({
+export function QueryProvider({
   children,
   state,
 }: {

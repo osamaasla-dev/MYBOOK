@@ -18,9 +18,9 @@ export async function GET(request: Request) {
         false,
         {},
         authMessages.verify.result.missingToken,
-        400
+        400,
+        requestId
       );
-      res.headers.set("x-request-id", requestId);
       return res;
     }
 
@@ -35,9 +35,9 @@ export async function GET(request: Request) {
         false,
         {},
         authMessages.verify.result.failed,
-        404
+        404,
+        requestId
       );
-      res.headers.set("x-request-id", requestId);
       return res;
     }
 
@@ -48,8 +48,13 @@ export async function GET(request: Request) {
     });
 
     log.info({ userId: user.id }, "Email verified");
-    const res = apiResponse(true, {}, authMessages.verify.result.success, 200);
-    res.headers.set("x-request-id", requestId);
+    const res = apiResponse(
+      true,
+      {},
+      authMessages.verify.result.success,
+      200,
+      requestId
+    );
     return res;
   } catch (err) {
     const error = normalizeError(err);
@@ -58,9 +63,9 @@ export async function GET(request: Request) {
       false,
       {},
       error.message ?? authMessages.verify.result.failed,
-      error.status ?? 500
+      error.status ?? 500,
+      requestId
     );
-    res.headers.set("x-request-id", requestId);
     return res;
   }
 }

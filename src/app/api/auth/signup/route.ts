@@ -22,9 +22,9 @@ export async function POST(request: Request) {
         false,
         {},
         first?.message || authMessages.signup.fieldsRequired,
-        400
+        400,
+        requestId
       );
-      res.headers.set("x-request-id", requestId);
       return res;
     }
 
@@ -53,9 +53,9 @@ export async function POST(request: Request) {
         false,
         {},
         result.error.message || authMessages.signup.serverError,
-        result.error.status ?? 400
+        result.error.status ?? 400,
+        requestId
       );
-      res.headers.set("x-request-id", requestId);
       return res;
     }
 
@@ -77,9 +77,9 @@ export async function POST(request: Request) {
         false,
         {},
         "Failed to send verification email. Please try again later.",
-        500
+        500,
+        requestId
       );
-      res.headers.set("x-request-id", requestId);
       return res;
     }
     log.info({ requestId }, "Signup request completed");
@@ -87,9 +87,9 @@ export async function POST(request: Request) {
       true,
       { user: result.user },
       authMessages.signup.success,
-      201
+      201,
+      requestId
     );
-    res.headers.set("x-request-id", requestId);
     return res;
   } catch (err) {
     const error = normalizeError(err);
@@ -98,9 +98,9 @@ export async function POST(request: Request) {
       false,
       {},
       error.message ?? authMessages.signup.serverError,
-      error.status ?? 500
+      error.status ?? 500,
+      requestId
     );
-    res.headers.set("x-request-id", requestId);
     return res;
   }
 }

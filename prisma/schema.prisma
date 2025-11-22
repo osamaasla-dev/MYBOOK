@@ -290,6 +290,7 @@ model Notification {
   @@index([postId, createdAt])
   @@index([commentId, createdAt])
   @@index([followId, createdAt])
+  @@unique([userId, actorId, type])
 }
 
 model Post {

@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
-import NextAuthSessionProvider from "@/components/SessionProvider";
 import { getCachedSiteName } from "@/lib/settings";
 import { Cairo } from "next/font/google";
 import { Toaster } from "react-hot-toast";
+import { NextAuthSessionProvider } from "@/components";
 
 const cairo = Cairo({ subsets: ["latin", "arabic"], weight: ["400", "700"] });
 

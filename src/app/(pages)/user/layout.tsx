@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
-import { Navbar } from "@/features/User/components/navbar";
-import QueryProvider from "@/components/QueryProvider";
+import { Navbar } from "@/features/components/navbar";
+import { QueryProvider } from "@/components";
 
 export default function UserLayout({ children }: { children: ReactNode }) {
   return (

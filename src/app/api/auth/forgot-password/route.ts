@@ -20,9 +20,9 @@ export async function POST(request: Request) {
         false,
         {},
         authMessages.signup.fieldsRequired,
-        400
+        400,
+        requestId
       );
-      res.headers.set("x-request-id", requestId);
       return res;
     }
 
@@ -61,8 +61,13 @@ export async function POST(request: Request) {
 
     // Always return success message to prevent user enumeration
     log.info({ email }, "Forgot password request processed");
-    const res = apiResponse(true, {}, authMessages.password.forgotSent, 200);
-    res.headers.set("x-request-id", requestId);
+    const res = apiResponse(
+      true,
+      {},
+      authMessages.password.forgotSent,
+      200,
+      requestId
+    );
     return res;
   } catch (err) {
     const error = normalizeError(err);
@@ -71,9 +76,9 @@ export async function POST(request: Request) {
       false,
       {},
       error.message ?? authMessages.signup.serverError,
-      error.status ?? 500
+      error.status ?? 500,
+      requestId
     );
-    res.headers.set("x-request-id", requestId);
     return res;
   }
 }

@@ -10,7 +10,7 @@ export type AdminGuardResult = { userId: string };
 export async function requireAdmin(): Promise<AdminGuardResult | NextResponse> {
   const session = await ServerSession();
   if (!session?.user?.id) {
-    return apiResponse(false, null, "UNAUTHORIZED", 401);
+    return apiResponse(false, null, "UNAUTHORIZED", 401, requestId);
   }
   const me = await prisma.user.findUnique({
     where: { id: session.user.id },
