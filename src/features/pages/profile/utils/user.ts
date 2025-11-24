@@ -36,6 +36,7 @@ export async function fetchProfileUserByUsername(
       isVerified: true,
       followersCount: true,
       followingCount: true,
+      friendsCount: true,
       postsCount: true,
       createdAt: true,
     },

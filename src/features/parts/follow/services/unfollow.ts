@@ -7,21 +7,20 @@ import { invalidateProfileCache } from "@/features/pages/profile/utils";
 import { followMessages } from "@/lib/messages";
 import { broadcastFollowEvent } from "@/features/utils/realtime";
 import { ensureCurrentlyFollowing } from "../utils";
-import { deleteFollowNotification } from "../../notifications/services";
 
-export type UnfollowPublicProfileInput = {
+export type UnfollowProfileInput = {
   viewerId: string;
   viewerUsername: string;
   targetUserId: string;
   targetUsername: string;
 };
 
-export async function unfollowPublicProfile({
+export async function unfollowProfile({
   viewerId,
   viewerUsername,
   targetUserId,
   targetUsername,
-}: UnfollowPublicProfileInput) {
+}: UnfollowProfileInput) {
   if (viewerId === targetUserId) {
     throw new Error(followMessages.FOLLOW_ERRORS.selfFollow);
   }
@@ -41,8 +40,6 @@ export async function unfollowPublicProfile({
         where: { id: viewerId },
         data: { followingCount: { decrement: 1 } },
       });
-
-      await deleteFollowNotification(tx, viewerId, targetUserId);
     });
   } catch (error) {
     if (
@@ -66,6 +63,8 @@ export async function unfollowPublicProfile({
     followerUsername: viewerUsername,
     targetId: targetUserId,
     targetUsername,
+    kind: "public-unfollow",
+    followersDelta: -1,
   });
 
   return {

@@ -14,6 +14,7 @@ const seedUsers = [
     phone: "+10000000001",
     gender: "MALE" as Gender,
     birthDate: new Date("1995-01-01"),
+    isPrivate: false,
   },
   {
     username: "user2",
@@ -23,6 +24,27 @@ const seedUsers = [
     phone: "+10000000002",
     gender: "FEMALE" as Gender,
     birthDate: new Date("1997-02-02"),
+    isPrivate: false,
+  },
+  {
+    username: "user3",
+    firstName: "User",
+    lastName: "three",
+    email: "user3@example.com",
+    phone: "+10000000003",
+    gender: "FEMALE" as Gender,
+    birthDate: new Date("1997-02-02"),
+    isPrivate: true,
+  },
+  {
+    username: "user4",
+    firstName: "User",
+    lastName: "Four",
+    email: "user4@example.com",
+    phone: "+10000000004",
+    gender: "MALE" as Gender,
+    birthDate: new Date("1993-03-03"),
+    isPrivate: true,
   },
 ];
 
@@ -44,12 +66,53 @@ async function main() {
         gender: user.gender,
         birthDate: user.birthDate,
         emailVerified: true,
+        isPrivate: Boolean(user.isPrivate),
+      },
+    });
+  }
+
+  const createdUsers = await prisma.user.findMany({
+    where: { email: { in: seedUsers.map((user) => user.email) } },
+    select: { id: true, email: true },
+  });
+
+  const userByEmail = createdUsers.reduce<Record<string, string>>(
+    (acc, user) => ({ ...acc, [user.email]: user.id }),
+    {}
+  );
+
+  const friendships: Array<[string, string]> = [
+    ["user1@example.com", "user4@example.com"],
+  ];
+
+  for (const [emailA, emailB] of friendships) {
+    const userA = userByEmail[emailA];
+    const userB = userByEmail[emailB];
+
+    if (!userA || !userB) {
+      continue;
+    }
+
+    const [userOneId, userTwoId] =
+      userA < userB ? [userA, userB] : [userB, userA];
+
+    await prisma.friend.upsert({
+      where: {
+        userOneId_userTwoId: {
+          userOneId,
+          userTwoId,
+        },
+      },
+      update: {},
+      create: {
+        userOneId,
+        userTwoId,
       },
     });
   }
 
   console.log(
-    `Seeded ${seedUsers.length} users. Default password for all is "${DEFAULT_PASSWORD}".`
+    `Seeded ${seedUsers.length} users plus ${friendships.length} friendship(s). Default password for all is "${DEFAULT_PASSWORD}".`
   );
 }
 

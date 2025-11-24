@@ -7,6 +7,8 @@ export type FollowNotificationPayload = {
   followerUsername: string;
   targetUserId: string;
   targetUsername: string;
+  kind: "follow" | "request" | "request-approved";
+  status?: "pending" | "accepted" | "rejected";
 };
 
 export type FollowNotificationMetadata = {
@@ -15,6 +17,8 @@ export type FollowNotificationMetadata = {
   targetUsername: string;
   targetName: string | null;
   occurredAt: string;
+  kind: FollowNotificationPayload["kind"];
+  status?: FollowNotificationPayload["status"];
 };
 
 export type NotificationActorSummary = {

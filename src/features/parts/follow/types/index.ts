@@ -4,5 +4,12 @@ export type FollowActionInput = {
 
 export type FollowApiResponse = {
   message: string;
-  status: "FOLLOWED" | "UNFOLLOWED";
+  status:
+    | "FOLLOWED"
+    | "UNFOLLOWED"
+    | "REQUESTED"
+    | "CANCELLED"
+    | "APPROVED"
+    | "REJECTED";
+  requestId?: string;
 };

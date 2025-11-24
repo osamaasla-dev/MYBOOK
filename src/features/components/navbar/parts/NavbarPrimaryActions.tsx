@@ -1,6 +1,6 @@
 import { NavbarHomeLink } from "./NavbarHomeLink";
 import { NavbarProfileLink } from "./NavbarProfileLink";
-import { NavbarNotifications } from "./NavbarNotifications";
+import { Notifications } from "@/features/parts/notifications/components/Notifications";
 
 export function NavbarPrimaryActions() {
   return (
@@ -10,7 +10,7 @@ export function NavbarPrimaryActions() {
       data-testid="navbar-primary-actions"
     >
       <NavbarHomeLink />
-      <NavbarNotifications />
+      <Notifications />
       <NavbarProfileLink />
     </nav>
   );

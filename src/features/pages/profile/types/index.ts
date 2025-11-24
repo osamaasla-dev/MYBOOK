@@ -31,6 +31,7 @@ export type ProfileUserRecord = {
   isVerified: boolean;
   followersCount: number;
   followingCount: number;
+  friendsCount: number;
   postsCount: number;
   createdAt: Date;
 };
@@ -47,6 +48,7 @@ export type ProfileSummary = Pick<
   | "isVerified"
   | "followersCount"
   | "followingCount"
+  | "friendsCount"
   | "postsCount"
   | "createdAt"
 > & {

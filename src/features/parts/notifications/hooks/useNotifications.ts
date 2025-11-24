@@ -18,18 +18,23 @@ export type NotificationsQueryData = {
   hasMore: boolean;
 };
 
+export const notificationsQueryKey = (unreadOnly = false) =>
+  ["notifications", { unreadOnly }] as const;
+
 export function useNotifications({
   unreadOnly = false,
   initialLimit,
   enabled = true,
 }: UseNotificationsOptions = {}) {
+  const queryKey = notificationsQueryKey(unreadOnly);
+
   return useInfiniteQuery<
     NotificationListResult,
     Error,
     NotificationsQueryData,
-    ["notifications", { unreadOnly: boolean }]
+    typeof queryKey
   >({
-    queryKey: ["notifications", { unreadOnly }],
+    queryKey,
     enabled,
     initialPageParam: undefined as string | undefined,
     queryFn: async ({ pageParam }) =>

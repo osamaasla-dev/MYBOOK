@@ -2,7 +2,7 @@ import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
 import { followMessages } from "@/lib/messages";
 import { prepareFollowAction, type FollowRouteContext } from "../shared";
-import { unfollowPublicProfile } from "@/features/parts/follow/services";
+import { unfollowProfile } from "@/features/parts/follow/services";
 
 const ROUTE = "/api/follow/[username]/unfollow";
 
@@ -20,7 +20,7 @@ export async function DELETE(request: Request, { params }: FollowRouteContext) {
     preparation.context;
 
   try {
-    const result = await unfollowPublicProfile({
+    const result = await unfollowProfile({
       viewerId,
       viewerUsername,
       targetUserId: target.id,

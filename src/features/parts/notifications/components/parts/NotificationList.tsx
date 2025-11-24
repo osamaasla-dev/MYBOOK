@@ -1,3 +1,4 @@
+import { type RefObject } from "react";
 import { Loader2 } from "lucide-react";
 
 import type { NotificationListItem } from "@/features/parts/notifications/types";
@@ -13,7 +14,9 @@ type NotificationListProps = {
   isFetchingNextPage: boolean;
   hasNextPage: boolean;
   onRetry: () => void;
-  onScroll: React.UIEventHandler<HTMLDivElement>;
+  listRef: RefObject<HTMLDivElement | null>;
+  sentinelRef: RefObject<HTMLDivElement | null>;
+  onSelectNotification: (notification: NotificationListItem) => void;
 };
 
 export function NotificationList({
@@ -24,14 +27,16 @@ export function NotificationList({
   isFetchingNextPage,
   hasNextPage,
   onRetry,
-  onScroll,
+  listRef,
+  sentinelRef,
+  onSelectNotification,
 }: NotificationListProps) {
   const showEmptyState = !isLoading && !isError && items.length === 0;
 
   return (
     <div
+      ref={listRef}
       className="max-h-80 overflow-y-auto"
-      onScroll={onScroll}
       role="region"
       aria-live="polite"
       aria-busy={isLoading || isFetchingNextPage}
@@ -56,7 +61,11 @@ export function NotificationList({
         data-testid="navbar-notifications-list"
       >
         {items.map((notification) => (
-          <NotificationItem key={notification.id} notification={notification} />
+          <NotificationItem
+            key={notification.id}
+            notification={notification}
+            onSelect={onSelectNotification}
+          />
         ))}
       </ul>
 
@@ -78,6 +87,13 @@ export function NotificationList({
           No more notifications.
         </div>
       )}
+
+      <div
+        ref={sentinelRef}
+        className="h-1 w-full"
+        aria-hidden="true"
+        data-testid="navbar-notifications-scroll-sentinel"
+      />
     </div>
   );
 }

@@ -25,5 +25,7 @@ export async function buildFollowNotificationMetadata(
     targetUsername: payload.targetUsername,
     targetName: target?.name ?? null,
     occurredAt: new Date().toISOString(),
+    kind: payload.kind,
+    status: payload.status,
   };
 }

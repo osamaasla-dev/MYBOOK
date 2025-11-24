@@ -4,31 +4,45 @@ const USER_CHANNEL_PREFIX = "private-user-";
 
 const buildUserChannel = (userId: string) => `${USER_CHANNEL_PREFIX}${userId}`;
 
-type FollowRealtimePayload = {
+export type FollowRealtimeKind =
+  | "public-follow"
+  | "public-unfollow"
+  | "follow-request"
+  | "follow-request-approved"
+  | "follow-request-rejected";
+
+export type FollowRealtimePayload = {
   followerId: string;
   followerUsername: string;
   targetId: string;
   targetUsername: string;
+  kind: FollowRealtimeKind;
+  followersDelta: number; // only used for public-follow/unfollow
+  requestId?: string;
 };
 
-type FollowRealtimeEvent = "follow:added" | "follow:removed";
+export type FollowRealtimeEvent =
+  | "follow:added"
+  | "follow:removed"
+  | "follow:requested"
+  | "follow:approved"
+  | "follow:rejected";
 
-type BroadcastFollowInput = {
+type BroadcastFollowInput = FollowRealtimePayload & {
   event: FollowRealtimeEvent;
-} & FollowRealtimePayload;
+};
 
-export async function broadcastFollowEvent({
-  event,
-  followerId,
-  followerUsername,
-  targetId,
-  targetUsername,
-}: BroadcastFollowInput) {
+export async function broadcastFollowEvent(input: BroadcastFollowInput) {
+  const { targetId, event, ...rest } = input;
+
+  if (!targetId) return; // safety
+
   const payload: FollowRealtimePayload = {
-    followerId,
-    followerUsername,
     targetId,
-    targetUsername,
+    ...rest,
+    followersDelta: ["public-follow", "public-unfollow"].includes(rest.kind)
+      ? rest.followersDelta
+      : 0,
   };
 
   await pusherServer.trigger(buildUserChannel(targetId), event, payload);

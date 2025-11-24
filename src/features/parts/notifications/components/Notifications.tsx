@@ -1,22 +1,27 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import {
-  Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui";
 import { useCurrentUser } from "@/features/hooks/useCurrentUser";
-import { useNotifications } from "@/features/parts/notifications/hooks/useNotifications";
-import { usePusherChannel } from "@/hooks/usePusherChannel";
+import { useNotifications } from "../hooks/useNotifications";
+import { useNotificationsRealtime } from "../hooks/useNotificationsRealtime";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+import type { NotificationListItem } from "../types";
+import { useMarkNotificationRead } from "../hooks/useMarkNotificationRead";
 
-import { NotificationBellButton } from "./notifications/NotificationBellButton";
-import { NotificationList } from "./notifications/NotificationList";
+import {
+  NotificationBellButton,
+  NotificationList,
+  NotificationDropdownHeader,
+} from "./parts";
 
-export function NavbarNotifications() {
+export function Notifications() {
   const queryClient = useQueryClient();
   const { data: currentUser } = useCurrentUser();
   const {
@@ -32,6 +37,8 @@ export function NavbarNotifications() {
   } = useNotifications({ initialLimit: 10 });
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   const items = useMemo(() => data?.items ?? [], [data?.items]);
   const unreadCount = useMemo(
@@ -43,38 +50,38 @@ export function NavbarNotifications() {
     ? `private-user-${currentUser.id}`
     : "";
 
+  const markNotificationMutation = useMarkNotificationRead();
+
   const invalidateNotifications = useCallback(() => {
     queryClient.invalidateQueries({
       queryKey: ["notifications", { unreadOnly: false }],
     });
   }, [queryClient]);
 
-  usePusherChannel({
-    channelName: subscriptionChannel,
-    event: "follow:added",
-    enabled: Boolean(subscriptionChannel),
-    onEvent: invalidateNotifications,
+  useNotificationsRealtime(
+    subscriptionChannel,
+    Boolean(subscriptionChannel),
+    invalidateNotifications
+  );
+
+  useInfiniteScroll({
+    containerRef: listRef,
+    sentinelRef,
+    hasNextPage: Boolean(hasNextPage),
+    isFetching: isFetchingNextPage,
+    onLoadMore: fetchNextPage,
+    rootMargin: "0px 0px 300px 0px",
   });
 
-  usePusherChannel({
-    channelName: subscriptionChannel,
-    event: "follow:removed",
-    enabled: Boolean(subscriptionChannel),
-    onEvent: invalidateNotifications,
-  });
-
-  const handleScroll: React.UIEventHandler<HTMLDivElement> = (event) => {
-    if (!hasNextPage || isFetchingNextPage) {
-      return;
-    }
-
-    const { scrollHeight, scrollTop, clientHeight } = event.currentTarget;
-    const distanceToBottom = scrollHeight - scrollTop - clientHeight;
-
-    if (distanceToBottom < 64) {
-      fetchNextPage();
-    }
-  };
+  const handleNotificationSelect = useCallback(
+    (notification: NotificationListItem) => {
+      if (!notification.id || notification.isRead) {
+        return;
+      }
+      markNotificationMutation.mutate(notification.id);
+    },
+    [markNotificationMutation]
+  );
 
   return (
     <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
@@ -91,20 +98,7 @@ export function NavbarNotifications() {
         sideOffset={12}
         data-testid="navbar-notifications-dropdown"
       >
-        <div
-          className="flex items-center justify-between border-b px-4 py-2"
-          data-testid="navbar-notifications-header"
-        >
-          <p className="text-sm font-semibold">Notifications</p>
-          <Button
-            type="button"
-            onClick={() => refetch()}
-            variant="link"
-            data-testid="navbar-notifications-refresh"
-          >
-            Refresh
-          </Button>
-        </div>
+        <NotificationDropdownHeader onRefresh={refetch} />
 
         <NotificationList
           items={items}
@@ -114,11 +108,13 @@ export function NavbarNotifications() {
           isFetchingNextPage={isFetchingNextPage}
           hasNextPage={Boolean(hasNextPage)}
           onRetry={refetch}
-          onScroll={handleScroll}
+          listRef={listRef}
+          sentinelRef={sentinelRef}
+          onSelectNotification={handleNotificationSelect}
         />
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
 
-export default NavbarNotifications;
+export default Notifications;

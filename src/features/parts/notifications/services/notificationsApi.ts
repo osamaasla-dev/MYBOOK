@@ -1,4 +1,4 @@
-import { apiGetR } from "@/lib/api";
+import { apiGetR, apiPostR } from "@/lib/api";
 import { DEFAULT_NOTIFICATIONS_LIMIT } from "../schema";
 import type { NotificationListResult } from "../types";
 
@@ -41,4 +41,30 @@ export async function fetchNotificationsPage(
   );
 
   return data;
+}
+
+////////////////////////////////////////////////////
+export async function markNotificationsAsReadRequest(): Promise<{
+  updated: number;
+  message: string;
+}> {
+  const { data, message } = await apiPostR<{ updated: number }>(
+    "/notifications/mark-read"
+  );
+
+  return {
+    updated: data.updated,
+    message,
+  };
+}
+
+export async function markNotificationAsReadRequest(notificationId: string) {
+  const { data, message } = await apiPostR<{ updated: number }>(
+    `/notifications/${encodeURIComponent(notificationId)}/mark-read`
+  );
+
+  return {
+    updated: data.updated,
+    message,
+  };
 }

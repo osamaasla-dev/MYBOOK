@@ -49,9 +49,43 @@ model FollowRequest {
   status      FollowRequestStatus  @default(PENDING)
   createdAt   DateTime             @default(now())
   respondedAt DateTime?
+  notificationId String?
 
   @@unique([requesterId, receiverId])
   @@index([receiverId, status, createdAt])
+}
+
+model FriendRequest {
+  id          String                @id @default(cuid())
+
+  requesterId String
+  requester   User                  @relation("FriendRequestRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+
+  receiverId  String
+  receiver    User                  @relation("FriendRequestReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  status      FriendRequestStatus   @default(PENDING)
+  createdAt   DateTime              @default(now())
+  respondedAt DateTime?
+
+  @@unique([requesterId, receiverId])
+  @@index([receiverId, status, createdAt])
+}
+
+model Friend {
+  id         String   @id @default(cuid())
+
+  userOneId  String
+  userOne    User     @relation("UserFriendOne", fields: [userOneId], references: [id], onDelete: Cascade)
+
+  userTwoId  String
+  userTwo    User     @relation("UserFriendTwo", fields: [userTwoId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime @default(now())
+
+  @@unique([userOneId, userTwoId])
+  @@index([userOneId, createdAt])
+  @@index([userTwoId, createdAt])
 }
 
 model Block {
@@ -180,6 +214,7 @@ model User {
   // Activity & counters
   followersCount    Int      @default(0)
   followingCount    Int      @default(0)
+  friendsCount      Int      @default(0)
   postsCount        Int      @default(0)
   lastLoginAt       DateTime?
   lastSeenAt        DateTime?
@@ -212,6 +247,10 @@ model User {
   following          Follow[]  @relation("UserFollowing")
   followRequestsSent     FollowRequest[] @relation("FollowRequestRequester")
   followRequestsReceived FollowRequest[] @relation("FollowRequestReceiver")
+  friendRequestsSent     FriendRequest[] @relation("FriendRequestRequester")
+  friendRequestsReceived FriendRequest[] @relation("FriendRequestReceiver")
+  friendsAsUserOne       Friend[]        @relation("UserFriendOne")
+  friendsAsUserTwo       Friend[]        @relation("UserFriendTwo")
   blocks             Block[]  @relation("UserBlocks")
   blockedBy          Block[]  @relation("UserBlockedBy")
   conversationsOwned Conversation[] @relation("UserCreatedConversations")
@@ -243,21 +282,7 @@ model User {
     updatedAt DateTime @updatedAt
 }
 
-enum Gender {
-  MALE
-  FEMALE
-}
 
-enum UserRole {
-  USER
-  ADMIN
-}
-
-enum FollowRequestStatus {
-  PENDING
-  ACCEPTED
-  REJECTED
-}
 
 model Notification {
   id          String   @id @default(cuid())
@@ -290,7 +315,6 @@ model Notification {
   @@index([postId, createdAt])
   @@index([commentId, createdAt])
   @@index([followId, createdAt])
-  @@unique([userId, actorId, type])
 }
 
 model Post {
@@ -647,4 +671,27 @@ enum SupportAgentRole {
   AGENT
   SUPERVISOR
   ADMIN
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum FollowRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELED
 }

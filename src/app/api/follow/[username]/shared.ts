@@ -28,11 +28,19 @@ export type PreparedFollowAction = {
   viewerId: string;
   viewerUsername: string;
   target: ProfileUserRecord;
+  requiresApproval: boolean;
 };
+
+type FollowActionKind =
+  | "follow"
+  | "unfollow"
+  | "cancel-request"
+  | "accept-request"
+  | "reject-request";
 
 type PrepareFollowActionOptions = {
   route: string;
-  action: "follow" | "unfollow";
+  action: FollowActionKind;
 };
 
 type PrepareFollowActionResult =
@@ -45,7 +53,14 @@ export async function prepareFollowAction(
   options: PrepareFollowActionOptions
 ): Promise<PrepareFollowActionResult> {
   const { requestId, log } = await getRequestLog({ route: options.route });
-  const actionLabel = options.action === "follow" ? "Follow" : "Unfollow";
+  const actionLabelMap: Record<FollowActionKind, string> = {
+    follow: "Follow",
+    unfollow: "Unfollow",
+    "cancel-request": "Cancel follow request",
+    "accept-request": "Accept follow request",
+    "reject-request": "Reject follow request",
+  };
+  const actionLabel = actionLabelMap[options.action];
 
   try {
     log.info(`${actionLabel} request started`);
@@ -140,25 +155,10 @@ export async function prepareFollowAction(
             ),
           };
         }
-        case "PRIVATE": {
-          log.warn(
-            "Target profile is private - follow requests not implemented yet"
-          );
-          return {
-            ok: false,
-            response: apiResponse(
-              false,
-              {},
-              "FOLLOW_PRIVATE_NOT_SUPPORTED",
-              400,
-              requestId
-            ),
-          };
-        }
       }
     }
 
-    const target = validation.profile;
+    const { profile: target, requiresApproval } = validation;
 
     return {
       ok: true,
@@ -168,6 +168,7 @@ export async function prepareFollowAction(
         viewerId,
         viewerUsername,
         target,
+        requiresApproval,
       },
     };
   } catch (error) {

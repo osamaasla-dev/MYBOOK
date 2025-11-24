@@ -12,8 +12,8 @@ export function normalizeFollowUsername(username?: string): string | null {
 }
 
 export type FollowTargetValidationResult =
-  | { ok: true; profile: ProfileUserRecord }
-  | { ok: false; reason: "NOT_FOUND" | "SELF" | "PRIVATE" };
+  | { ok: true; profile: ProfileUserRecord; requiresApproval: boolean }
+  | { ok: false; reason: "NOT_FOUND" | "SELF" };
 
 export function validateFollowTarget(
   profile: ProfileUserRecord | null,
@@ -27,9 +27,9 @@ export function validateFollowTarget(
     return { ok: false, reason: "SELF" };
   }
 
-  if (profile.isPrivate) {
-    return { ok: false, reason: "PRIVATE" };
-  }
-
-  return { ok: true, profile };
+  return {
+    ok: true,
+    profile,
+    requiresApproval: profile.isPrivate,
+  };
 }

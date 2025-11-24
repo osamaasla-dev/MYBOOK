@@ -70,6 +70,7 @@ export function buildProfileSummary(
     isVerified: user.isVerified,
     followersCount: isPublic ? user.followersCount : 0,
     followingCount: isPublic ? user.followingCount : 0,
+    friendsCount: isPublic ? user.friendsCount : 0,
     postsCount: isPublic ? user.postsCount : 0,
     createdAt: user.createdAt,
     visibility: privacy.visibility,
@@ -92,6 +93,7 @@ export function buildViewerAwareProfile(
       summary.visibility === "public" ? summary.followersCount : 0,
     followingCount:
       summary.visibility === "public" ? summary.followingCount : 0,
+    friendsCount: summary.visibility === "public" ? summary.friendsCount : 0,
     postsCount: summary.visibility === "public" ? summary.postsCount : 0,
   };
 }

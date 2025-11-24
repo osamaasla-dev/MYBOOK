@@ -27,8 +27,31 @@ CREATE TABLE "FollowRequest" (
     "status" TEXT NOT NULL DEFAULT 'PENDING',
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "respondedAt" DATETIME,
+    "notificationId" TEXT,
     CONSTRAINT "FollowRequest_requesterId_fkey" FOREIGN KEY ("requesterId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "FollowRequest_receiverId_fkey" FOREIGN KEY ("receiverId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "FriendRequest" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "requesterId" TEXT NOT NULL,
+    "receiverId" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'PENDING',
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "respondedAt" DATETIME,
+    CONSTRAINT "FriendRequest_requesterId_fkey" FOREIGN KEY ("requesterId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "FriendRequest_receiverId_fkey" FOREIGN KEY ("receiverId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "Friend" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "userOneId" TEXT NOT NULL,
+    "userTwoId" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "Friend_userOneId_fkey" FOREIGN KEY ("userOneId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "Friend_userTwoId_fkey" FOREIGN KEY ("userTwoId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -112,6 +135,7 @@ CREATE TABLE "User" (
     "deactivatedAt" DATETIME,
     "followersCount" INTEGER NOT NULL DEFAULT 0,
     "followingCount" INTEGER NOT NULL DEFAULT 0,
+    "friendsCount" INTEGER NOT NULL DEFAULT 0,
     "postsCount" INTEGER NOT NULL DEFAULT 0,
     "lastLoginAt" DATETIME,
     "lastSeenAt" DATETIME,
@@ -370,6 +394,21 @@ CREATE INDEX "FollowRequest_receiverId_status_createdAt_idx" ON "FollowRequest"(
 CREATE UNIQUE INDEX "FollowRequest_requesterId_receiverId_key" ON "FollowRequest"("requesterId", "receiverId");
 
 -- CreateIndex
+CREATE INDEX "FriendRequest_receiverId_status_createdAt_idx" ON "FriendRequest"("receiverId", "status", "createdAt");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "FriendRequest_requesterId_receiverId_key" ON "FriendRequest"("requesterId", "receiverId");
+
+-- CreateIndex
+CREATE INDEX "Friend_userOneId_createdAt_idx" ON "Friend"("userOneId", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "Friend_userTwoId_createdAt_idx" ON "Friend"("userTwoId", "createdAt");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Friend_userOneId_userTwoId_key" ON "Friend"("userOneId", "userTwoId");
+
+-- CreateIndex
 CREATE INDEX "Block_blockedId_createdAt_idx" ON "Block"("blockedId", "createdAt");
 
 -- CreateIndex
@@ -440,9 +479,6 @@ CREATE INDEX "Notification_commentId_createdAt_idx" ON "Notification"("commentId
 
 -- CreateIndex
 CREATE INDEX "Notification_followId_createdAt_idx" ON "Notification"("followId", "createdAt");
-
--- CreateIndex
-CREATE UNIQUE INDEX "Notification_userId_actorId_type_key" ON "Notification"("userId", "actorId", "type");
 
 -- CreateIndex
 CREATE INDEX "Post_authorId_publishedAt_idx" ON "Post"("authorId", "publishedAt");

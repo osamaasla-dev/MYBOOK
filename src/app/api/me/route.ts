@@ -6,7 +6,7 @@ import { ServerSession } from "@/utils/session";
 import { userMessages } from "@/lib/messages";
 import { CurrentUser } from "@/features/types";
 
-const ROUTE = "/api/users/navbar/user";
+const ROUTE = "/api/me";
 
 export async function GET() {
   const { requestId, log } = await getRequestLog({ route: ROUTE });
