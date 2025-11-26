@@ -10,6 +10,7 @@ const TAB_LABELS: Record<RelationTab, string> = {
   followers: "Followers",
   following: "Following",
   "follow-requests": "Follow Requests",
+  "sent-follow-requests": "Sent Follow Requests",
   friends: "Friends",
   "friend-requests": "Friend Requests",
 };

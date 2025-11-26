@@ -10,9 +10,11 @@ const followMessages = {
     loadingFollow: "Following user…",
     loadingUnfollow: "Unfollowing user…",
     loadingCancelRequest: "Canceling follow request…",
+    loadingRemoveFollower: "Removing follower…",
     followSuccess: "Followed successfully",
     unfollowSuccess: "Unfollowed successfully",
     cancelRequestSuccess: "Follow request canceled",
+    removeFollowerSuccess: "Follower removed",
     followFailure: "Failed to follow user",
     unfollowFailure: "Failed to unfollow user",
     cancelRequestFailure: "Failed to cancel follow request",
@@ -20,6 +22,7 @@ const followMessages = {
     acceptRequestFailure: "Failed to accept follow request",
     rejectRequestSuccess: "Follow request rejected",
     rejectRequestFailure: "Failed to reject follow request",
+    removeFollowerFailure: "Failed to remove follower",
   },
 };
 

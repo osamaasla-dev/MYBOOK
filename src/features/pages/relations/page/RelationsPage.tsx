@@ -9,8 +9,11 @@ import { RELATION_TABS, type RelationTab, isRelationTab } from "../types";
 import { RelationsTabs } from "../components/RelationsTabs";
 import { RelationsList } from "../components/RelationsList";
 import { useRelationsInfiniteList } from "../hooks/useRelationsInfiniteList";
+import { useRelationsRealtime } from "../hooks/useRelationsRealtime";
 
 export function RelationsPage() {
+  useRelationsRealtime();
+
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -64,7 +67,7 @@ export function RelationsPage() {
   return (
     <div className="space-y-6">
       <header className="space-y-1">
-        <h1 className="text-2xl font-semibold text-foreground">Relations</h1>
+        <h1 className="text-2xl font-semibold text-primary">Relations</h1>
         <p className="text-sm text-muted-foreground">
           Review followers, follow requests, and friends in one dashboard.
         </p>

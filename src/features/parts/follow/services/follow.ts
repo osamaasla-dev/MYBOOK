@@ -4,9 +4,9 @@ import { prisma } from "@/lib/prisma";
 import { followMessages } from "@/lib/messages";
 import { ensureNotAlreadyFollowing, ensureNotBlocked } from "../utils/guards";
 import { invalidateProfileCache } from "@/features/pages/profile/utils";
-import { broadcastFollowEvent } from "@/features/utils/realtime";
-import { FollowNotificationPayload } from "../../notifications/types";
-import { createFollowNotification } from "../../notifications/services";
+import { broadcastFollowEvent } from "../utils/realtime";
+import { createFollowNotification } from "./followNotifications";
+import { FollowNotificationPayload } from "../types";
 
 export type FollowPublicProfileInput = {
   viewerId: string;
@@ -80,7 +80,7 @@ export async function followProfile({
         targetUserId,
         targetUsername,
         followId: null,
-        kind: "request",
+        kind: "follow-request",
         status: "pending",
       });
 
@@ -166,7 +166,7 @@ export async function followProfile({
     followerUsername: viewerUsername,
     targetId: targetUserId,
     targetUsername,
-    kind: "public-follow",
+    kind: "follow",
     followersDelta: 1,
   });
 

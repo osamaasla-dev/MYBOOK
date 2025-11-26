@@ -3,6 +3,10 @@
 import Link from "next/link";
 
 import type { RelationListItem } from "../types";
+import type { ProfileRouteData } from "@/features/pages/profile/types";
+import { FollowRequestActions } from "@/features/parts/follow/components/FollowRequestActions";
+import { RemoveFollowerButton } from "@/features/parts/follow/components/RemoveFollowerButton";
+import { FollowButton } from "@/features/parts/follow/components/FollowButton";
 
 const STATUS_LABELS: Record<string, string> = {
   PENDING: "Pending",
@@ -14,11 +18,25 @@ type RelationListItemProps = {
   item: RelationListItem;
 };
 
+const SENT_REQUEST_VIEWER_CONTEXT: ProfileRouteData["viewer"] = {
+  isAuthenticated: true,
+  isSelf: false,
+  isFollowing: false,
+  isFollower: false,
+  canViewFullProfile: false,
+  isBlocked: false,
+  hasPendingFollowRequest: true,
+};
+
 export function RelationListItem({ item }: RelationListItemProps) {
-  const { user, status } = item;
+  const { user, status, tab } = item;
   const profileHref = `/user/profile/${encodeURIComponent(user.username)}`;
   const initials = (user.name || user.username || "?").charAt(0).toUpperCase();
   const statusLabel = status ? STATUS_LABELS[status] ?? status : null;
+
+  const isFollowRequest = tab === "follow-requests";
+  const isFollower = tab === "followers";
+  const isSentFollowRequest = tab === "sent-follow-requests";
 
   return (
     <li className="flex items-center gap-4 border-b border-border/60 px-4 py-4 last:border-none">
@@ -58,11 +76,29 @@ export function RelationListItem({ item }: RelationListItemProps) {
         </div>
       </Link>
 
-      {statusLabel && (
-        <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium capitalize text-muted-foreground">
-          {statusLabel.toLowerCase()}
-        </span>
-      )}
+      <div className="flex flex-col items-end gap-2">
+        {statusLabel && (
+          <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium capitalize text-muted-foreground">
+            {statusLabel.toLowerCase()}
+          </span>
+        )}
+
+        {isFollowRequest && (
+          <FollowRequestActions
+            username={user.username}
+            className="w-full min-w-[160px]"
+          />
+        )}
+
+        {isFollower && <RemoveFollowerButton username={user.username} />}
+        {isSentFollowRequest && (
+          <FollowButton
+            viewer={SENT_REQUEST_VIEWER_CONTEXT}
+            profileUsername={user.username}
+            isBlocked={false}
+          />
+        )}
+      </div>
     </li>
   );
 }

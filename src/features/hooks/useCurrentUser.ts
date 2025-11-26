@@ -14,5 +14,6 @@ export function useCurrentUser(enabled?: boolean) {
     gcTime: 60 * 1000,
     placeholderData: keepPreviousData,
     enabled: enabled ?? true,
+    refetchOnWindowFocus: true,
   });
 }

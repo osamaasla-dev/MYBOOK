@@ -5,8 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { invalidateProfileCache } from "@/features/pages/profile/utils";
 
 import { followMessages } from "@/lib/messages";
-import { broadcastFollowEvent } from "@/features/utils/realtime";
-import { ensureCurrentlyFollowing } from "../utils";
+import { broadcastFollowEvent, ensureCurrentlyFollowing } from "../utils";
 
 export type UnfollowProfileInput = {
   viewerId: string;
@@ -63,7 +62,7 @@ export async function unfollowProfile({
     followerUsername: viewerUsername,
     targetId: targetUserId,
     targetUsername,
-    kind: "public-unfollow",
+    kind: "unfollow",
     followersDelta: -1,
   });
 

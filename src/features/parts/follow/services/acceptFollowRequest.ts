@@ -1,11 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { followMessages } from "@/lib/messages";
 import { invalidateProfileCache } from "@/features/pages/profile/utils";
-import { broadcastFollowEvent } from "@/features/utils/realtime";
+
+import { broadcastFollowEvent } from "../utils";
 import {
   createFollowNotification,
   updateFollowNotification,
-} from "../../notifications/services";
+} from "./followNotifications";
 
 export type AcceptFollowRequestInput = {
   viewerId: string;
@@ -38,7 +39,13 @@ export async function acceptFollowRequest({
       throw new Error(followMessages.FOLLOW_ERRORS.noPendingRequest);
     }
 
-    await tx.followRequest.delete({ where: { id: pendingRequest.id } });
+    await tx.followRequest.update({
+      where: { id: pendingRequest.id },
+      data: {
+        status: "ACCEPTED",
+        respondedAt: new Date(),
+      },
+    });
 
     await tx.follow.create({
       data: {
@@ -64,7 +71,7 @@ export async function acceptFollowRequest({
         targetUserId: viewerId,
         targetUsername: viewerUsername,
         followId: null,
-        kind: "request",
+        kind: "follow-request",
         status: "accepted",
       });
     }
@@ -75,7 +82,7 @@ export async function acceptFollowRequest({
       targetUserId: requesterId,
       targetUsername: requesterUsername,
       followId: null,
-      kind: "request-approved",
+      kind: "follow-request-approved",
     });
 
     return { requestId: pendingRequest.id };
@@ -103,7 +110,7 @@ export async function acceptFollowRequest({
     followerUsername: requesterUsername,
     targetId: viewerId,
     targetUsername: viewerUsername,
-    kind: "public-follow",
+    kind: "follow",
     followersDelta: 1,
   });
 

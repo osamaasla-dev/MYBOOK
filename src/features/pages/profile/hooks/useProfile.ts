@@ -16,5 +16,6 @@ export function useProfile(username: string, enabled = true) {
     staleTime: 60 * 1000,
     gcTime: 60 * 1000,
     placeholderData: keepPreviousData,
+    refetchOnWindowFocus: true,
   });
 }

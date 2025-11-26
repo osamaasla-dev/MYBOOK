@@ -4,6 +4,19 @@ import { useCallback } from "react";
 
 import { usePusherChannel } from "@/hooks/usePusherChannel";
 
+const NOTIFICATION_EVENTS = [
+  "follow:added",
+  "follow:removed",
+  "follow:requested",
+  "follow:approved",
+  "follow:rejected",
+  "follow:canceled",
+  "friend:request",
+  "friend:canceled",
+  "friend:accepted",
+  "friend:rejected",
+] as const;
+
 export function useNotificationsRealtime(
   channelName: string,
   enabled: boolean,
@@ -15,36 +28,10 @@ export function useNotificationsRealtime(
 
   usePusherChannel({
     channelName,
-    event: "follow:added",
     enabled,
-    onEvent: handler,
-  });
-
-  usePusherChannel({
-    channelName,
-    event: "follow:removed",
-    enabled,
-    onEvent: handler,
-  });
-
-  usePusherChannel({
-    channelName,
-    event: "follow:requested",
-    enabled,
-    onEvent: handler,
-  });
-
-  usePusherChannel({
-    channelName,
-    event: "follow:approved",
-    enabled,
-    onEvent: handler,
-  });
-
-  usePusherChannel({
-    channelName,
-    event: "follow:rejected",
-    enabled,
-    onEvent: handler,
+    bindings: NOTIFICATION_EVENTS.map((event) => ({
+      event,
+      onEvent: handler,
+    })),
   });
 }

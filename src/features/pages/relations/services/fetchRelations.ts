@@ -8,6 +8,7 @@ import {
   fetchFollowers,
   fetchFollowing,
   fetchFollowRequests,
+  fetchSentFollowRequests,
   fetchFriends,
   fetchFriendRequests,
 } from "./fetchers";
@@ -19,6 +20,7 @@ const tabFetchers: Record<RelationTab, TabFetcher> = {
   followers: fetchFollowers,
   following: fetchFollowing,
   "follow-requests": fetchFollowRequests,
+  "sent-follow-requests": fetchSentFollowRequests,
   friends: fetchFriends,
   "friend-requests": fetchFriendRequests,
 };

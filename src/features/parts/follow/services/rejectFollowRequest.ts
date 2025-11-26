@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { followMessages } from "@/lib/messages";
 import { invalidateProfileCache } from "@/features/pages/profile/utils";
-import { broadcastFollowEvent } from "@/features/utils/realtime";
-import { updateFollowNotification } from "../../notifications/services";
+import { broadcastFollowEvent } from "../utils";
+import { updateFollowNotification } from "./followNotifications";
 
 export type RejectFollowRequestInput = {
   viewerId: string;
@@ -35,7 +35,13 @@ export async function rejectFollowRequest({
       throw new Error(followMessages.FOLLOW_ERRORS.noPendingRequest);
     }
 
-    await tx.followRequest.delete({ where: { id: pendingRequest.id } });
+    await tx.followRequest.update({
+      where: { id: pendingRequest.id },
+      data: {
+        status: "REJECTED",
+        respondedAt: new Date(),
+      },
+    });
     if (pendingRequest.notificationId) {
       await updateFollowNotification(tx, pendingRequest.notificationId, {
         followerId: requesterId,
@@ -43,7 +49,7 @@ export async function rejectFollowRequest({
         targetUserId: viewerId,
         targetUsername: viewerUsername,
         followId: null,
-        kind: "request",
+        kind: "follow-request",
         status: "rejected",
       });
     }

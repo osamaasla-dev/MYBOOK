@@ -55,20 +55,20 @@ export async function GET(request: Request, { params }: ProfileRouteContext) {
       ip: clientIp,
     });
 
-    if (limited) {
-      log.warn(
-        { username, viewerId, clientIp },
-        "Profile request rate-limited"
-      );
-      const res = apiResponse(
-        false,
-        {},
-        userMessages.rateLimited,
-        429,
-        requestId
-      );
-      return res;
-    }
+    // if (limited) {
+    //   log.warn(
+    //     { username, viewerId, clientIp },
+    //     "Profile request rate-limited"
+    //   );
+    //   const res = apiResponse(
+    //     false,
+    //     {},
+    //     userMessages.rateLimited,
+    //     429,
+    //     requestId
+    //   );
+    //   return res;
+    // }
 
     const user = await fetchProfileUserByUsername(normalizedUsername);
 
@@ -94,12 +94,8 @@ export async function GET(request: Request, { params }: ProfileRouteContext) {
       profile: shapedProfile,
       viewer: {
         isAuthenticated,
-        isSelf: relations.isSelf,
-        isFollowing: relations.isFollowing,
-        isFollower: relations.isFollower,
         canViewFullProfile: privacy.canViewFullProfile,
-        isBlocked: relations.isBlocked,
-        hasPendingFollowRequest: relations.hasPendingFollowRequest,
+        ...relations,
       },
       restrictions: privacy.restrictions,
     };

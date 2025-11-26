@@ -3,11 +3,11 @@
 import { Button } from "@/components/ui/button";
 import type { ProfileRouteData } from "@/features/pages/profile/types";
 import {
-  useFollowUserMutation,
-  useUnfollowUserMutation,
-  useCancelFollowRequestMutation,
-} from "../hooks/useFollowActions";
-import { useFollowRealtimeFollowState } from "../hooks/useFollowRealtimeFollowState";
+  useFollowRealtime,
+  useFollow,
+  useUnfollow,
+  useCancelFollowRequest,
+} from "../hooks";
 
 function getFollowState(
   viewer: ProfileRouteData["viewer"],
@@ -40,11 +40,11 @@ export function FollowButton({
   profileUsername,
   isBlocked,
 }: FollowButtonProps) {
-  useFollowRealtimeFollowState(profileUsername);
+  useFollowRealtime(profileUsername);
 
-  const followMutation = useFollowUserMutation();
-  const unfollowMutation = useUnfollowUserMutation();
-  const cancelRequestMutation = useCancelFollowRequestMutation();
+  const followMutation = useFollow();
+  const unfollowMutation = useUnfollow();
+  const cancelRequestMutation = useCancelFollowRequest();
 
   const followState = getFollowState(viewer, isBlocked);
 

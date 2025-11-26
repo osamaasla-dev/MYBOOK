@@ -1,7 +1,7 @@
 import { redis } from "@/lib/redis";
 
-const PROFILE_RATE_WINDOW_SECONDS = 60; // 1 minute
-const PROFILE_RATE_MAX = 30;
+const PROFILE_RATE_WINDOW_SECONDS = 5; // 1 minute
+const PROFILE_RATE_MAX = 100;
 const PROFILE_RATE_NAMESPACE = "profile:rl";
 
 type ProfileRateLimitContext = {

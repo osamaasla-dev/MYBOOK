@@ -8,6 +8,9 @@ export type ProfileViewerContext = {
   canViewFullProfile: boolean;
   isBlocked: boolean;
   hasPendingFollowRequest: boolean;
+  isFriend: boolean;
+  hasIncomingFriendRequest: boolean;
+  hasOutgoingFriendRequest: boolean;
 };
 
 export type ViewerRelations = Pick<
@@ -17,6 +20,9 @@ export type ViewerRelations = Pick<
   | "isFollower"
   | "isBlocked"
   | "hasPendingFollowRequest"
+  | "isFriend"
+  | "hasIncomingFriendRequest"
+  | "hasOutgoingFriendRequest"
 >;
 
 export type ProfileUserRecord = {

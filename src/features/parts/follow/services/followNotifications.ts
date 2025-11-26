@@ -1,13 +1,7 @@
 import { NotificationType, Prisma } from "@prisma/client";
-
-import {
-  type FollowNotificationPayload,
-  type PrismaTransaction,
-} from "../types";
-import {
-  buildFollowNotificationMetadata,
-  isFollowNotificationBlocked,
-} from "../utils";
+import { FollowNotificationPayload, PrismaTransaction } from "../types";
+import { isFollowNotificationBlocked } from "../utils";
+import { buildFollowNotificationMetadata } from "./";
 
 export async function createFollowNotification(
   tx: PrismaTransaction,

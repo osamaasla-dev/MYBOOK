@@ -4,3 +4,6 @@ export * from "./followApi";
 export * from "./cancelFollowRequest";
 export * from "./acceptFollowRequest";
 export * from "./rejectFollowRequest";
+export * from "./removeFollower";
+export * from "./NotificationMetadata";
+export * from "./followNotifications";

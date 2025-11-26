@@ -2,10 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import {
-  useAcceptFollowRequestMutation,
-  useRejectFollowRequestMutation,
-} from "../hooks/useFollowRequestActions";
+import { useAcceptFollowRequest, useRejectFollowRequest } from "../hooks";
 
 export type FollowRequestActionsProps = {
   username: string;
@@ -18,8 +15,8 @@ export function FollowRequestActions({
   layout = "row",
   className,
 }: FollowRequestActionsProps) {
-  const acceptMutation = useAcceptFollowRequestMutation();
-  const rejectMutation = useRejectFollowRequestMutation();
+  const acceptMutation = useAcceptFollowRequest();
+  const rejectMutation = useRejectFollowRequest();
 
   const isPending = acceptMutation.isPending || rejectMutation.isPending;
 

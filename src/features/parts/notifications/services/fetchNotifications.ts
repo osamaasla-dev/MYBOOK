@@ -1,3 +1,5 @@
+import type { Prisma } from "@prisma/client";
+
 import { prisma } from "@/lib/prisma";
 import type {
   FetchNotificationsInput,
@@ -14,11 +16,19 @@ export async function fetchUserNotifications({
 }: FetchNotificationsInput): Promise<NotificationListResult> {
   const take = Math.min(Math.max(limit, 1), MAX_NOTIFICATIONS_LIMIT);
 
-  const notifications = await prisma.notification.findMany({
-    where: {
-      userId,
-      ...(unreadOnly ? { isRead: false } : {}),
+  const where: Prisma.NotificationWhereInput = {
+    userId,
+    ...(unreadOnly ? { isRead: false } : {}),
+    NOT: {
+      metadata: {
+        path: "status",
+        equals: "canceled",
+      },
     },
+  };
+
+  const notifications = await prisma.notification.findMany({
+    where,
     orderBy: { createdAt: "desc" },
     take: take + 1,
     ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),

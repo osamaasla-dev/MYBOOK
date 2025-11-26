@@ -15,6 +15,9 @@ export async function resolveViewerRelations(
       isFollower: isSelf,
       isBlocked: false,
       hasPendingFollowRequest: false,
+      isFriend: isSelf,
+      hasIncomingFriendRequest: false,
+      hasOutgoingFriendRequest: false,
     };
   }
 
@@ -24,6 +27,9 @@ export async function resolveViewerRelations(
     blockedByViewer,
     blockedByProfile,
     pendingRequest,
+    friendshipRecord,
+    incomingFriendRequest,
+    outgoingFriendRequest,
   ] = await Promise.all([
     prisma.follow.findFirst({
       where: { followerId: viewerId, followingId: profileUserId },
@@ -49,6 +55,31 @@ export async function resolveViewerRelations(
       },
       select: { id: true },
     }),
+    prisma.friend.findFirst({
+      where: {
+        OR: [
+          { userOneId: viewerId, userTwoId: profileUserId },
+          { userOneId: profileUserId, userTwoId: viewerId },
+        ],
+      },
+      select: { id: true },
+    }),
+    prisma.friendRequest.findFirst({
+      where: {
+        requesterId: profileUserId,
+        receiverId: viewerId,
+        status: "PENDING",
+      },
+      select: { id: true },
+    }),
+    prisma.friendRequest.findFirst({
+      where: {
+        requesterId: viewerId,
+        receiverId: profileUserId,
+        status: "PENDING",
+      },
+      select: { id: true },
+    }),
   ]);
 
   return {
@@ -57,5 +88,8 @@ export async function resolveViewerRelations(
     isFollower: Boolean(followerRecord),
     isBlocked: Boolean(blockedByViewer || blockedByProfile),
     hasPendingFollowRequest: Boolean(pendingRequest),
+    isFriend: Boolean(friendshipRecord),
+    hasIncomingFriendRequest: Boolean(incomingFriendRequest),
+    hasOutgoingFriendRequest: Boolean(outgoingFriendRequest),
   };
 }

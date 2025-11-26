@@ -58,5 +58,6 @@ export function useRelationsInfiniteList({
           ? data.pages[data.pages.length - 1].hasNextPage
           : false,
     }),
+    refetchOnWindowFocus: true,
   });
 }

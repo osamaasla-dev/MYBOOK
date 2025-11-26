@@ -67,6 +67,7 @@ model FriendRequest {
   status      FriendRequestStatus   @default(PENDING)
   createdAt   DateTime              @default(now())
   respondedAt DateTime?
+  notificationId String?
 
   @@unique([requesterId, receiverId])
   @@index([receiverId, status, createdAt])
@@ -584,6 +585,7 @@ enum NotificationType {
   LIKE
   COMMENT
   FOLLOW
+  FRIEND
   MENTION
   REPLY
 }
@@ -687,6 +689,7 @@ enum FollowRequestStatus {
   PENDING
   ACCEPTED
   REJECTED
+  CANCELED
 }
 
 enum FriendRequestStatus {

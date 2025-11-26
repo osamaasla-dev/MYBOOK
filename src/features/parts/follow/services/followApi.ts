@@ -10,6 +10,7 @@ const buildFollowPath = (
     | "cancel-request"
     | "accept-request"
     | "reject-request"
+    | "remove-follower"
 ) => `/follow/${encodeURIComponent(username)}/${action}`;
 
 export async function followUserApi({
@@ -71,6 +72,19 @@ export async function cancelFollowRequestApi({
 }: FollowActionInput): Promise<FollowApiResponse> {
   const { data, message } = await apiDeleteR<{ status: "CANCELLED" }>(
     buildFollowPath(username, "cancel-request")
+  );
+
+  return {
+    message,
+    status: data.status,
+  };
+}
+
+export async function removeFollowerApi({
+  username,
+}: FollowActionInput): Promise<FollowApiResponse> {
+  const { data, message } = await apiDeleteR<{ status: "REMOVED" }>(
+    buildFollowPath(username, "remove-follower")
   );
 
   return {

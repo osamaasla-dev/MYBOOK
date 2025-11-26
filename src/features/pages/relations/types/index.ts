@@ -4,6 +4,7 @@ export const RELATION_TABS = [
   "followers",
   "following",
   "follow-requests",
+  "sent-follow-requests",
   "friends",
   "friend-requests",
 ] as const;

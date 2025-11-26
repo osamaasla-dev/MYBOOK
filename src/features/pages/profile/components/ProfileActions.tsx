@@ -1,25 +1,8 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import type { ProfileRouteData } from "../types";
 import { FollowButton } from "@/features/parts/follow/components/FollowButton";
-
-function getFriendState(
-  viewer: ProfileRouteData["viewer"],
-  isBlocked: boolean
-) {
-  if (viewer.isSelf) {
-    return { label: "you", disabled: true };
-  }
-  if (isBlocked) {
-    return { label: "blocked", disabled: true };
-  }
-  const isFriend = viewer.isFollower && viewer.isFollowing;
-  if (isFriend) {
-    return { label: "friends", disabled: true };
-  }
-  return { label: "add friend", disabled: false };
-}
+import { FriendActionButton } from "@/features/parts/addFriend/components/FriendActionButton";
 
 type ProfileActionsProps = {
   viewer: ProfileRouteData["viewer"];
@@ -34,7 +17,6 @@ export function ProfileActions({
 }: ProfileActionsProps) {
   const isBlocked =
     viewer.isBlocked || restrictions?.reason === "PROFILE_BLOCKED";
-  const friendState = getFriendState(viewer, isBlocked);
 
   if (viewer.isSelf) {
     return null;
@@ -50,16 +32,11 @@ export function ProfileActions({
         profileUsername={profileUsername}
         isBlocked={isBlocked}
       />
-      <Button
-        type="button"
-        disabled={friendState.disabled}
-        aria-live="polite"
-        aria-label={`friend status: ${friendState.label}`}
-        data-testid="profile-action-friend"
-        onClick={() => {}}
-      >
-        {friendState.label}
-      </Button>
+      <FriendActionButton
+        viewer={viewer}
+        profileUsername={profileUsername}
+        isBlocked={isBlocked}
+      />
     </section>
   );
 }

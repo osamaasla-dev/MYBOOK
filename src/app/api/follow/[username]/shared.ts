@@ -36,7 +36,8 @@ type FollowActionKind =
   | "unfollow"
   | "cancel-request"
   | "accept-request"
-  | "reject-request";
+  | "reject-request"
+  | "remove-follower";
 
 type PrepareFollowActionOptions = {
   route: string;
@@ -59,6 +60,7 @@ export async function prepareFollowAction(
     "cancel-request": "Cancel follow request",
     "accept-request": "Accept follow request",
     "reject-request": "Reject follow request",
+    "remove-follower": "Remove follower",
   };
   const actionLabel = actionLabelMap[options.action];
 
@@ -73,19 +75,19 @@ export async function prepareFollowAction(
       ip: clientIp,
     });
 
-    if (limited) {
-      log.warn({ viewerId, clientIp }, `${actionLabel} request rate-limited`);
-      return {
-        ok: false,
-        response: apiResponse(
-          false,
-          {},
-          userMessages.rateLimited,
-          429,
-          requestId
-        ),
-      };
-    }
+    // if (limited) {
+    //   log.warn({ viewerId, clientIp }, `${actionLabel} request rate-limited`);
+    //   return {
+    //     ok: false,
+    //     response: apiResponse(
+    //       false,
+    //       {},
+    //       userMessages.rateLimited,
+    //       429,
+    //       requestId
+    //     ),
+    //   };
+    // }
 
     if (!viewerId) {
       log.warn(`${actionLabel} request unauthorized`);

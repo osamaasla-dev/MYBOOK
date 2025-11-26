@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { followMessages } from "@/lib/messages";
 import { invalidateProfileCache } from "@/features/pages/profile/utils";
-import { broadcastFollowEvent } from "@/features/utils/realtime";
-import { deleteFollowNotification } from "../../notifications/services";
+import { broadcastFollowEvent } from "../utils";
+import { updateFollowNotification } from "./followNotifications";
 
 export type CancelFollowRequestInput = {
   viewerId: string;
@@ -35,9 +35,23 @@ export async function cancelFollowRequest({
       throw new Error(followMessages.FOLLOW_ERRORS.noPendingRequest);
     }
 
-    await tx.followRequest.delete({ where: { id: pendingRequest.id } });
+    await tx.followRequest.update({
+      where: { id: pendingRequest.id },
+      data: {
+        status: "CANCELED",
+        respondedAt: new Date(),
+      },
+    });
+
     if (pendingRequest.notificationId) {
-      await deleteFollowNotification(tx, pendingRequest.notificationId);
+      await updateFollowNotification(tx, pendingRequest.notificationId, {
+        followerId: viewerId,
+        followerUsername: viewerUsername,
+        targetUserId,
+        targetUsername,
+        kind: "follow-request",
+        status: "canceled",
+      });
     }
 
     return pendingRequest.id;
@@ -49,12 +63,12 @@ export async function cancelFollowRequest({
   ]);
 
   await broadcastFollowEvent({
-    event: "follow:rejected",
+    event: "follow:canceled",
     followerId: viewerId,
     followerUsername: viewerUsername,
     targetId: targetUserId,
     targetUsername,
-    kind: "follow-request-rejected",
+    kind: "follow-request-canceled",
     followersDelta: 0,
     requestId,
   });

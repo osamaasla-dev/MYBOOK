@@ -51,7 +51,7 @@ export function ProfilePage({ username }: ProfilePageProps) {
           restrictions={restrictions}
           profileUsername={profile.username}
         />
-        <ProfileStats profile={profile} />
+        <ProfileStats profile={profile} viewer={viewer} />
         <ProfileAbout
           profile={profile}
           canViewFullProfile={viewer.canViewFullProfile}
