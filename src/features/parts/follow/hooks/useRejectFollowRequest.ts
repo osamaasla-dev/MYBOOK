@@ -15,6 +15,7 @@ export function useRejectFollowRequest() {
   const queryClient = useQueryClient();
 
   return useMutation<FollowApiResponse, Error, FollowActionInput>({
+    mutationKey: ["follow-request", "reject"],
     mutationFn: rejectFollowRequestApi,
     onMutate: () => {
       toast.dismiss();

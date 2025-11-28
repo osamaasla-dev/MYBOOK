@@ -1,6 +1,10 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  notifyManager,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
 import { followMessages } from "@/lib/messages";
@@ -15,6 +19,7 @@ export function useAcceptFollowRequest() {
   const queryClient = useQueryClient();
 
   return useMutation<FollowApiResponse, Error, FollowActionInput>({
+    mutationKey: ["follow-request", "accept"],
     mutationFn: acceptFollowRequestApi,
     onMutate: () => {
       toast.dismiss();
@@ -24,17 +29,17 @@ export function useAcceptFollowRequest() {
       toast.dismiss();
       toast.success(message || followMessages.FEEDBACK.acceptRequestSuccess);
 
-      await Promise.all([
-        ...RELATION_TABS_TO_INVALIDATE.map((tab) =>
+      notifyManager.batch(() => {
+        RELATION_TABS_TO_INVALIDATE.forEach((tab) =>
           queryClient.invalidateQueries({ queryKey: relationsQueryKey(tab) })
-        ),
+        );
         queryClient.invalidateQueries({
           queryKey: notificationsQueryKey(false),
-        }),
+        });
         queryClient.invalidateQueries({
           queryKey: notificationsQueryKey(true),
-        }),
-      ]);
+        });
+      });
     },
     onError: (err) => {
       toast.dismiss();

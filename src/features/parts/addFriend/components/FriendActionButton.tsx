@@ -1,9 +1,19 @@
 "use client";
 
+import { useMutationState } from "@tanstack/react-query";
+
 import { Button } from "@/components/ui/button";
 import type { ProfileRouteData } from "@/features/pages/profile/types";
-import { useSendFriendRequest } from "../hooks/useFriendRequest";
+import { useFriendRequest } from "../hooks/useFriendRequest";
 import { useCancelFriendRequest } from "../hooks/useCancelFriendRequest";
+import { AcceptRejectFriendButtons } from "./AcceptRejectFriendButtons";
+import { useUnFriend } from "../hooks/useUnFriend";
+import { useFriendRealtime } from "../hooks/useFriendRealtime";
+import {
+  cancelFriendRequestMutationKey,
+  sendFriendRequestMutationKey,
+  unFriendMutationKey,
+} from "../hooks";
 
 function getFriendState(
   viewer: ProfileRouteData["viewer"],
@@ -21,10 +31,6 @@ function getFriendState(
     return { label: "cancel request", disabled: false } as const;
   }
 
-  if (viewer.hasIncomingFriendRequest) {
-    return { label: "accept friend request", disabled: false } as const;
-  }
-
   return { label: "add friend", disabled: false } as const;
 }
 
@@ -39,11 +45,72 @@ export function FriendActionButton({
   profileUsername,
   isBlocked,
 }: FriendActionButtonProps) {
-  const sendFriendRequest = useSendFriendRequest({ profileUsername });
+  const sendFriendRequest = useFriendRequest({ profileUsername });
   const cancelFriendRequest = useCancelFriendRequest({ profileUsername });
+  const unFriend = useUnFriend({ profileUsername });
+
+  useFriendRealtime(profileUsername);
+
+  const sharedSendPending = useMutationState({
+    filters: {
+      mutationKey: sendFriendRequestMutationKey(profileUsername),
+      status: "pending",
+    },
+  });
+  const sharedCancelPending = useMutationState({
+    filters: {
+      mutationKey: cancelFriendRequestMutationKey(profileUsername),
+      status: "pending",
+    },
+  });
+  const sharedUnfriendPending = useMutationState({
+    filters: {
+      mutationKey: unFriendMutationKey(profileUsername),
+      status: "pending",
+    },
+  });
+
+  const sendIsPending =
+    sendFriendRequest.isPending || sharedSendPending.length > 0;
+  const cancelIsPending =
+    cancelFriendRequest.isPending || sharedCancelPending.length > 0;
+  const unFriendIsPending =
+    unFriend.isPending || sharedUnfriendPending.length > 0;
 
   if (viewer.isSelf) {
     return null;
+  }
+
+  if (viewer.isFriend) {
+    const removeDisabled = isBlocked || unFriendIsPending || sendIsPending;
+
+    return (
+      <Button
+        type="button"
+        disabled={removeDisabled}
+        aria-live="polite"
+        aria-label="unfriend user"
+        data-testid="profile-action-unfriend"
+        onClick={() => {
+          if (removeDisabled) {
+            return;
+          }
+
+          unFriend.mutate();
+        }}
+      >
+        {unFriendIsPending ? "removing…" : "unfriend"}
+      </Button>
+    );
+  }
+
+  if (viewer.hasIncomingFriendRequest) {
+    return (
+      <AcceptRejectFriendButtons
+        profileUsername={profileUsername}
+        isBlocked={isBlocked}
+      />
+    );
   }
 
   const friendState = getFriendState(viewer, isBlocked);
@@ -52,8 +119,8 @@ export function FriendActionButton({
     friendState.disabled ||
     viewer.isSelf ||
     isBlocked ||
-    sendFriendRequest.isPending ||
-    cancelFriendRequest.isPending;
+    sendIsPending ||
+    cancelIsPending;
 
   const buttonLabel = friendState.label;
 
@@ -63,11 +130,15 @@ export function FriendActionButton({
     }
 
     if (viewer.hasOutgoingFriendRequest) {
-      cancelFriendRequest.mutate();
+      if (!cancelIsPending) {
+        cancelFriendRequest.mutate();
+      }
       return;
     }
 
-    sendFriendRequest.mutate();
+    if (!sendIsPending) {
+      sendFriendRequest.mutate();
+    }
   };
 
   return (

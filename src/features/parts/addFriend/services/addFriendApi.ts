@@ -28,7 +28,7 @@ export type RejectFriendRequestApiResponse = {
   requestId?: string;
 };
 
-export type RemoveFriendApiResponse = {
+export type UnFriendApiResponse = {
   message: string;
   status: "REMOVED";
   requestId?: string;
@@ -46,7 +46,7 @@ const buildAcceptFriendRequestPath = (username: string) =>
 const buildRejectFriendRequestPath = (username: string) =>
   `/add-friend/${encodeURIComponent(username)}/reject-request`;
 
-const buildRemoveFriendPath = (username: string) =>
+const buildUnFriendPath = (username: string) =>
   `/add-friend/${encodeURIComponent(username)}/unfriend`;
 
 export async function sendFriendRequestApi({
@@ -64,13 +64,13 @@ export async function sendFriendRequestApi({
   };
 }
 
-export async function removeFriendApi({
+export async function unFriendApi({
   username,
-}: FriendRequestInput): Promise<RemoveFriendApiResponse> {
+}: FriendRequestInput): Promise<UnFriendApiResponse> {
   const { data, message } = await apiDeleteR<{
     status: "REMOVED";
     requestId?: string;
-  }>(buildRemoveFriendPath(username));
+  }>(buildUnFriendPath(username));
 
   return {
     message,

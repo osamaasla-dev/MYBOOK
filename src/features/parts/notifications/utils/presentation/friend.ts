@@ -40,5 +40,12 @@ export const friendPresentationBuilder: Builder = (notification) => {
     initials,
     statusLabel: metadata?.status,
     statusTone,
+    action:
+      metadata?.kind === "friend-request" && metadata.status === "pending"
+        ? {
+            kind: "friend-request",
+            username,
+          }
+        : undefined,
   };
 };

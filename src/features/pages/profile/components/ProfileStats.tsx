@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import type { ProfileRouteData } from "../types";
 
 const statClasses =
-  "flex flex-col items-center rounded-xl border border-border/60 bg-accent-light px-4 py-3 text-center";
+  "flex flex-col items-center rounded-xl border border-border/60 bg-secondary px-4 py-3 text-center";
 
 type ProfileStatsProps = {
   profile: ProfileRouteData["profile"];

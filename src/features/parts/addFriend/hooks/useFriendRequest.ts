@@ -10,56 +10,51 @@ import {
 } from "../services/addFriendApi";
 import { profileQueryKey } from "@/features/pages/profile/hooks/useProfile";
 import type { ProfileRouteData } from "@/features/pages/profile/types";
+import { relationsQueryKey } from "@/features/pages/relations/hooks/useRelationsInfiniteList";
 
-export type UseSendFriendRequestArgs = {
+export type UseFriendRequestArgs = {
   profileUsername: string;
 };
 
-export function useSendFriendRequest({
-  profileUsername,
-}: UseSendFriendRequestArgs) {
+export const sendFriendRequestMutationKey = (profileUsername: string) =>
+  ["friend-request", "send", profileUsername] as const;
+
+export function useFriendRequest({ profileUsername }: UseFriendRequestArgs) {
   const queryClient = useQueryClient();
   const queryKey = profileQueryKey(profileUsername);
 
-  return useMutation<
-    FriendRequestApiResponse,
-    Error,
-    void,
-    { previousProfile?: ProfileRouteData }
-  >({
+  return useMutation<FriendRequestApiResponse, Error, void>({
+    mutationKey: sendFriendRequestMutationKey(profileUsername),
     mutationFn: () => sendFriendRequestApi({ username: profileUsername }),
     onMutate: async () => {
       toast.dismiss();
       toast.loading(friendMessages.FEEDBACK.loadingRequest);
+    },
+    onSuccess: ({ message }) => {
+      queryClient.setQueryData<ProfileRouteData>(queryKey, (previous) => {
+        if (!previous) {
+          return previous;
+        }
 
-      await queryClient.cancelQueries({ queryKey });
-      const previousProfile =
-        queryClient.getQueryData<ProfileRouteData>(queryKey);
-
-      if (previousProfile) {
-        queryClient.setQueryData<ProfileRouteData>(queryKey, {
-          ...previousProfile,
+        return {
+          ...previous,
           viewer: {
-            ...previousProfile.viewer,
+            ...previous.viewer,
             hasOutgoingFriendRequest: true,
             hasIncomingFriendRequest: false,
           },
-        });
-      }
+        };
+      });
 
-      return { previousProfile };
-    },
-    onSuccess: ({ message }) => {
+      queryClient.invalidateQueries({
+        queryKey: relationsQueryKey("sent-friend-requests"),
+      });
       toast.dismiss();
       toast.success(message ?? friendMessages.FEEDBACK.requestSuccess);
     },
-    onError: (error: Error, _vars, context) => {
+    onError: (error: Error) => {
       toast.dismiss();
       toast.error(error.message ?? friendMessages.FEEDBACK.requestFailure);
-
-      if (context?.previousProfile) {
-        queryClient.setQueryData(queryKey, context.previousProfile);
-      }
     },
   });
 }

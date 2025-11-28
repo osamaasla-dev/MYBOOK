@@ -10,10 +10,15 @@ import {
 } from "../services/addFriendApi";
 import { profileQueryKey } from "@/features/pages/profile/hooks/useProfile";
 import type { ProfileRouteData } from "@/features/pages/profile/types";
+import { notificationsQueryKey } from "../../notifications/hooks/useNotifications";
+import { relationsQueryKey } from "@/features/pages/relations/hooks/useRelationsInfiniteList";
 
 export type UseRejectFriendRequestArgs = {
   profileUsername: string;
 };
+
+export const rejectFriendRequestMutationKey = (profileUsername: string) =>
+  ["friend-request", "reject", profileUsername] as const;
 
 export function useRejectFriendRequest({
   profileUsername,
@@ -21,48 +26,47 @@ export function useRejectFriendRequest({
   const queryClient = useQueryClient();
   const queryKey = profileQueryKey(profileUsername);
 
-  return useMutation<
-    RejectFriendRequestApiResponse,
-    Error,
-    void,
-    { previousProfile?: ProfileRouteData }
-  >({
+  return useMutation<RejectFriendRequestApiResponse, Error, void>({
+    mutationKey: rejectFriendRequestMutationKey(profileUsername),
     mutationFn: () => rejectFriendRequestApi({ username: profileUsername }),
     onMutate: async () => {
       toast.dismiss();
       toast.loading(friendMessages.FEEDBACK.loadingRejectRequest);
+    },
+    onSuccess: async ({ message }) => {
+      queryClient.setQueryData<ProfileRouteData>(queryKey, (previous) => {
+        if (!previous) {
+          return previous;
+        }
 
-      await queryClient.cancelQueries({ queryKey });
-      const previousProfile =
-        queryClient.getQueryData<ProfileRouteData>(queryKey);
-
-      if (previousProfile) {
-        queryClient.setQueryData<ProfileRouteData>(queryKey, {
-          ...previousProfile,
+        return {
+          ...previous,
           viewer: {
-            ...previousProfile.viewer,
+            ...previous.viewer,
             isFriend: false,
             hasIncomingFriendRequest: false,
             hasOutgoingFriendRequest: false,
           },
-        });
-      }
+        };
+      });
 
-      return { previousProfile };
-    },
-    onSuccess: ({ message }) => {
       toast.dismiss();
       toast.success(message ?? friendMessages.FEEDBACK.rejectRequestSuccess);
+      await queryClient.invalidateQueries({
+        queryKey: notificationsQueryKey(false),
+      });
+      await queryClient.invalidateQueries({
+        queryKey: notificationsQueryKey(true),
+      });
+      await queryClient.invalidateQueries({
+        queryKey: relationsQueryKey("friend-requests"),
+      });
     },
-    onError: (error, _vars, context) => {
+    onError: (error) => {
       toast.dismiss();
       toast.error(
         error.message ?? friendMessages.FEEDBACK.rejectRequestFailure
       );
-
-      if (context?.previousProfile) {
-        queryClient.setQueryData(queryKey, context.previousProfile);
-      }
     },
   });
 }

@@ -6,12 +6,18 @@ import toast from "react-hot-toast";
 import { followMessages } from "@/lib/messages";
 import type { FollowActionInput, FollowApiResponse } from "../types";
 import { removeFollowerApi } from "../services/followApi";
+
+export const REMOVE_FOLLOWER_MUTATION_KEY = [
+  "follow",
+  "remove-follower",
+] as const;
 import { relationsQueryKey } from "@/features/pages/relations/hooks/useRelationsInfiniteList";
 
 export function useRemoveFollower() {
   const queryClient = useQueryClient();
 
   return useMutation<FollowApiResponse, Error, FollowActionInput>({
+    mutationKey: REMOVE_FOLLOWER_MUTATION_KEY,
     mutationFn: removeFollowerApi,
     onMutate: () => {
       toast.dismiss();

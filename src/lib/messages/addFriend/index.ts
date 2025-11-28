@@ -21,9 +21,9 @@ const friendMessages = {
     loadingRejectRequest: "Rejecting friend request…",
     rejectRequestSuccess: "Friend request rejected",
     rejectRequestFailure: "Failed to reject friend request",
-    loadingRemoveFriend: "Removing friend…",
-    removeFriendSuccess: "Friend removed",
-    removeFriendFailure: "Failed to remove friend",
+    loadingUnFriend: "Removing friend…",
+    unFriendSuccess: "Friend removed",
+    unFriendFailure: "Failed to remove friend",
   },
 };
 

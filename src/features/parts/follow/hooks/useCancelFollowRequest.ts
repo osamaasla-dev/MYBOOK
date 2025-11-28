@@ -14,6 +14,10 @@ const RELATION_TABS_TO_INVALIDATE = [
   "follow-requests",
   "sent-follow-requests",
 ] as const;
+export const CANCEL_FOLLOW_REQUEST_MUTATION_KEY = [
+  "follow-request",
+  "cancel",
+] as const;
 
 export function useCancelFollowRequest() {
   const queryClient = useQueryClient();
@@ -27,6 +31,7 @@ export function useCancelFollowRequest() {
       queryKey: ReturnType<typeof profileQueryKey>;
     }
   >({
+    mutationKey: CANCEL_FOLLOW_REQUEST_MUTATION_KEY,
     mutationFn: cancelFollowRequestApi,
     onMutate: async (variables) => {
       toast.dismiss();

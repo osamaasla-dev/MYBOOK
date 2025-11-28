@@ -2,7 +2,7 @@ import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
 import { friendMessages } from "@/lib/messages";
 
-import { removeFriend } from "@/features/parts/addFriend/services";
+import { unFriend } from "@/features/parts/addFriend/services";
 import { prepareFriendAction, type FriendRouteContext } from "../shared";
 
 const ROUTE = "/api/add-friend/[username]/unfriend";
@@ -18,7 +18,7 @@ export async function DELETE(request: Request, { params }: FriendRouteContext) {
     preparation.context;
 
   try {
-    const result = await removeFriend({
+    const result = await unFriend({
       viewerId,
       viewerUsername,
       targetUserId: target.id,
@@ -28,7 +28,7 @@ export async function DELETE(request: Request, { params }: FriendRouteContext) {
     return apiResponse(
       true,
       result,
-      friendMessages.FEEDBACK.removeFriendSuccess,
+      friendMessages.FEEDBACK.unFriendSuccess,
       200,
       requestId
     );
@@ -39,7 +39,7 @@ export async function DELETE(request: Request, { params }: FriendRouteContext) {
     return apiResponse(
       false,
       {},
-      error.message ?? friendMessages.FEEDBACK.removeFriendFailure,
+      error.message ?? friendMessages.FEEDBACK.unFriendFailure,
       error.status ?? 500,
       requestId
     );

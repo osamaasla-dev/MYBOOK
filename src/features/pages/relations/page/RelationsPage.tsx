@@ -6,7 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 
 import { RELATION_TABS, type RelationTab, isRelationTab } from "../types";
-import { RelationsTabs } from "../components/RelationsTabs";
+import { RelationsSidebarNav } from "../components/RelationsSidebarNav";
 import { RelationsList } from "../components/RelationsList";
 import { useRelationsInfiniteList } from "../hooks/useRelationsInfiniteList";
 import { useRelationsRealtime } from "../hooks/useRelationsRealtime";
@@ -73,23 +73,25 @@ export function RelationsPage() {
         </p>
       </header>
 
-      <RelationsTabs
-        value={currentTab}
-        onChange={handleTabChange}
-        disabled={isFetchingNextPage}
-      />
+      <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start lg:gap-6">
+        <RelationsSidebarNav
+          value={currentTab}
+          onChange={handleTabChange}
+          disabled={isFetchingNextPage}
+        />
 
-      <RelationsList
-        items={items}
-        isLoading={isLoading}
-        isError={isError}
-        errorMessage={error?.message}
-        isFetchingNextPage={isFetchingNextPage}
-        hasNextPage={Boolean(hasNextPage)}
-        onRetry={refetch}
-        listRef={listRef}
-        sentinelRef={sentinelRef}
-      />
+        <RelationsList
+          items={items}
+          isLoading={isLoading}
+          isError={isError}
+          errorMessage={error?.message}
+          isFetchingNextPage={isFetchingNextPage}
+          hasNextPage={Boolean(hasNextPage)}
+          onRetry={refetch}
+          listRef={listRef}
+          sentinelRef={sentinelRef}
+        />
+      </div>
     </div>
   );
 }

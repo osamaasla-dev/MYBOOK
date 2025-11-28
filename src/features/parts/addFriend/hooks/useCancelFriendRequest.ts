@@ -10,10 +10,14 @@ import {
 } from "../services/addFriendApi";
 import { profileQueryKey } from "@/features/pages/profile/hooks/useProfile";
 import type { ProfileRouteData } from "@/features/pages/profile/types";
+import { relationsQueryKey } from "@/features/pages/relations/hooks/useRelationsInfiniteList";
 
 export type UseCancelFriendRequestArgs = {
   profileUsername: string;
 };
+
+export const cancelFriendRequestMutationKey = (profileUsername: string) =>
+  ["friend-request", "cancel", profileUsername] as const;
 
 export function useCancelFriendRequest({
   profileUsername,
@@ -21,45 +25,39 @@ export function useCancelFriendRequest({
   const queryClient = useQueryClient();
   const queryKey = profileQueryKey(profileUsername);
 
-  return useMutation<
-    CancelFriendRequestApiResponse,
-    Error,
-    void,
-    { previousProfile?: ProfileRouteData }
-  >({
+  return useMutation<CancelFriendRequestApiResponse, Error, void>({
+    mutationKey: cancelFriendRequestMutationKey(profileUsername),
     mutationFn: () => cancelFriendRequestApi({ username: profileUsername }),
     onMutate: async () => {
       toast.dismiss();
       toast.loading(friendMessages.FEEDBACK.loadingCancelRequest);
+    },
+    onSuccess: ({ message }) => {
+      queryClient.setQueryData<ProfileRouteData>(queryKey, (previous) => {
+        if (!previous) {
+          return previous;
+        }
 
-      await queryClient.cancelQueries({ queryKey });
-      const previousProfile =
-        queryClient.getQueryData<ProfileRouteData>(queryKey);
-
-      if (previousProfile) {
-        queryClient.setQueryData<ProfileRouteData>(queryKey, {
-          ...previousProfile,
+        return {
+          ...previous,
           viewer: {
-            ...previousProfile.viewer,
+            ...previous.viewer,
             hasOutgoingFriendRequest: false,
             hasIncomingFriendRequest: false,
           },
-        });
-      }
+        };
+      });
 
-      return { previousProfile };
-    },
-    onSuccess: ({ message }) => {
+      queryClient.invalidateQueries({
+        queryKey: relationsQueryKey("sent-friend-requests"),
+      });
+
       toast.dismiss();
       toast.success(message ?? friendMessages.FEEDBACK.cancelRequestSuccess);
     },
-    onError: (_error, _vars, context) => {
+    onError: () => {
       toast.dismiss();
       toast.error(friendMessages.FEEDBACK.cancelRequestFailure);
-
-      if (context?.previousProfile) {
-        queryClient.setQueryData(queryKey, context.previousProfile);
-      }
     },
   });
 }

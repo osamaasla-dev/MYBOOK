@@ -1,8 +1,11 @@
 "use client";
 
+import { useMutationState } from "@tanstack/react-query";
+
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAcceptFollowRequest, useRejectFollowRequest } from "../hooks";
+import type { FollowActionInput } from "../types";
 
 export type FollowRequestActionsProps = {
   username: string;
@@ -18,18 +21,54 @@ export function FollowRequestActions({
   const acceptMutation = useAcceptFollowRequest();
   const rejectMutation = useRejectFollowRequest();
 
-  const isPending = acceptMutation.isPending || rejectMutation.isPending;
+  const sharedAcceptPending = useMutationState({
+    filters: {
+      mutationKey: ["follow-request", "accept"],
+      status: "pending",
+      predicate: (mutation) => {
+        const variables = mutation.state.variables as
+          | FollowActionInput
+          | undefined;
+        return variables?.username === username;
+      },
+    },
+  });
+
+  const sharedRejectPending = useMutationState({
+    filters: {
+      mutationKey: ["follow-request", "reject"],
+      status: "pending",
+      predicate: (mutation) => {
+        const variables = mutation.state.variables as
+          | FollowActionInput
+          | undefined;
+        return variables?.username === username;
+      },
+    },
+  });
+
+  const acceptIsPending =
+    acceptMutation.isPending || sharedAcceptPending.length > 0;
+  const rejectIsPending =
+    rejectMutation.isPending || sharedRejectPending.length > 0;
+
+  const acceptDisabled = acceptIsPending || rejectIsPending;
+  const rejectDisabled = acceptIsPending || rejectIsPending;
 
   const handleAccept = () => {
-    if (!isPending) {
-      acceptMutation.mutate({ username });
+    if (acceptDisabled) {
+      return;
     }
+
+    acceptMutation.mutate({ username });
   };
 
   const handleReject = () => {
-    if (!isPending) {
-      rejectMutation.mutate({ username });
+    if (rejectDisabled) {
+      return;
     }
+
+    rejectMutation.mutate({ username });
   };
 
   return (
@@ -44,20 +83,20 @@ export function FollowRequestActions({
         type="button"
         size="sm"
         variant="accept"
-        disabled={isPending}
+        disabled={acceptDisabled}
         onClick={handleAccept}
       >
-        {acceptMutation.isPending ? "Accepting…" : "Accept"}
+        {acceptIsPending ? "accepting…" : "accept"}
       </Button>
 
       <Button
         type="button"
         size="sm"
         variant="reject"
-        disabled={isPending}
+        disabled={rejectDisabled}
         onClick={handleReject}
       >
-        {rejectMutation.isPending ? "Rejecting…" : "Reject"}
+        {rejectIsPending ? "rejecting…" : "reject"}
       </Button>
     </div>
   );

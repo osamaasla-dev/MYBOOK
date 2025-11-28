@@ -1,6 +1,10 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  notifyManager,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
 import friendMessages from "@/lib/messages/addFriend";
@@ -8,69 +12,50 @@ import {
   acceptFriendRequestApi,
   type AcceptFriendRequestApiResponse,
 } from "../services/addFriendApi";
+import { notificationsQueryKey } from "../../notifications/hooks/useNotifications";
 import { profileQueryKey } from "@/features/pages/profile/hooks/useProfile";
-import type { ProfileRouteData } from "@/features/pages/profile/types";
 
 export type UseAcceptFriendRequestArgs = {
   profileUsername: string;
 };
 
+export const acceptFriendRequestMutationKey = (profileUsername: string) =>
+  ["friend-request", "accept", profileUsername] as const;
+
 export function useAcceptFriendRequest({
   profileUsername,
 }: UseAcceptFriendRequestArgs) {
   const queryClient = useQueryClient();
-  const queryKey = profileQueryKey(profileUsername);
 
-  return useMutation<
-    AcceptFriendRequestApiResponse,
-    Error,
-    void,
-    { previousProfile?: ProfileRouteData }
-  >({
+  return useMutation<AcceptFriendRequestApiResponse, Error, void>({
+    mutationKey: acceptFriendRequestMutationKey(profileUsername),
     mutationFn: () => acceptFriendRequestApi({ username: profileUsername }),
     onMutate: async () => {
       toast.dismiss();
       toast.loading(friendMessages.FEEDBACK.loadingAcceptRequest);
-
-      await queryClient.cancelQueries({ queryKey });
-      const previousProfile =
-        queryClient.getQueryData<ProfileRouteData>(queryKey);
-
-      if (previousProfile) {
-        const becameFriend = !previousProfile.viewer.isFriend;
-
-        queryClient.setQueryData<ProfileRouteData>(queryKey, {
-          ...previousProfile,
-          profile: {
-            ...previousProfile.profile,
-            friendsCount: becameFriend
-              ? previousProfile.profile.friendsCount + 1
-              : previousProfile.profile.friendsCount,
-          },
-          viewer: {
-            ...previousProfile.viewer,
-            isFriend: true,
-            hasIncomingFriendRequest: false,
-            hasOutgoingFriendRequest: false,
-          },
-        });
-      }
-
-      return { previousProfile };
     },
-    onSuccess: ({ message }) => {
+    onSuccess: async ({ message }) => {
       toast.dismiss();
       toast.success(message ?? friendMessages.FEEDBACK.acceptRequestSuccess);
+      notifyManager.batch(() => {
+        queryClient.invalidateQueries({
+          queryKey: profileQueryKey(profileUsername),
+        });
+        queryClient.invalidateQueries({
+          queryKey: notificationsQueryKey(false),
+        });
+        queryClient.invalidateQueries({
+          queryKey: notificationsQueryKey(true),
+        });
+
+        queryClient.invalidateQueries({ queryKey: ["relations"] });
+      });
     },
-    onError: (error, _vars, context) => {
+    onError: (error) => {
       toast.dismiss();
       toast.error(
         error.message ?? friendMessages.FEEDBACK.acceptRequestFailure
       );
-
-      if (context?.previousProfile) {
-        queryClient.setQueryData(queryKey, context.previousProfile);
-      }
     },
   });
 }

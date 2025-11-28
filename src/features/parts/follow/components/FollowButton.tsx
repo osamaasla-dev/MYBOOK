@@ -1,5 +1,7 @@
 "use client";
 
+import { useMutationState } from "@tanstack/react-query";
+
 import { Button } from "@/components/ui/button";
 import type { ProfileRouteData } from "@/features/pages/profile/types";
 import {
@@ -7,6 +9,12 @@ import {
   useFollow,
   useUnfollow,
   useCancelFollowRequest,
+} from "../hooks";
+import type { FollowActionInput } from "../types";
+import {
+  FOLLOW_MUTATION_KEY,
+  UNFOLLOW_MUTATION_KEY,
+  CANCEL_FOLLOW_REQUEST_MUTATION_KEY,
 } from "../hooks";
 
 function getFollowState(
@@ -48,6 +56,26 @@ export function FollowButton({
 
   const followState = getFollowState(viewer, isBlocked);
 
+  const sharedFollowPending = useFollowActionPending(
+    FOLLOW_MUTATION_KEY,
+    profileUsername
+  );
+  const sharedUnfollowPending = useFollowActionPending(
+    UNFOLLOW_MUTATION_KEY,
+    profileUsername
+  );
+  const sharedCancelPending = useFollowActionPending(
+    CANCEL_FOLLOW_REQUEST_MUTATION_KEY,
+    profileUsername
+  );
+
+  const followIsPending =
+    followMutation.isPending || sharedFollowPending.length > 0;
+  const unfollowIsPending =
+    unfollowMutation.isPending || sharedUnfollowPending.length > 0;
+  const cancelIsPending =
+    cancelRequestMutation.isPending || sharedCancelPending.length > 0;
+
   const handleFollowToggle = () => {
     if (followState.disabled) {
       return;
@@ -56,13 +84,19 @@ export function FollowButton({
 
     switch (followState.action) {
       case "follow":
-        followMutation.mutate(payload);
+        if (!followIsPending) {
+          followMutation.mutate(payload);
+        }
         break;
       case "unfollow":
-        unfollowMutation.mutate(payload);
+        if (!unfollowIsPending) {
+          unfollowMutation.mutate(payload);
+        }
         break;
       case "cancel-request":
-        cancelRequestMutation.mutate(payload);
+        if (!cancelIsPending) {
+          cancelRequestMutation.mutate(payload);
+        }
         break;
       default:
         break;
@@ -71,9 +105,9 @@ export function FollowButton({
 
   const isDisabled =
     followState.disabled ||
-    followMutation.isPending ||
-    unfollowMutation.isPending ||
-    cancelRequestMutation.isPending;
+    followIsPending ||
+    unfollowIsPending ||
+    cancelIsPending;
 
   const buttonLabel = (() => {
     if (followState.action === "follow") {
@@ -100,4 +134,22 @@ export function FollowButton({
       {buttonLabel}
     </Button>
   );
+}
+
+function useFollowActionPending(
+  mutationKey: readonly unknown[],
+  username: string
+) {
+  return useMutationState({
+    filters: {
+      mutationKey,
+      status: "pending",
+      predicate: (mutation) => {
+        const variables = mutation.state.variables as
+          | FollowActionInput
+          | undefined;
+        return variables?.username === username;
+      },
+    },
+  });
 }

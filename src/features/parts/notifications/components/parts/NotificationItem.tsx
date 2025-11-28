@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import type { NotificationListItem } from "@/features/parts/notifications/types";
 import { getNotificationPresentation } from "@/features/parts/notifications/utils/presentation";
 import { FollowRequestActions } from "@/features/parts/follow/components/FollowRequestActions";
+import { AcceptRejectFriendButtons } from "@/features/parts/addFriend/components/AcceptRejectFriendButtons";
 
 type NotificationItemProps = {
   notification: NotificationListItem;
@@ -40,6 +41,13 @@ export function NotificationItem({
           <FollowRequestActions
             username={action.username}
             layout="row"
+            className="w-full"
+          />
+        );
+      case "friend-request":
+        return (
+          <AcceptRejectFriendButtons
+            profileUsername={action.username}
             className="w-full"
           />
         );

@@ -5,4 +5,4 @@ export * from "./friendNotifications";
 export * from "./cancelFriendRequest";
 export * from "./acceptFriendRequest";
 export * from "./rejectFriendRequest";
-export * from "./removeFriend";
+export * from "./unFriend";

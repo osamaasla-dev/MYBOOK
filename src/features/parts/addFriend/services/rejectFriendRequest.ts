@@ -81,7 +81,7 @@ export async function rejectFriendRequest({
   await broadcastFriendEvent({
     event: "friend:rejected",
     requesterId: viewerId,
-    requesterUsername,
+    requesterUsername: viewerUsername,
     targetId: requesterId,
     targetUsername: requesterUsername,
     kind: "friend-request-rejected",
