@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { useCurrentUser } from "@/features/hooks/useCurrentUser";
+import { useCurrentUser } from "@/features/hooks";
 import { usePusherChannel } from "@/hooks/usePusherChannel";
 import type { FollowRealtimePayload } from "../utils/realtime";
 import { profileQueryKey } from "@/features/pages/profile/hooks/useProfile";

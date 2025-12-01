@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 
-import { useCurrentUser } from "@/features/hooks/useCurrentUser";
+import { useCurrentUser } from "@/features/hooks";
 
 export function NavbarProfileLink() {
   const { data: user } = useCurrentUser();

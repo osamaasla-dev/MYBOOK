@@ -8,6 +8,181 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model CommentMention {
+  id              String   @id @default(cuid())
+
+  commentId       String
+  comment         Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  mentionedUserId String
+  mentionedUser   User     @relation("UserCommentMentions", fields: [mentionedUserId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime @default(now())
+
+  @@unique([commentId, mentionedUserId])
+  @@index([mentionedUserId, createdAt])
+}
+
+model CommentReport {
+  id           String               @id @default(cuid())
+
+  commentId    String
+  comment      Comment              @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  reporterId   String
+  reporter     User                 @relation("UserCommentReports", fields: [reporterId], references: [id], onDelete: Cascade)
+
+  reason       CommentReportReason
+  status       CommentReportStatus  @default(PENDING)
+  description  String?
+
+  handledById  String?
+  handledBy    User?                @relation("UserHandledCommentReports", fields: [handledById], references: [id], onDelete: SetNull)
+  handledAt    DateTime?
+  resolutionNote String?
+
+  metadata     Json?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  @@index([status, createdAt])
+  @@index([commentId, createdAt])
+  @@index([reporterId, createdAt])
+  @@index([handledById, handledAt])
+}
+
+model CommentEditHistory {
+  id               String   @id @default(cuid())
+
+  commentId        String
+  comment          Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  editedById       String?
+  editedBy         User?    @relation("UserCommentEdits", fields: [editedById], references: [id], onDelete: SetNull)
+
+  previousContent  String?
+  previousRichContent Json?
+  changeSummary    String?
+  metadata         Json?
+  editedAt         DateTime @default(now())
+
+  @@index([commentId, editedAt])
+  @@index([editedById, editedAt])
+}
+
+model Topic {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String?
+  iconUrl     String?
+  coverUrl    String?
+  isFeatured  Boolean  @default(false)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  posts       PostTopic[]
+
+  @@index([isFeatured])
+  @@index([createdAt])
+}
+
+model PostTopic {
+  id       String @id @default(cuid())
+
+  postId   String
+  post     Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  topicId  String
+  topic    Topic  @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([postId, topicId])
+  @@index([topicId, createdAt])
+}
+
+model PostDraft {
+  id          String   @id @default(cuid())
+
+  authorId    String
+  author      User     @relation("UserPostDrafts", fields: [authorId], references: [id], onDelete: Cascade)
+
+  content     String?
+  richContent Json?
+  mediaDraft  Json?
+  visibility  PostVisibility @default(PUBLIC)
+  metadata    Json?
+  expiresAt   DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([authorId, updatedAt])
+  @@index([expiresAt])
+}
+
+model PostAnalyticsDaily {
+  id        String   @id @default(cuid())
+
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  date      DateTime
+  views     Int      @default(0)
+  likes     Int      @default(0)
+  comments  Int      @default(0)
+  shares    Int      @default(0)
+  bookmarks Int      @default(0)
+  reach     Int      @default(0)
+  metadata  Json?
+
+  @@unique([postId, date])
+  @@index([date])
+}
+
+model PostModerationLog {
+  id          String                @id @default(cuid())
+
+  postId      String
+  post        Post                  @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  moderatorId String
+  moderator   User                  @relation("UserPostModerationLogs", fields: [moderatorId], references: [id], onDelete: Cascade)
+
+  action      PostModerationAction
+  reason      String?
+  notes       String?
+  metadata    Json?
+
+  createdAt   DateTime @default(now())
+
+  @@index([postId, createdAt])
+  @@index([moderatorId, createdAt])
+}
+
+model HashtagFollow {
+  id         String   @id @default(cuid())
+
+  hashtagId  String
+  hashtag    Hashtag  @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+
+  userId     String
+  user       User     @relation("UserHashtagFollows", fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime @default(now())
+
+  @@unique([hashtagId, userId])
+  @@index([userId, createdAt])
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+
 model MessageReaction {
   id         String   @id @default(cuid())
   messageId  String
@@ -20,6 +195,106 @@ model MessageReaction {
   @@unique([messageId, userId, emoji])
   @@index([messageId, emoji])
   @@index([userId, createdAt])
+}
+
+model Hashtag {
+  id             String        @id @default(cuid())
+  slug           String        @unique
+  label          String
+  description    String?
+  usageCount     Int           @default(0)
+  postsCount     Int           @default(0)
+  followersCount Int           @default(0)
+  trendingScore  Float         @default(0)
+  metadata       Json?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  posts          PostHashtag[]
+  followers      HashtagFollow[]
+
+  @@index([usageCount])
+  @@index([postsCount])
+  @@index([trendingScore])
+}
+
+model PostHashtag {
+  id        String   @id @default(cuid())
+
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  hashtagId String
+  hashtag   Hashtag  @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([postId, hashtagId])
+  @@index([hashtagId, createdAt])
+}
+
+model PostMention {
+  id              String   @id @default(cuid())
+
+  postId          String
+  post            Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  mentionedUserId String
+  mentionedUser   User     @relation("UserPostMentions", fields: [mentionedUserId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime @default(now())
+
+  @@unique([postId, mentionedUserId])
+  @@index([mentionedUserId, createdAt])
+}
+
+model PostView {
+  id         String   @id @default(cuid())
+
+  postId     String
+  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  viewerId   String?
+  viewer     User?    @relation("UserPostViews", fields: [viewerId], references: [id], onDelete: SetNull)
+
+  sessionHash String?
+  country     String?
+  device      String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@unique([postId, viewerId])
+  @@unique([postId, sessionHash])
+  @@index([postId, createdAt])
+  @@index([viewerId, createdAt])
+}
+
+model PostReport {
+  id          String           @id @default(cuid())
+
+  postId      String
+  post        Post             @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  reporterId  String
+  reporter    User             @relation("UserPostReports", fields: [reporterId], references: [id], onDelete: Cascade)
+
+  reason      PostReportReason
+  status      PostReportStatus @default(OPEN)
+  description String?
+
+  handledById String?
+  handledBy   User?            @relation("UserHandledPostReports", fields: [handledById], references: [id], onDelete: SetNull)
+  handledAt   DateTime?
+  resolutionNote String?
+
+  metadata    Json?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([status, createdAt])
+  @@index([postId, createdAt])
+  @@index([reporterId, createdAt])
+  @@index([handledById, handledAt])
 }
 
 model Follow {
@@ -130,10 +405,15 @@ model Comment {
 
   isEdited    Boolean @default(false)
   isDeleted   Boolean @default(false)
+  deletedAt   DateTime?
   metadata    Json?
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  mentions    CommentMention[]
+  reports     CommentReport[]
+  editHistory CommentEditHistory[]
 
   @@index([postId, createdAt])
   @@index([authorId, createdAt])
@@ -175,12 +455,9 @@ model PostShare {
 
   @@index([postId, createdAt])
   @@index([sharedById, createdAt])
+  @@unique([postId, sharedById, channel])
 }
 
-datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
-}
 
 
 
@@ -244,6 +521,17 @@ model User {
   postShares         PostShare[]
   postBookmarks      Bookmark[]
   comments           Comment[] @relation("UserComments")
+  postMentions       PostMention[] @relation("UserPostMentions")
+  commentMentions    CommentMention[] @relation("UserCommentMentions")
+  hashtagFollows     HashtagFollow[] @relation("UserHashtagFollows")
+  postViews          PostView[] @relation("UserPostViews")
+  postReports        PostReport[] @relation("UserPostReports")
+  handledPostReports PostReport[] @relation("UserHandledPostReports")
+  commentReports     CommentReport[] @relation("UserCommentReports")
+  handledCommentReports CommentReport[] @relation("UserHandledCommentReports")
+  commentEditHistory CommentEditHistory[] @relation("UserCommentEdits")
+  postDrafts         PostDraft[] @relation("UserPostDrafts")
+  postModerationLogs PostModerationLog[] @relation("UserPostModerationLogs")
   followers          Follow[]  @relation("UserFollowers")
   following          Follow[]  @relation("UserFollowing")
   followRequestsSent     FollowRequest[] @relation("FollowRequestRequester")
@@ -330,6 +618,7 @@ model Post {
   linkPreview   Json?
 
   visibility    PostVisibility @default(PUBLIC)
+  visibilityPreference PostVisibilityPreference @default(ACCOUNT_DEFAULT)
   type          PostType       @default(ORIGINAL)
 
   replyToId     String?
@@ -346,12 +635,21 @@ model Post {
   commentsCount Int           @default(0)
   sharesCount   Int           @default(0)
   bookmarksCount Int          @default(0)
+  viewCount     Int           @default(0)
   shares        PostShare[]
   bookmarks     Bookmark[]
   comments      Comment[]
+  mentions      PostMention[]
+  hashtags      PostHashtag[]
+  views         PostView[]
+  reports       PostReport[]
+  topics        PostTopic[]
+  analytics     PostAnalyticsDaily[]
+  moderationLogs PostModerationLog[]
 
   isPinned      Boolean       @default(false)
   isDeleted     Boolean       @default(false)
+  deletedAt     DateTime?
 
   location      String?
   language      String?
@@ -363,9 +661,11 @@ model Post {
 
   @@index([authorId, publishedAt])
   @@index([visibility, publishedAt])
+  @@index([visibilityPreference, publishedAt])
   @@index([isDeleted, publishedAt])
   @@index([isDeleted, authorId, publishedAt])
   @@index([isDeleted, visibility, publishedAt])
+  @@index([deletedAt])
   @@index([replyToId])
   @@index([repostOfId])
 }
@@ -596,10 +896,59 @@ enum PostVisibility {
   PRIVATE
 }
 
+enum PostVisibilityPreference {
+  ACCOUNT_DEFAULT
+  OVERRIDE
+}
+
 enum PostType {
   ORIGINAL
   REPLY
   REPOST
+}
+
+enum CommentReportReason {
+  SPAM
+  ABUSE
+  HATE_SPEECH
+  HARASSMENT
+  OFF_TOPIC
+  COPYRIGHT
+  OTHER
+}
+
+enum CommentReportStatus {
+  PENDING
+  UNDER_REVIEW
+  ACTION_TAKEN
+  RESOLVED
+  DISMISSED
+}
+
+enum PostReportReason {
+  SPAM
+  ABUSE
+  COPYRIGHT
+  HATE_SPEECH
+  MISINFORMATION
+  SELF_HARM
+  OTHER
+}
+
+enum PostReportStatus {
+  OPEN
+  UNDER_REVIEW
+  ACTION_TAKEN
+  RESOLVED
+  DISMISSED
+}
+
+enum PostModerationAction {
+  WARNING
+  REMOVE_POST
+  SHADOW_HIDE
+  RESTORE_POST
+  NOTE
 }
 
 enum ShareChannel {

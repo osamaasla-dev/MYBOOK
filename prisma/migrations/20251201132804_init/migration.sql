@@ -1,4 +1,125 @@
 -- CreateTable
+CREATE TABLE "CommentMention" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "commentId" TEXT NOT NULL,
+    "mentionedUserId" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "CommentMention_commentId_fkey" FOREIGN KEY ("commentId") REFERENCES "Comment" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "CommentMention_mentionedUserId_fkey" FOREIGN KEY ("mentionedUserId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "CommentReport" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "commentId" TEXT NOT NULL,
+    "reporterId" TEXT NOT NULL,
+    "reason" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'PENDING',
+    "description" TEXT,
+    "handledById" TEXT,
+    "handledAt" DATETIME,
+    "resolutionNote" TEXT,
+    "metadata" JSONB,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "CommentReport_commentId_fkey" FOREIGN KEY ("commentId") REFERENCES "Comment" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "CommentReport_reporterId_fkey" FOREIGN KEY ("reporterId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "CommentReport_handledById_fkey" FOREIGN KEY ("handledById") REFERENCES "User" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "CommentEditHistory" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "commentId" TEXT NOT NULL,
+    "editedById" TEXT,
+    "previousContent" TEXT,
+    "previousRichContent" JSONB,
+    "changeSummary" TEXT,
+    "metadata" JSONB,
+    "editedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "CommentEditHistory_commentId_fkey" FOREIGN KEY ("commentId") REFERENCES "Comment" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "CommentEditHistory_editedById_fkey" FOREIGN KEY ("editedById") REFERENCES "User" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "Topic" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "slug" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "iconUrl" TEXT,
+    "coverUrl" TEXT,
+    "isFeatured" BOOLEAN NOT NULL DEFAULT false,
+    "metadata" JSONB,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL
+);
+
+-- CreateTable
+CREATE TABLE "PostTopic" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "postId" TEXT NOT NULL,
+    "topicId" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "PostTopic_postId_fkey" FOREIGN KEY ("postId") REFERENCES "Post" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "PostTopic_topicId_fkey" FOREIGN KEY ("topicId") REFERENCES "Topic" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "PostDraft" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "authorId" TEXT NOT NULL,
+    "content" TEXT,
+    "richContent" JSONB,
+    "mediaDraft" JSONB,
+    "visibility" TEXT NOT NULL DEFAULT 'PUBLIC',
+    "metadata" JSONB,
+    "expiresAt" DATETIME,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "PostDraft_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "PostAnalyticsDaily" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "postId" TEXT NOT NULL,
+    "date" DATETIME NOT NULL,
+    "views" INTEGER NOT NULL DEFAULT 0,
+    "likes" INTEGER NOT NULL DEFAULT 0,
+    "comments" INTEGER NOT NULL DEFAULT 0,
+    "shares" INTEGER NOT NULL DEFAULT 0,
+    "bookmarks" INTEGER NOT NULL DEFAULT 0,
+    "reach" INTEGER NOT NULL DEFAULT 0,
+    "metadata" JSONB,
+    CONSTRAINT "PostAnalyticsDaily_postId_fkey" FOREIGN KEY ("postId") REFERENCES "Post" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "PostModerationLog" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "postId" TEXT NOT NULL,
+    "moderatorId" TEXT NOT NULL,
+    "action" TEXT NOT NULL,
+    "reason" TEXT,
+    "notes" TEXT,
+    "metadata" JSONB,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "PostModerationLog_postId_fkey" FOREIGN KEY ("postId") REFERENCES "Post" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "PostModerationLog_moderatorId_fkey" FOREIGN KEY ("moderatorId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "HashtagFollow" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "hashtagId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "HashtagFollow_hashtagId_fkey" FOREIGN KEY ("hashtagId") REFERENCES "Hashtag" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "HashtagFollow_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- CreateTable
 CREATE TABLE "MessageReaction" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "messageId" TEXT NOT NULL,
@@ -7,6 +128,74 @@ CREATE TABLE "MessageReaction" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "MessageReaction_messageId_fkey" FOREIGN KEY ("messageId") REFERENCES "Message" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "MessageReaction_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "Hashtag" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "slug" TEXT NOT NULL,
+    "label" TEXT NOT NULL,
+    "description" TEXT,
+    "usageCount" INTEGER NOT NULL DEFAULT 0,
+    "postsCount" INTEGER NOT NULL DEFAULT 0,
+    "followersCount" INTEGER NOT NULL DEFAULT 0,
+    "trendingScore" REAL NOT NULL DEFAULT 0,
+    "metadata" JSONB,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL
+);
+
+-- CreateTable
+CREATE TABLE "PostHashtag" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "postId" TEXT NOT NULL,
+    "hashtagId" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "PostHashtag_postId_fkey" FOREIGN KEY ("postId") REFERENCES "Post" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "PostHashtag_hashtagId_fkey" FOREIGN KEY ("hashtagId") REFERENCES "Hashtag" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "PostMention" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "postId" TEXT NOT NULL,
+    "mentionedUserId" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "PostMention_postId_fkey" FOREIGN KEY ("postId") REFERENCES "Post" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "PostMention_mentionedUserId_fkey" FOREIGN KEY ("mentionedUserId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "PostView" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "postId" TEXT NOT NULL,
+    "viewerId" TEXT,
+    "sessionHash" TEXT,
+    "country" TEXT,
+    "device" TEXT,
+    "metadata" JSONB,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "PostView_postId_fkey" FOREIGN KEY ("postId") REFERENCES "Post" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "PostView_viewerId_fkey" FOREIGN KEY ("viewerId") REFERENCES "User" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "PostReport" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "postId" TEXT NOT NULL,
+    "reporterId" TEXT NOT NULL,
+    "reason" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'OPEN',
+    "description" TEXT,
+    "handledById" TEXT,
+    "handledAt" DATETIME,
+    "resolutionNote" TEXT,
+    "metadata" JSONB,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "PostReport_postId_fkey" FOREIGN KEY ("postId") REFERENCES "Post" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "PostReport_reporterId_fkey" FOREIGN KEY ("reporterId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "PostReport_handledById_fkey" FOREIGN KEY ("handledById") REFERENCES "User" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -80,6 +269,7 @@ CREATE TABLE "Comment" (
     "replyCount" INTEGER NOT NULL DEFAULT 0,
     "isEdited" BOOLEAN NOT NULL DEFAULT false,
     "isDeleted" BOOLEAN NOT NULL DEFAULT false,
+    "deletedAt" DATETIME,
     "metadata" JSONB,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
@@ -188,6 +378,7 @@ CREATE TABLE "Post" (
     "richContent" JSONB,
     "linkPreview" JSONB,
     "visibility" TEXT NOT NULL DEFAULT 'PUBLIC',
+    "visibilityPreference" TEXT NOT NULL DEFAULT 'ACCOUNT_DEFAULT',
     "type" TEXT NOT NULL DEFAULT 'ORIGINAL',
     "replyToId" TEXT,
     "repostOfId" TEXT,
@@ -196,8 +387,10 @@ CREATE TABLE "Post" (
     "commentsCount" INTEGER NOT NULL DEFAULT 0,
     "sharesCount" INTEGER NOT NULL DEFAULT 0,
     "bookmarksCount" INTEGER NOT NULL DEFAULT 0,
+    "viewCount" INTEGER NOT NULL DEFAULT 0,
     "isPinned" BOOLEAN NOT NULL DEFAULT false,
     "isDeleted" BOOLEAN NOT NULL DEFAULT false,
+    "deletedAt" DATETIME,
     "location" TEXT,
     "language" TEXT,
     "publishedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -374,6 +567,69 @@ CREATE TABLE "MessageReceipt" (
 );
 
 -- CreateIndex
+CREATE INDEX "CommentMention_mentionedUserId_createdAt_idx" ON "CommentMention"("mentionedUserId", "createdAt");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "CommentMention_commentId_mentionedUserId_key" ON "CommentMention"("commentId", "mentionedUserId");
+
+-- CreateIndex
+CREATE INDEX "CommentReport_status_createdAt_idx" ON "CommentReport"("status", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "CommentReport_commentId_createdAt_idx" ON "CommentReport"("commentId", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "CommentReport_reporterId_createdAt_idx" ON "CommentReport"("reporterId", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "CommentReport_handledById_handledAt_idx" ON "CommentReport"("handledById", "handledAt");
+
+-- CreateIndex
+CREATE INDEX "CommentEditHistory_commentId_editedAt_idx" ON "CommentEditHistory"("commentId", "editedAt");
+
+-- CreateIndex
+CREATE INDEX "CommentEditHistory_editedById_editedAt_idx" ON "CommentEditHistory"("editedById", "editedAt");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Topic_slug_key" ON "Topic"("slug");
+
+-- CreateIndex
+CREATE INDEX "Topic_isFeatured_idx" ON "Topic"("isFeatured");
+
+-- CreateIndex
+CREATE INDEX "Topic_createdAt_idx" ON "Topic"("createdAt");
+
+-- CreateIndex
+CREATE INDEX "PostTopic_topicId_createdAt_idx" ON "PostTopic"("topicId", "createdAt");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "PostTopic_postId_topicId_key" ON "PostTopic"("postId", "topicId");
+
+-- CreateIndex
+CREATE INDEX "PostDraft_authorId_updatedAt_idx" ON "PostDraft"("authorId", "updatedAt");
+
+-- CreateIndex
+CREATE INDEX "PostDraft_expiresAt_idx" ON "PostDraft"("expiresAt");
+
+-- CreateIndex
+CREATE INDEX "PostAnalyticsDaily_date_idx" ON "PostAnalyticsDaily"("date");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "PostAnalyticsDaily_postId_date_key" ON "PostAnalyticsDaily"("postId", "date");
+
+-- CreateIndex
+CREATE INDEX "PostModerationLog_postId_createdAt_idx" ON "PostModerationLog"("postId", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "PostModerationLog_moderatorId_createdAt_idx" ON "PostModerationLog"("moderatorId", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "HashtagFollow_userId_createdAt_idx" ON "HashtagFollow"("userId", "createdAt");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "HashtagFollow_hashtagId_userId_key" ON "HashtagFollow"("hashtagId", "userId");
+
+-- CreateIndex
 CREATE INDEX "MessageReaction_messageId_emoji_idx" ON "MessageReaction"("messageId", "emoji");
 
 -- CreateIndex
@@ -381,6 +637,54 @@ CREATE INDEX "MessageReaction_userId_createdAt_idx" ON "MessageReaction"("userId
 
 -- CreateIndex
 CREATE UNIQUE INDEX "MessageReaction_messageId_userId_emoji_key" ON "MessageReaction"("messageId", "userId", "emoji");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Hashtag_slug_key" ON "Hashtag"("slug");
+
+-- CreateIndex
+CREATE INDEX "Hashtag_usageCount_idx" ON "Hashtag"("usageCount");
+
+-- CreateIndex
+CREATE INDEX "Hashtag_postsCount_idx" ON "Hashtag"("postsCount");
+
+-- CreateIndex
+CREATE INDEX "Hashtag_trendingScore_idx" ON "Hashtag"("trendingScore");
+
+-- CreateIndex
+CREATE INDEX "PostHashtag_hashtagId_createdAt_idx" ON "PostHashtag"("hashtagId", "createdAt");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "PostHashtag_postId_hashtagId_key" ON "PostHashtag"("postId", "hashtagId");
+
+-- CreateIndex
+CREATE INDEX "PostMention_mentionedUserId_createdAt_idx" ON "PostMention"("mentionedUserId", "createdAt");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "PostMention_postId_mentionedUserId_key" ON "PostMention"("postId", "mentionedUserId");
+
+-- CreateIndex
+CREATE INDEX "PostView_postId_createdAt_idx" ON "PostView"("postId", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "PostView_viewerId_createdAt_idx" ON "PostView"("viewerId", "createdAt");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "PostView_postId_viewerId_key" ON "PostView"("postId", "viewerId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "PostView_postId_sessionHash_key" ON "PostView"("postId", "sessionHash");
+
+-- CreateIndex
+CREATE INDEX "PostReport_status_createdAt_idx" ON "PostReport"("status", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "PostReport_postId_createdAt_idx" ON "PostReport"("postId", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "PostReport_reporterId_createdAt_idx" ON "PostReport"("reporterId", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "PostReport_handledById_handledAt_idx" ON "PostReport"("handledById", "handledAt");
 
 -- CreateIndex
 CREATE INDEX "Follow_followingId_createdAt_idx" ON "Follow"("followingId", "createdAt");
@@ -443,6 +747,9 @@ CREATE INDEX "PostShare_postId_createdAt_idx" ON "PostShare"("postId", "createdA
 CREATE INDEX "PostShare_sharedById_createdAt_idx" ON "PostShare"("sharedById", "createdAt");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "PostShare_postId_sharedById_channel_key" ON "PostShare"("postId", "sharedById", "channel");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "User_username_key" ON "User"("username");
 
 -- CreateIndex
@@ -488,6 +795,9 @@ CREATE INDEX "Post_authorId_publishedAt_idx" ON "Post"("authorId", "publishedAt"
 CREATE INDEX "Post_visibility_publishedAt_idx" ON "Post"("visibility", "publishedAt");
 
 -- CreateIndex
+CREATE INDEX "Post_visibilityPreference_publishedAt_idx" ON "Post"("visibilityPreference", "publishedAt");
+
+-- CreateIndex
 CREATE INDEX "Post_isDeleted_publishedAt_idx" ON "Post"("isDeleted", "publishedAt");
 
 -- CreateIndex
@@ -495,6 +805,9 @@ CREATE INDEX "Post_isDeleted_authorId_publishedAt_idx" ON "Post"("isDeleted", "a
 
 -- CreateIndex
 CREATE INDEX "Post_isDeleted_visibility_publishedAt_idx" ON "Post"("isDeleted", "visibility", "publishedAt");
+
+-- CreateIndex
+CREATE INDEX "Post_deletedAt_idx" ON "Post"("deletedAt");
 
 -- CreateIndex
 CREATE INDEX "Post_replyToId_idx" ON "Post"("replyToId");

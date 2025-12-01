@@ -1,0 +1,54 @@
+import { z } from "zod";
+
+import { PostVisibility, PostVisibilityPreference } from "@prisma/client";
+
+import { postMessages } from "@/lib/messages";
+
+const mediaTypes = ["image", "video"] as const;
+
+const postMediaSchema = z.object({
+  url: z.string().url(),
+  publicId: z.string().min(1),
+  folder: z.string().optional(),
+  format: z.string().optional(),
+  type: z.enum(mediaTypes).default("image"),
+  width: z.number().int().positive().nullable().optional(),
+  height: z.number().int().positive().nullable().optional(),
+  duration: z.number().nonnegative().nullable().optional(),
+  frames: z.number().int().nonnegative().nullable().optional(),
+  frameRate: z.string().optional().nullable(),
+});
+
+export const createPostSchema = z
+  .object({
+    content: z
+      .string()
+      .trim()
+      .min(1, postMessages.validation.contentRequired)
+      .max(5000, postMessages.validation.contentTooLong)
+      .optional(),
+    visibility: z.nativeEnum(PostVisibility).default(PostVisibility.PUBLIC),
+    visibilityPreference: z
+      .nativeEnum(PostVisibilityPreference)
+      .default(PostVisibilityPreference.ACCOUNT_DEFAULT),
+    media: z
+      .array(postMediaSchema)
+      .max(10, postMessages.validation.mediaLimit)
+      .optional()
+      .default([]),
+  })
+  .refine(
+    (data) => {
+      const hasContent =
+        typeof data.content === "string" && data.content.trim().length > 0;
+      const hasMedia = Array.isArray(data.media) && data.media.length > 0;
+      return hasContent || hasMedia;
+    },
+    {
+      message: postMessages.validation.contentOrMediaRequired,
+      path: ["content"],
+    }
+  );
+
+export type CreatePostInput = z.infer<typeof createPostSchema>;
+export type CreatePostMediaInput = z.infer<typeof postMediaSchema>;

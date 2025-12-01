@@ -8,7 +8,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui";
-import { useCurrentUser } from "@/features/hooks/useCurrentUser";
+import { useCurrentUser } from "@/features/hooks";
 import { useNotifications } from "../hooks/useNotifications";
 import { useNotificationsRealtime } from "../hooks/useNotificationsRealtime";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";

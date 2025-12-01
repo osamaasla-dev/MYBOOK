@@ -3,7 +3,7 @@
 import { useCallback, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { useCurrentUser } from "@/features/hooks/useCurrentUser";
+import { useCurrentUser } from "@/features/hooks";
 import { usePusherChannel } from "@/hooks/usePusherChannel";
 import type { FollowRealtimePayload } from "@/features/parts/follow/utils";
 import type { FriendRealtimePayload } from "@/features/parts/addFriend/utils/realtime";

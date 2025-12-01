@@ -6,3 +6,6 @@ export { default as followMessages } from "./follow";
 export { default as notificationMessages } from "./notifications";
 export { default as relationsMessages } from "./relations";
 export { default as friendMessages } from "./addFriend";
+export { default as uploadMessages } from "./upload";
+export { default as moderationMessages } from "./moderation";
+export { default as postMessages } from "./post";
