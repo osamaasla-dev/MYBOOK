@@ -1,3 +1,5 @@
+import type { UploadApiResponse } from "cloudinary";
+
 import cloudinary from "@/lib/cloudinary";
 
 export async function removePendingAsset(
@@ -9,6 +11,6 @@ export async function removePendingAsset(
   });
 }
 
-export function promoteMedia(publicId: string) {
+export function promoteMedia(publicId: string): Promise<UploadApiResponse> {
   return cloudinary.uploader.rename(publicId, publicId.replace("/pending", ""));
 }

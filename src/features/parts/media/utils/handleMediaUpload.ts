@@ -1,8 +1,11 @@
 import type { Logger } from "pino";
-import type { UploadApiResponse } from "cloudinary";
 
 import { MediaUploadError } from "./errors";
-import type { SessionLike } from "../types/media";
+import type {
+  MediaAssetPayload,
+  SessionLike,
+  UploadMediaResponse,
+} from "../types/media";
 import { parseUploadInputs } from "./parseUploadInputs";
 import { getFileBuffer } from "./getFileBuffer";
 import { uploadToCloudinary } from "./uploadToCloudinary";
@@ -20,7 +23,7 @@ export async function handleMediaUpload({
   req,
   session,
   log,
-}: HandleMediaUploadParams): Promise<UploadApiResponse> {
+}: HandleMediaUploadParams): Promise<UploadMediaResponse> {
   const userId = session?.user?.id;
   if (!userId) {
     throw new MediaUploadError("unauthorized", 401);
@@ -56,7 +59,13 @@ export async function handleMediaUpload({
       { metadata, decision },
       "Media rejected during moderation; asset removed"
     );
-    throw new MediaUploadError("rejected", 400);
+
+    return {
+      moderationSeverity: decision.severity,
+      moderationContext: decision.context,
+      moderationThreshold: decision.threshold,
+      moderationStatus: decision.status,
+    };
   }
 
   const promoted = await promoteMedia(metadata.publicId);
@@ -65,5 +74,24 @@ export async function handleMediaUpload({
     "Media upload moderated and promoted"
   );
 
-  return promoted;
+  const asset: MediaAssetPayload = {
+    url: promoted.secure_url,
+    publicId: promoted.public_id,
+    width: promoted.width,
+    height: promoted.height,
+    format: promoted.format,
+    folder: promoted.folder ?? metadata.folder.replace("/pending", ""),
+    type: promoted.resource_type,
+    duration: promoted.duration ?? metadata.duration ?? null,
+    frames: promoted.nb_frames ?? metadata.frames ?? null,
+    frameRate: promoted.frame_rate ?? metadata.frameRate ?? null,
+  };
+
+  return {
+    moderationSeverity: decision.severity,
+    moderationContext: decision.context,
+    moderationThreshold: decision.threshold,
+    moderationStatus: decision.status,
+    asset,
+  };
 }

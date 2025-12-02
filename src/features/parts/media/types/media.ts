@@ -1,4 +1,7 @@
-import type { ModerationContext } from "@/features/types";
+import type {
+  ModerationContext,
+  ModerationDecisionStatus,
+} from "@/features/types";
 
 export type MediaResourceType = "image" | "video" | "auto";
 
@@ -7,9 +10,18 @@ export type UploadMediaVariables = {
   folder?: string;
   folderType?: string;
   resourceType?: MediaResourceType;
+  context?: ModerationContext;
 };
 
 export type UploadMediaResponse = {
+  moderationSeverity: number;
+  moderationContext: ModerationContext;
+  moderationThreshold: number;
+  moderationStatus: ModerationDecisionStatus;
+  asset?: MediaAssetPayload;
+};
+
+export type MediaAssetPayload = {
   url: string;
   publicId: string;
   width: number;
@@ -36,15 +48,9 @@ export type MediaUploadInputs = {
   moderationContext: ModerationContext;
 };
 
-export type MediaMetadata = {
-  url: string;
-  publicId: string;
-  width: number;
-  height: number;
-  format: string;
-  folder: string;
-  type: string;
-  duration: number | null;
-  frames: number | null;
-  frameRate: string | null;
+export type MediaMetadata = MediaAssetPayload & {
+  moderationSeverity?: number;
+  moderationContext?: ModerationContext;
+  moderationThreshold?: number;
+  moderationStatus?: ModerationDecisionStatus;
 };

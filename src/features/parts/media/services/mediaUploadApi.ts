@@ -8,6 +8,7 @@ export async function uploadMedia({
   folder,
   folderType,
   resourceType,
+  context,
 }: UploadMediaVariables): Promise<UploadMediaResponse> {
   const formData = new FormData();
   formData.append("file", file);
@@ -15,6 +16,7 @@ export async function uploadMedia({
   if (folder) formData.append("folder", folder);
   if (folderType) formData.append("folderType", folderType);
   if (resourceType) formData.append("resourceType", resourceType);
+  if (context) formData.append("context", context);
 
   const { data } = await apiPostR<UploadMediaResponse>(
     MEDIA_UPLOAD_ENDPOINT,

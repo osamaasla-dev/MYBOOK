@@ -2,8 +2,8 @@
 
 import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
 
-import { uploadMedia } from "../services";
-import type { UploadMediaResponse, UploadMediaVariables } from "../types";
+import type { UploadMediaResponse, UploadMediaVariables } from "../types/media";
+import { uploadMedia } from "../services/mediaUploadApi";
 
 export const MEDIA_UPLOAD_MUTATION_KEY = ["media", "upload"] as const;
 

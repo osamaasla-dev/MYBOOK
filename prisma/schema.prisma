@@ -892,8 +892,9 @@ enum NotificationType {
 
 enum PostVisibility {
   PUBLIC
-  FOLLOWERS
-  PRIVATE
+  FRIENDS
+  FRIENDS_FOLLOWERS
+  ONLY_ME
 }
 
 enum PostVisibilityPreference {
