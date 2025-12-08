@@ -1,4 +1,4 @@
-import { PostVisibility, PostVisibilityPreference } from "@prisma/client";
+import { Visibility, PostVisibilityPreference } from "@prisma/client";
 import { Globe, Lock, Settings, UserCheck, Users } from "lucide-react";
 
 export type VisibilityOption = {
@@ -7,7 +7,7 @@ export type VisibilityOption = {
   description: string;
   icon: typeof Globe;
   selection: {
-    visibility: PostVisibility;
+    visibility: Visibility;
     visibilityPreference: PostVisibilityPreference;
   };
 };
@@ -19,7 +19,7 @@ export const VISIBILITY_OPTIONS: readonly VisibilityOption[] = [
     description: "Respect your account privacy settings",
     icon: Settings,
     selection: {
-      visibility: PostVisibility.PUBLIC,
+      visibility: Visibility.PUBLIC,
       visibilityPreference: PostVisibilityPreference.ACCOUNT_DEFAULT,
     },
   },
@@ -29,7 +29,7 @@ export const VISIBILITY_OPTIONS: readonly VisibilityOption[] = [
     description: "Anyone on or off the platform can see this",
     icon: Globe,
     selection: {
-      visibility: PostVisibility.PUBLIC,
+      visibility: Visibility.PUBLIC,
       visibilityPreference: PostVisibilityPreference.OVERRIDE,
     },
   },
@@ -39,7 +39,7 @@ export const VISIBILITY_OPTIONS: readonly VisibilityOption[] = [
     description: "Only your friends will see this",
     icon: UserCheck,
     selection: {
-      visibility: PostVisibility.FRIENDS,
+      visibility: Visibility.FRIENDS,
       visibilityPreference: PostVisibilityPreference.OVERRIDE,
     },
   },
@@ -49,7 +49,7 @@ export const VISIBILITY_OPTIONS: readonly VisibilityOption[] = [
     description: "Friends plus people who follow you",
     icon: Users,
     selection: {
-      visibility: PostVisibility.FRIENDS_FOLLOWERS,
+      visibility: Visibility.FRIENDS_FOLLOWERS,
       visibilityPreference: PostVisibilityPreference.OVERRIDE,
     },
   },
@@ -59,7 +59,7 @@ export const VISIBILITY_OPTIONS: readonly VisibilityOption[] = [
     description: "Visible just for you",
     icon: Lock,
     selection: {
-      visibility: PostVisibility.ONLY_ME,
+      visibility: Visibility.ONLY_ME,
       visibilityPreference: PostVisibilityPreference.OVERRIDE,
     },
   },

@@ -3,6 +3,8 @@ export * from "./ModalHeader";
 export * from "./ModalShell";
 export * from "./ProfileRow";
 export * from "./PostPanel";
-
+export * from "./PostEditorPanel";
+export * from "./PostModalShell";
+export * from "./PostActions";
 export * from "./EditorTextarea";
 export * from "./MediaPreviewList";

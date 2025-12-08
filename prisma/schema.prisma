@@ -8,6 +8,27 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model PrivacySetting {
+  id                      String         @id @default(cuid())
+
+  userId                  String         @unique
+  user                    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  postsVisibility         Visibility @default(PUBLIC)
+  friendsListVisibility   Visibility @default(PUBLIC)
+  followersVisibility     Visibility @default(PUBLIC)
+  followingVisibility     Visibility @default(PUBLIC)
+  bioVisibility           Visibility @default(PUBLIC)
+  contactVisibility       Visibility @default(PUBLIC)
+  searchVisibility        Boolean        @default(true)
+  allowTagReview          Boolean        @default(false)
+
+  createdAt               DateTime       @default(now())
+  updatedAt               DateTime       @updatedAt
+
+  
+}
+
 model CommentMention {
   id              String   @id @default(cuid())
 
@@ -112,7 +133,7 @@ model PostDraft {
   content     String?
   richContent Json?
   mediaDraft  Json?
-  visibility  PostVisibility @default(PUBLIC)
+  visibility  Visibility @default(PUBLIC)
   metadata    Json?
   expiresAt   DateTime?
 
@@ -498,6 +519,7 @@ model User {
   lastSeenAt        DateTime?
   language          String?
   timezone          String?
+  totalInteractedUsers Int @default(0)
 
   // Account security
   emailVerified     Boolean  @default(false)
@@ -550,6 +572,9 @@ model User {
   supportTicketsCreated SupportTicket[] @relation("UserCreatedTickets")
   supportTicketsAssigned SupportTicketAssignment[] @relation("UserAssignedTickets")
   supportTicketMessages SupportTicketMessage[] @relation("UserTicketMessages")
+  privacySetting    PrivacySetting?
+  interactionsAuthored UserInteractionStats[] @relation("UserInteractionActor")
+  interactionsTargeted UserInteractionStats[] @relation("UserInteractionTarget")
 
   // Timestamps
   createdAt         DateTime @default(now())
@@ -617,7 +642,7 @@ model Post {
   media         Media[]
   linkPreview   Json?
 
-  visibility    PostVisibility @default(PUBLIC)
+  visibility    Visibility @default(PUBLIC)
   visibilityPreference PostVisibilityPreference @default(ACCOUNT_DEFAULT)
   type          PostType       @default(ORIGINAL)
 
@@ -890,7 +915,45 @@ enum NotificationType {
   REPLY
 }
 
-enum PostVisibility {
+model UserInteractionStats {
+  id            String   @id @default(cuid())
+
+  userId        String
+  user          User     @relation("UserInteractionActor", fields: [userId], references: [id], onDelete: Cascade)
+
+  targetUserId  String
+  targetUser    User     @relation("UserInteractionTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+  
+  // Counters
+  messagesCount Int      @default(0)
+  likesCount    Int      @default(0)
+  commentsCount Int      @default(0)
+  profileVisits Int      @default(0)
+
+
+  // Timers
+  lastMessageAt    DateTime?
+  lastLikeAt       DateTime?
+  lastCommentAt    DateTime?
+  lastVisitAt      DateTime?
+  lastInteractionAt DateTime?
+
+  // Status
+  isFriend    Boolean @default(false)
+  isFollowing Boolean @default(false)
+
+  // Scores
+  interactionWeight Float @default(0)
+
+  updatedAt     DateTime @updatedAt
+  createdAt     DateTime @default(now())
+
+  @@unique([userId, targetUserId])
+  @@index([userId])
+  @@index([targetUserId])
+}
+
+enum Visibility {
   PUBLIC
   FRIENDS
   FRIENDS_FOLLOWERS

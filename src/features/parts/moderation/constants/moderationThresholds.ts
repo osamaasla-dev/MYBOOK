@@ -5,7 +5,7 @@ import type {
 } from "@/features/types";
 
 export const MODERATION_THRESHOLDS: Record<ModerationContext, number> = {
-  post: 0.5,
+  post: 0.7,
   comment: 0.7,
   message: 5,
 };

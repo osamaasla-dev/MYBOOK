@@ -3,7 +3,9 @@ import { normalizeError } from "@/lib/http/normalizeError";
 import { friendMessages } from "@/lib/messages";
 
 import { unFriend } from "@/features/parts/addFriend/services";
+import { adjustRelationshipSnapshot } from "@/features/parts/interaction/services";
 import { prepareFriendAction, type FriendRouteContext } from "../shared";
+import { prisma } from "@/lib/prisma";
 
 const ROUTE = "/api/add-friend/[username]/unfriend";
 
@@ -23,6 +25,23 @@ export async function DELETE(request: Request, { params }: FriendRouteContext) {
       viewerUsername,
       targetUserId: target.id,
       targetUsername: target.username,
+    });
+
+    await prisma.$transaction(async (tx) => {
+      await adjustRelationshipSnapshot({
+        actorId: viewerId,
+        targetUserId: target.id,
+        isFriend: false,
+        isFollowing: false,
+        prismaClient: tx,
+      });
+      await adjustRelationshipSnapshot({
+        actorId: target.id,
+        targetUserId: viewerId,
+        isFriend: false,
+        isFollowing: false,
+        prismaClient: tx,
+      });
     });
 
     return apiResponse(

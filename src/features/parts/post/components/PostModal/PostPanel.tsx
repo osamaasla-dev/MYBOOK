@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import type { PostVisibility, PostVisibilityPreference } from "@prisma/client";
+import type { Visibility, PostVisibilityPreference } from "@prisma/client";
 
 import type { CurrentUser } from "@/features/types";
 
@@ -24,10 +24,10 @@ type PostPanelProps = {
   onRemoveMedia: (id: string) => void;
   actionItems: ComposerActionItem[];
   onFileSelect: (file: File, action: ComposerActionItem) => void;
-  visibility: PostVisibility;
+  visibility: Visibility;
   visibilityPreference: PostVisibilityPreference;
   onVisibilityChange: (selection: {
-    visibility: PostVisibility;
+    visibility: Visibility;
     visibilityPreference: PostVisibilityPreference;
   }) => void;
 };

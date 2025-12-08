@@ -1,4 +1,4 @@
-import type { PostVisibility, PostVisibilityPreference } from "@prisma/client";
+import type { Visibility, PostVisibilityPreference } from "@prisma/client";
 
 import type { MediaPreview } from "../useMediaPreview";
 
@@ -7,12 +7,17 @@ export type UsePostPublishingOptions = {
   mediaPreviews: MediaPreview[];
   clearMedia: () => void;
   setStatusMessage: (message: string | null) => void;
-  setContentValue: (value: string) => void;
   onClose: () => void;
-  visibility: PostVisibility;
+  visibility: Visibility;
   visibilityPreference: PostVisibilityPreference;
+  resetDraft: () => void;
 };
 
 export type PublishArgs = {
   canPublish: boolean;
+};
+
+export type PublishProgress = {
+  value: number;
+  label: string;
 };

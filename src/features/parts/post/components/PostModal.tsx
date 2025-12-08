@@ -1,11 +1,15 @@
 "use client";
 
-import type { PostVisibility, PostVisibilityPreference } from "@prisma/client";
-
 import type { CurrentUser } from "@/features/types";
 
-import { ModalHeader, ModalShell, PostPanel } from "./PostModal/index";
-import { usePostComposerState, usePostPublishing } from "./PostModal/hooks";
+import {
+  PostModalShell,
+  PostActions,
+  PostEditorPanel,
+} from "./PostModal/index";
+
+import { usePostState, usePostPublishing } from "./PostModal/hooks";
+import { usePostStore } from "@/stores/postStore";
 
 type PostModalProps = {
   open: boolean;
@@ -20,6 +24,8 @@ export function PostModal({
   user,
   placeholder,
 }: PostModalProps) {
+  const resetComposer = usePostStore((state) => state.reset);
+
   const {
     contentValue,
     setContentValue,
@@ -37,85 +43,52 @@ export function PostModal({
     visibilityPreference,
     setVisibility,
     setVisibilityPreference,
-  } = usePostComposerState({ isOpen: open });
+  } = usePostState({ isOpen: open });
 
-  const { isPublishing, publishPost } = usePostPublishing({
+  const handleResetDraft = () => {
+    resetComposer();
+    clearMedia();
+    setStatusMessage(null);
+  };
+
+  const { isPublishing, publishPost, progress } = usePostPublishing({
     trimmedContent,
     mediaPreviews,
     clearMedia,
     setStatusMessage,
-    setContentValue,
     onClose,
     visibility,
     visibilityPreference,
+    resetDraft: handleResetDraft,
   });
 
-  const handleEditorChange = (
-    event: React.ChangeEvent<HTMLTextAreaElement>
-  ) => {
-    if (statusMessage) {
-      setStatusMessage(null);
-    }
-    setContentValue(event.target.value);
-  };
-
-  const handleMediaSelect = (file: File) => {
-    if (statusMessage) {
-      setStatusMessage(null);
-    }
-    appendMedia({ file });
-  };
-
-  const handleVisibilityChange = ({
-    visibility: nextVisibility,
-    visibilityPreference: nextPreference,
-  }: {
-    visibility: PostVisibility;
-    visibilityPreference: PostVisibilityPreference;
-  }) => {
-    setVisibility(nextVisibility);
-    setVisibilityPreference(nextPreference);
-  };
-
-  if (!open) {
-    return null;
-  }
-
   return (
-    <ModalShell onClose={onClose} ariaLabel="Create post editor">
-      <ModalHeader title="Create Post" onClose={onClose} />
-
-      <PostPanel
+    <PostModalShell open={open} onClose={onClose} title="Create Post">
+      <PostEditorPanel
         user={user}
         placeholder={placeholder}
+        statusMessage={statusMessage}
+        setStatusMessage={setStatusMessage}
         editorRef={editorRef}
         contentValue={contentValue}
-        onContentChange={handleEditorChange}
+        setContentValue={setContentValue}
         mediaPreviews={mediaPreviews}
-        onRemoveMedia={removeMedia}
+        appendMedia={appendMedia}
+        removeMedia={removeMedia}
         actionItems={actionItems}
-        onFileSelect={handleMediaSelect}
         visibility={visibility}
         visibilityPreference={visibilityPreference}
-        onVisibilityChange={handleVisibilityChange}
+        setVisibility={setVisibility}
+        setVisibilityPreference={setVisibilityPreference}
       />
 
-      {statusMessage && (
-        <div className="text-danger px-4 text-sm" aria-live="assertive">
-          {statusMessage}
-        </div>
-      )}
-
-      <div className="p-4 pt-2">
-        <button
-          type="button"
-          onClick={() => publishPost({ canPublish })}
-          className="w-full cursor-pointer rounded-lg bg-primary px-4 py-2 text-center text-sm font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
-          disabled={isPublishing || !canPublish}
-        >
-          {isPublishing ? "Publishing..." : "Publish"}
-        </button>
-      </div>
-    </ModalShell>
+      <PostActions
+        canPublish={canPublish}
+        isPublishing={isPublishing}
+        progress={progress}
+        onPublish={() => publishPost({ canPublish })}
+        onResetDraft={handleResetDraft}
+      />
+    </PostModalShell>
   );
 }

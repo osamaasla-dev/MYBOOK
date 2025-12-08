@@ -1,27 +1,38 @@
 import { useMemo, useState } from "react";
 import { ImageIcon } from "lucide-react";
-import { PostVisibility, PostVisibilityPreference } from "@prisma/client";
+import { useShallow } from "zustand/react/shallow";
 
 import type { ComposerActionItem } from "../ActionsRow";
 import { useAutosizeTextarea } from "./useAutosizeTextarea";
 import { useMediaPreview } from "./useMediaPreview";
+import { usePostStore } from "@/stores/postStore";
 
-type UsePostComposerStateOptions = {
+type UsePostStateOptions = {
   isOpen: boolean;
 };
 
-export function usePostComposerState({ isOpen }: UsePostComposerStateOptions) {
-  const [contentValue, setContentValue] = useState("");
+export function usePostState({ isOpen }: UsePostStateOptions) {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
-  const [visibility, setVisibility] = useState<PostVisibility>(
-    PostVisibility.PUBLIC
-  );
-  const [visibilityPreference, setVisibilityPreference] =
-    useState<PostVisibilityPreference>(
-      PostVisibilityPreference.ACCOUNT_DEFAULT
-    );
 
-  const editorRef = useAutosizeTextarea(contentValue);
+  const {
+    contentValue,
+    setContentValue,
+    visibility,
+    visibilityPreference,
+    setVisibility,
+    setVisibilityPreference,
+  } = usePostStore(
+    useShallow((state) => ({
+      contentValue: state.contentValue,
+      setContentValue: state.setContentValue,
+      visibility: state.visibility,
+      setVisibility: state.setVisibility,
+      visibilityPreference: state.visibilityPreference,
+      setVisibilityPreference: state.setVisibilityPreference,
+    }))
+  );
+
+  const editorRef = useAutosizeTextarea(contentValue, isOpen);
   const { mediaPreviews, appendMedia, removeMedia, clearMedia } =
     useMediaPreview({ isOpen });
 

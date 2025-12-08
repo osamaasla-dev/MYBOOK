@@ -1,11 +1,3 @@
-import { useMutationState } from "@tanstack/react-query";
-import { useModerationCheck } from "@/features/parts/moderation/hooks/useModerationCheck";
-import { useMediaUpload } from "@/features/parts/media/hooks/useMediaUpload";
-import {
-  CREATE_POST_MUTATION_KEY,
-  useCreatePost,
-} from "@/features/parts/post/hooks/useCreatePost";
-
 import {
   type PublishArgs,
   type UsePostPublishingOptions,
@@ -13,63 +5,65 @@ import {
   runTextModeration,
   uploadAllMedia,
   validateCanPublish,
+  usePublishingProgress,
+  usePublishingMutations,
 } from "./publishing";
 import { postMessages } from "@/lib/messages";
 
 export function usePostPublishing({
   trimmedContent,
   mediaPreviews,
-  clearMedia,
   setStatusMessage,
-  setContentValue,
   onClose,
   visibility,
   visibilityPreference,
+  resetDraft,
 }: UsePostPublishingOptions) {
-  const moderationMutation = useModerationCheck();
-  const mediaUploadMutation = useMediaUpload();
-  const createPostMutation = useCreatePost();
-
-  const createPostPendingStates = useMutationState({
-    filters: {
-      mutationKey: CREATE_POST_MUTATION_KEY,
-      exact: true,
-    },
-    select: (mutation) => mutation.state.status === "pending",
-  });
-
-  const isPublishing =
-    moderationMutation.isPending ||
-    mediaUploadMutation.isPending ||
-    createPostPendingStates.some(Boolean);
+  const {
+    moderationMutation,
+    mediaUploadMutation,
+    createPostMutation,
+    isPublishing,
+  } = usePublishingMutations();
+  const { progress, updateProgress, resetProgress } = usePublishingProgress();
   const publishPost = async ({ canPublish }: PublishArgs) => {
     if (isPublishing) return;
 
     const validationMessage = validateCanPublish(canPublish);
     if (validationMessage) {
       setStatusMessage(validationMessage);
+      resetProgress();
       return;
     }
 
+    updateProgress(10, "Preparing post");
     setStatusMessage(null);
 
     try {
       if (trimmedContent.length > 0) {
+        updateProgress(25, "Running text checks");
         const decision = await runTextModeration({
           content: trimmedContent,
           mutateAsync: moderationMutation.mutateAsync,
         });
         if (decision.status === "reject") {
+          resetProgress();
           setStatusMessage(postMessages.PUBLISHING_MESSAGES.textRejected);
           return;
         }
       }
 
+      const hasMedia = mediaPreviews.length > 0;
+      updateProgress(
+        hasMedia ? 45 : 55,
+        hasMedia ? "Uploading media" : "Preparing post body"
+      );
       const uploadedMedia = await uploadAllMedia({
         mediaPreviews,
         mutateAsync: mediaUploadMutation.mutateAsync,
       });
 
+      updateProgress(75, "Submitting post");
       const input = buildPostPayload({
         content: trimmedContent,
         media: uploadedMedia,
@@ -81,17 +75,21 @@ export function usePostPublishing({
         input,
       });
 
-      setContentValue("");
-      clearMedia();
+      updateProgress(100, "Post published");
+      resetDraft();
       onClose();
+      setTimeout(() => {
+        resetProgress();
+      }, 400);
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
           : postMessages.PUBLISHING_MESSAGES.genericFailure;
       setStatusMessage(message);
+      resetProgress();
     }
   };
 
-  return { isPublishing, publishPost };
+  return { isPublishing, publishPost, progress };
 }

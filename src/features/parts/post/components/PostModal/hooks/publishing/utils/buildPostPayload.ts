@@ -1,4 +1,4 @@
-import type { PostVisibility, PostVisibilityPreference } from "@prisma/client";
+import type { Visibility, PostVisibilityPreference } from "@prisma/client";
 
 import type { CreatePostMediaInput } from "@/features/parts/post/schemas/createPostSchema";
 
@@ -7,7 +7,7 @@ import type { CreatePostInput } from "@/features/parts/post/schemas";
 type BuildPostPayloadParams = {
   content: string;
   media: CreatePostMediaInput[];
-  visibility: PostVisibility;
+  visibility: Visibility;
   visibilityPreference: PostVisibilityPreference;
 };
 

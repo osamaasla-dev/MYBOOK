@@ -5,6 +5,7 @@ import { normalizeError } from "@/lib/http/normalizeError";
 import { postMessages } from "@/lib/messages";
 import { getRequestLog } from "@/lib/request-log";
 import { ServerSession } from "@/utils/session";
+import { clearRankedPostsCache } from "@/features/pages/home/utils/posts/post-ranking/cache";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -46,7 +47,9 @@ export async function POST(request: Request) {
       authorId: session.user.id,
       input: parsed.data,
     });
-
+    if (post) {
+      await clearRankedPostsCache(session.user.id);
+    }
     log.info(
       { postId: post.id, userId: session.user.id },
       "Post created successfully"

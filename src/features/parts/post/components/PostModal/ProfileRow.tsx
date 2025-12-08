@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import type { PostVisibility, PostVisibilityPreference } from "@prisma/client";
+import type { Visibility, PostVisibilityPreference } from "@prisma/client";
 
 import type { CurrentUser } from "@/features/types";
 import { VisibilitySelector } from "./VisibilitySelector";
@@ -11,10 +11,10 @@ type ComposerProfileRowProps = {
   user: CurrentUser | null | undefined;
   displayName: string;
   initials: string;
-  visibility: PostVisibility;
+  visibility: Visibility;
   visibilityPreference: PostVisibilityPreference;
   onVisibilityChange: (selection: {
-    visibility: PostVisibility;
+    visibility: Visibility;
     visibilityPreference: PostVisibilityPreference;
   }) => void;
 };
@@ -52,9 +52,11 @@ export function ProfileRow({
       </Link>
 
       <div className="flex flex-col">
-        <span className="text-sm font-semibold text-foreground">
-          {displayName}
-        </span>
+        <Link href={profileHref}>
+          <span className="text-sm font-semibold text-foreground">
+            {displayName}
+          </span>
+        </Link>
         <VisibilitySelector
           visibility={visibility}
           visibilityPreference={visibilityPreference}

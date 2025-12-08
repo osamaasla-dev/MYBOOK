@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { ChevronDown } from "lucide-react";
-import { PostVisibility, PostVisibilityPreference } from "@prisma/client";
+import { Visibility, PostVisibilityPreference } from "@prisma/client";
 
 import {
   DropdownMenu,
@@ -16,10 +16,10 @@ import {
 import { VISIBILITY_OPTIONS } from "./visibilityOptions";
 
 type VisibilitySelectorProps = {
-  visibility: PostVisibility;
+  visibility: Visibility;
   visibilityPreference: PostVisibilityPreference;
   onChange: (selection: {
-    visibility: PostVisibility;
+    visibility: Visibility;
     visibilityPreference: PostVisibilityPreference;
   }) => void;
 };

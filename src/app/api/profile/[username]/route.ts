@@ -16,6 +16,7 @@ import {
   consumeProfileRateLimit,
 } from "@/features/pages/profile/utils";
 import { resolveViewerRelations } from "@/features/pages/profile/services";
+import { recordInteraction } from "@/features/parts/interaction/services";
 
 const ROUTE = "/api/users/profile";
 
@@ -85,6 +86,16 @@ export async function GET(request: Request, { params }: ProfileRouteContext) {
       log.warn({ username }, "Profile hidden due to block relationship");
       const res = apiResponse(false, {}, userMessages.notFound, 404, requestId);
       return res;
+    }
+
+    if (viewerId && viewerId !== user.id) {
+      await recordInteraction({
+        actorId: viewerId,
+        targetUserId: user.id,
+        type: "profileVisit",
+      }).catch((error: unknown) => {
+        log.error({ error }, "Failed to record profile visit interaction");
+      });
     }
 
     const summary = buildProfileSummary(user, privacy);

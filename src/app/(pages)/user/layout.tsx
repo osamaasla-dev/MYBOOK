@@ -8,7 +8,9 @@ export default function UserLayout({ children }: { children: ReactNode }) {
     <QueryProvider>
       <div className="min-h-screen bg-white">
         <Navbar />
-        <main className="mx-auto w-full max-w-6xl px-4 py-6">{children}</main>
+        <main className="bg-secondary mx-auto w-full max-w-6xl px-4 py-6">
+          {children}
+        </main>
       </div>
     </QueryProvider>
   );

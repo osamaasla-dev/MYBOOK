@@ -24,7 +24,7 @@ export function PostTrigger() {
   return (
     <>
       <section
-        className="rounded-2xl border border-border bg-background p-4 shadow-sm"
+        className="rounded-2xl border border-border bg-white p-4 shadow-sm mb-6"
         aria-label="Post composer area"
       >
         <div className="flex items-center gap-3">

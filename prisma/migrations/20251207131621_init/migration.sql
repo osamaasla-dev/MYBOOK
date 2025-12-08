@@ -1,4 +1,21 @@
 -- CreateTable
+CREATE TABLE "PrivacySetting" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "userId" TEXT NOT NULL,
+    "postsVisibility" TEXT NOT NULL DEFAULT 'PUBLIC',
+    "friendsListVisibility" TEXT NOT NULL DEFAULT 'PUBLIC',
+    "followersVisibility" TEXT NOT NULL DEFAULT 'PUBLIC',
+    "followingVisibility" TEXT NOT NULL DEFAULT 'PUBLIC',
+    "bioVisibility" TEXT NOT NULL DEFAULT 'PUBLIC',
+    "contactVisibility" TEXT NOT NULL DEFAULT 'PUBLIC',
+    "searchVisibility" BOOLEAN NOT NULL DEFAULT true,
+    "allowTagReview" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "PrivacySetting_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- CreateTable
 CREATE TABLE "CommentMention" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "commentId" TEXT NOT NULL,
@@ -332,6 +349,7 @@ CREATE TABLE "User" (
     "lastSeenAt" DATETIME,
     "language" TEXT,
     "timezone" TEXT,
+    "totalInteractedUsers" INTEGER NOT NULL DEFAULT 0,
     "emailVerified" BOOLEAN NOT NULL DEFAULT false,
     "verificationToken" TEXT,
     "verificationTokenExpiry" DATETIME,
@@ -565,6 +583,32 @@ CREATE TABLE "MessageReceipt" (
     CONSTRAINT "MessageReceipt_messageId_fkey" FOREIGN KEY ("messageId") REFERENCES "Message" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "MessageReceipt_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
+
+-- CreateTable
+CREATE TABLE "UserInteractionStats" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "userId" TEXT NOT NULL,
+    "targetUserId" TEXT NOT NULL,
+    "messagesCount" INTEGER NOT NULL DEFAULT 0,
+    "likesCount" INTEGER NOT NULL DEFAULT 0,
+    "commentsCount" INTEGER NOT NULL DEFAULT 0,
+    "profileVisits" INTEGER NOT NULL DEFAULT 0,
+    "lastMessageAt" DATETIME,
+    "lastLikeAt" DATETIME,
+    "lastCommentAt" DATETIME,
+    "lastVisitAt" DATETIME,
+    "lastInteractionAt" DATETIME,
+    "isFriend" BOOLEAN NOT NULL DEFAULT false,
+    "isFollowing" BOOLEAN NOT NULL DEFAULT false,
+    "interactionWeight" REAL NOT NULL DEFAULT 0,
+    "updatedAt" DATETIME NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "UserInteractionStats_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "UserInteractionStats_targetUserId_fkey" FOREIGN KEY ("targetUserId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "PrivacySetting_userId_key" ON "PrivacySetting"("userId");
 
 -- CreateIndex
 CREATE INDEX "CommentMention_mentionedUserId_createdAt_idx" ON "CommentMention"("mentionedUserId", "createdAt");
@@ -898,3 +942,12 @@ CREATE INDEX "MessageReceipt_messageId_status_idx" ON "MessageReceipt"("messageI
 
 -- CreateIndex
 CREATE UNIQUE INDEX "MessageReceipt_messageId_userId_key" ON "MessageReceipt"("messageId", "userId");
+
+-- CreateIndex
+CREATE INDEX "UserInteractionStats_userId_idx" ON "UserInteractionStats"("userId");
+
+-- CreateIndex
+CREATE INDEX "UserInteractionStats_targetUserId_idx" ON "UserInteractionStats"("targetUserId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "UserInteractionStats_userId_targetUserId_key" ON "UserInteractionStats"("userId", "targetUserId");

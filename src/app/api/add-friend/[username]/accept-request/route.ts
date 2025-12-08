@@ -1,8 +1,10 @@
 import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
 import { friendMessages } from "@/lib/messages";
+import { prisma } from "@/lib/prisma";
 
 import { acceptFriendRequest } from "@/features/parts/addFriend/services";
+import { adjustRelationshipSnapshot } from "@/features/parts/interaction/services";
 import { prepareFriendAction, type FriendRouteContext } from "../shared";
 
 const ROUTE = "/api/add-friend/[username]/accept-request";
@@ -23,6 +25,23 @@ export async function POST(request: Request, { params }: FriendRouteContext) {
       viewerUsername,
       requesterId: target.id,
       requesterUsername: target.username,
+    });
+
+    await prisma.$transaction(async (tx) => {
+      await adjustRelationshipSnapshot({
+        actorId: viewerId,
+        targetUserId: target.id,
+        isFriend: true,
+        isFollowing: true,
+        prismaClient: tx,
+      });
+      await adjustRelationshipSnapshot({
+        actorId: target.id,
+        targetUserId: viewerId,
+        isFriend: true,
+        isFollowing: true,
+        prismaClient: tx,
+      });
     });
 
     return apiResponse(

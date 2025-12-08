@@ -1,8 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, type RefObject } from "react";
 
 export type UseInfiniteScrollOptions = {
-  containerRef: React.RefObject<HTMLElement | null>;
-  sentinelRef: React.RefObject<HTMLElement | null>;
+  containerRef?: RefObject<HTMLElement | null>;
+  sentinelRef: RefObject<HTMLElement | null>;
   hasNextPage: boolean;
   isFetching: boolean;
   onLoadMore: () => void;
@@ -24,10 +24,10 @@ export function useInfiniteScroll({
   useEffect(() => {
     if (!enabled || !hasNextPage || isFetching) return;
 
-    const container = containerRef.current;
+    const container = containerRef?.current ?? null;
     const sentinel = sentinelRef.current;
 
-    if (!container || !sentinel) return;
+    if (!sentinel) return;
 
     const observer = new IntersectionObserver(
       (entries) => {

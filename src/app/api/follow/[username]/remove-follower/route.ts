@@ -2,6 +2,7 @@ import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
 import { followMessages } from "@/lib/messages";
 import { removeFollower } from "@/features/parts/follow/services";
+import { adjustRelationshipSnapshot } from "@/features/parts/interaction/services";
 import { prepareFollowAction, type FollowRouteContext } from "../shared";
 
 const ROUTE = "/api/follow/[username]/remove-follower";
@@ -25,6 +26,12 @@ export async function DELETE(request: Request, { params }: FollowRouteContext) {
       viewerUsername,
       followerId: target.id,
       followerUsername: target.username,
+    });
+
+    await adjustRelationshipSnapshot({
+      actorId: target.id,
+      targetUserId: viewerId,
+      isFollowing: false,
     });
 
     return apiResponse(

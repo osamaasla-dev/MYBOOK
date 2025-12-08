@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { PostVisibility, PostVisibilityPreference } from "@prisma/client";
+import { Visibility, PostVisibilityPreference } from "@prisma/client";
 
 import { postMessages } from "@/lib/messages";
 
@@ -27,7 +27,7 @@ export const createPostSchema = z
       .min(1, postMessages.validation.contentRequired)
       .max(5000, postMessages.validation.contentTooLong)
       .optional(),
-    visibility: z.nativeEnum(PostVisibility).default(PostVisibility.PUBLIC),
+    visibility: z.nativeEnum(Visibility).default(Visibility.PUBLIC),
     visibilityPreference: z
       .nativeEnum(PostVisibilityPreference)
       .default(PostVisibilityPreference.ACCOUNT_DEFAULT),

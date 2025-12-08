@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { PostTrigger } from "@/features/parts/post/components/PostTrigger";
+import { HomePage } from "@/features/pages/home/page/HomePage";
 
 export default async function UserDirectoryPage() {
   const users = await prisma.user.findMany({
@@ -38,6 +38,6 @@ export default async function UserDirectoryPage() {
     //     ))}
     //   </ul>
     // </section>
-    <PostTrigger />
+    <HomePage />
   );
 }

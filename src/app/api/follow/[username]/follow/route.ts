@@ -3,6 +3,7 @@ import { normalizeError } from "@/lib/http/normalizeError";
 import { followMessages } from "@/lib/messages";
 import { prepareFollowAction, type FollowRouteContext } from "../shared";
 import { followProfile } from "@/features/parts/follow/services";
+import { adjustRelationshipSnapshot } from "@/features/parts/interaction/services";
 
 const ROUTE = "/api/follow/[username]/follow";
 
@@ -27,6 +28,14 @@ export async function POST(request: Request, { params }: FollowRouteContext) {
       targetUsername: target.username,
       requiresApproval: target.isPrivate,
     });
+
+    if (result.status === "FOLLOWED") {
+      await adjustRelationshipSnapshot({
+        actorId: viewerId,
+        targetUserId: target.id,
+        isFollowing: true,
+      });
+    }
 
     const message =
       result.status === "REQUESTED"
