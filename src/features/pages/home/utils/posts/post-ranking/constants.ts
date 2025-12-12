@@ -14,4 +14,12 @@ export const VIEWER_COMMENT_BOOST = 40;
 export const VIEWER_SHARE_BOOST = 70;
 
 export const RANKED_POSTS_CACHE_NAMESPACE = "feed:posts";
-export const RANKED_POSTS_CACHE_TTL_SECONDS = 60; // 1 minutes
+export const RANKED_POSTS_CACHE_TTL_SECONDS = 60 * 5; // 5 minutes
+
+export const RANKED_POSTS_STALE_MS = 60 * 1000; // 1 minute freshness window
+
+export const FRESH_POST_WINDOW_MINUTES = 5;
+export const FRESH_POST_WINDOW_MS = FRESH_POST_WINDOW_MINUTES * 60 * 1000;
+export const VIEWER_FRESH_OVERRIDE_SCORE = 10_000_000;
+export const IMPORTANT_FRESH_OVERRIDE_SCORE = 5_000_000;
+export const TOP_IMPORTANT_PERCENTILE = 0.1;

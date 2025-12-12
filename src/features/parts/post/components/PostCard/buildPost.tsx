@@ -4,21 +4,16 @@ import { PostCardProps } from "./types";
 export function buildPostCardPropsFromRankedPost(
   post: RankedPost
 ): PostCardProps {
-  const usernameLabel = post.author.username
-    ? `@${post.author.username}`
-    : undefined;
-
-  const secondaryLabel = post.viewerRelationship.isFriend
-    ? "Friend"
-    : usernameLabel;
-
   return {
+    postId: post.postId,
     author: {
       name: post.author.name ?? post.author.username ?? "User",
       username: post.author.username ?? undefined,
       avatarUrl: post.author.avatarUrl ?? undefined,
-      secondaryLabel,
+
       isFollowing: post.viewerRelationship.isFollower,
+      isFriend: post.viewerRelationship.isFriend,
+      isSelf: post.viewerRelationship.isSelf,
     },
     timestamp: post.publishedAt,
     content: {
@@ -34,6 +29,8 @@ export function buildPostCardPropsFromRankedPost(
       reactions: post.likesCount,
       comments: post.commentsCount,
       shares: post.sharesCount,
+      viewerReaction: post.interactions.viewerReaction,
+      reactionSummary: post.reactionSummary ?? undefined,
     },
   };
 }

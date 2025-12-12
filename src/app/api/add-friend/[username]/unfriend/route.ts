@@ -6,6 +6,7 @@ import { unFriend } from "@/features/parts/addFriend/services";
 import { adjustRelationshipSnapshot } from "@/features/parts/interaction/services";
 import { prepareFriendAction, type FriendRouteContext } from "../shared";
 import { prisma } from "@/lib/prisma";
+import { updateRankedPostRelationships } from "@/features/pages/home/utils/posts/post-ranking/cache";
 
 const ROUTE = "/api/add-friend/[username]/unfriend";
 
@@ -43,6 +44,20 @@ export async function DELETE(request: Request, { params }: FriendRouteContext) {
         prismaClient: tx,
       });
     });
+    await Promise.all([
+      updateRankedPostRelationships({
+        viewerId,
+        authorId: target.id,
+        isFriend: false,
+        isFollowing: false,
+      }),
+      updateRankedPostRelationships({
+        viewerId: target.id,
+        authorId: viewerId,
+        isFriend: false,
+        isFollowing: false,
+      }),
+    ]);
 
     return apiResponse(
       true,

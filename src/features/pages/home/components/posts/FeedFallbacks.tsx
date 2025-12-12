@@ -39,5 +39,5 @@ export function FeedEmptyState({
   title?: string;
   message?: string;
 }) {
-  return <EmptyState title={title} message={message} />;
+  return <EmptyState title={title} message={message} className="bg-white" />;
 }

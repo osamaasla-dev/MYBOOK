@@ -4,6 +4,7 @@ import { followMessages } from "@/lib/messages";
 import { prepareFollowAction, type FollowRouteContext } from "../shared";
 import { unfollowProfile } from "@/features/parts/follow/services";
 import { adjustRelationshipSnapshot } from "@/features/parts/interaction/services";
+import { updateRankedPostRelationships } from "@/features/pages/home/utils/posts/post-ranking/cache";
 
 const ROUTE = "/api/follow/[username]/unfollow";
 
@@ -31,6 +32,12 @@ export async function DELETE(request: Request, { params }: FollowRouteContext) {
     await adjustRelationshipSnapshot({
       actorId: viewerId,
       targetUserId: target.id,
+      isFollowing: false,
+    });
+
+    await updateRankedPostRelationships({
+      viewerId,
+      authorId: target.id,
       isFollowing: false,
     });
 

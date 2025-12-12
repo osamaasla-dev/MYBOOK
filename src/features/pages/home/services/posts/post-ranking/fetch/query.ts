@@ -3,7 +3,9 @@ import type {
   MediaType,
   PostVisibilityPreference,
   Visibility,
+  Prisma,
 } from "@prisma/client";
+import type { ReactionSummary } from "@/features/parts/post/utils/reaction";
 
 export type RawFetchedPost = {
   id: string;
@@ -24,6 +26,7 @@ export type RawFetchedPost = {
   commentsCount: number;
   sharesCount: number;
   viewCount: number;
+  reactionSummary: ReactionSummary | null;
   visibility: Visibility;
   visibilityPreference: PostVisibilityPreference;
   author: {
@@ -34,6 +37,10 @@ export type RawFetchedPost = {
     isVerified: boolean;
     isPrivate: boolean;
   };
+};
+
+type PrismaFetchedPost = Omit<RawFetchedPost, "reactionSummary"> & {
+  reactionSummary: Prisma.JsonValue | null;
 };
 
 export async function queryRecentPosts(params: {
@@ -47,7 +54,7 @@ export async function queryRecentPosts(params: {
     return [];
   }
 
-  return prisma.post.findMany({
+  const posts = (await prisma.post.findMany({
     where: {
       authorId: { in: authorIds },
       publishedAt: { gte: since },
@@ -74,6 +81,7 @@ export async function queryRecentPosts(params: {
       commentsCount: true,
       sharesCount: true,
       viewCount: true,
+      reactionSummary: true,
       visibility: true,
       visibilityPreference: true,
       author: {
@@ -91,5 +99,27 @@ export async function queryRecentPosts(params: {
       publishedAt: "desc",
     },
     take: limit,
-  });
+  })) as PrismaFetchedPost[];
+
+  return posts.map((post) => ({
+    ...post,
+    reactionSummary: normalizeReactionSummary(post.reactionSummary),
+  }));
+}
+
+function normalizeReactionSummary(
+  value: Prisma.JsonValue | null
+): ReactionSummary | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+
+  const entries = Object.entries(value);
+  for (const [, count] of entries) {
+    if (typeof count !== "number") {
+      return null;
+    }
+  }
+
+  return value as ReactionSummary;
 }

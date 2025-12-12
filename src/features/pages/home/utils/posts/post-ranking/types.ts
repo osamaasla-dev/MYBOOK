@@ -3,6 +3,8 @@ import type {
   PostVisibilityPreference,
   Visibility,
 } from "@prisma/client";
+import type { PostReactionType } from "@/features/parts/post/constants/reactions";
+import type { ReactionSummary } from "@/features/parts/post/utils/reaction";
 
 export type ViewerRelationshipSnapshot = {
   isSelf: boolean;
@@ -50,6 +52,7 @@ export type PostWithStats = {
   commentsCount: number;
   sharesCount: number;
   viewCount: number;
+  reactionSummary: ReactionSummary | null;
   author: PostAuthorMeta;
   privacy: PostPrivacySnapshot;
   viewerRelationship: ViewerRelationshipSnapshot;
@@ -64,6 +67,7 @@ export type PostInteractionFlags = {
   hasLiked: boolean;
   hasCommented: boolean;
   hasShared: boolean;
+  viewerReaction: PostReactionType | null;
 };
 
 export type PostCandidate = {
@@ -75,6 +79,7 @@ export type PostCandidate = {
   commentsCount: number;
   sharesCount: number;
   viewCount: number;
+  reactionSummary: ReactionSummary | null;
   userScore: number;
   interactions: PostInteractionFlags;
   author: PostAuthorMeta;

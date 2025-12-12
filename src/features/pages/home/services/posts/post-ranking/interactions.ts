@@ -1,11 +1,13 @@
 import { prisma } from "@/lib/prisma";
 
 import type { PostInteractionFlags } from "@/features/pages/home/utils/posts/post-ranking";
+import { PostReactionType } from "@/features/parts/post/constants/reactions";
 
 export const createEmptyInteractionFlags = (): PostInteractionFlags => ({
   hasLiked: false,
   hasCommented: false,
   hasShared: false,
+  viewerReaction: null,
 });
 
 export async function fetchViewerPostInteractions(
@@ -20,7 +22,7 @@ export async function fetchViewerPostInteractions(
   const [likes, comments, shares] = await Promise.all([
     prisma.postReaction.findMany({
       where: { userId: viewerId, postId: { in: postIds } },
-      select: { postId: true },
+      select: { postId: true, emoji: true },
     }),
     prisma.comment.findMany({
       where: {
@@ -40,6 +42,7 @@ export async function fetchViewerPostInteractions(
     const next =
       interactions.get(reaction.postId) ?? createEmptyInteractionFlags();
     next.hasLiked = true;
+    next.viewerReaction = reaction.emoji as PostReactionType;
     interactions.set(reaction.postId, next);
   }
 

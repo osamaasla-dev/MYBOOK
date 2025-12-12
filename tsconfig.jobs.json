@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "node16",
+    "isolatedModules": false,
+    "noEmit": false
+  },
+  "include": ["src/jobs/**/*.ts", "src/lib/**/*.ts", "src/shared/**/*.ts"]
+}

@@ -75,25 +75,44 @@ export async function getImportantUsersForFeed(viewerId: string) {
     take: candidateCount,
   });
 
-  if (!sourceUsers.length) {
-    return [];
+  let importantUsers: ImportantUserScore[] = [];
+
+  if (sourceUsers.length) {
+    const candidates: RawInteractionCandidate[] = sourceUsers.map((stat) => ({
+      targetUserId: stat.targetUserId,
+      interactionWeight: stat.interactionWeight,
+      lastInteractionAt: stat.lastInteractionAt,
+    }));
+
+    const scored = candidates.map((candidate) =>
+      scoreInteractionCandidate(candidate)
+    );
+    const finalCount = determineFinalSelectionCount(candidateCount);
+    importantUsers = scored
+      .sort((a, b) => b.score - a.score)
+      .slice(0, finalCount);
   }
 
-  const candidates: RawInteractionCandidate[] = sourceUsers.map((stat) => ({
-    targetUserId: stat.targetUserId,
-    interactionWeight: stat.interactionWeight,
-    lastInteractionAt: stat.lastInteractionAt,
-  }));
+  const topScore = importantUsers.length ? importantUsers[0].score : 0;
+  const topScoreIsValid = Number.isFinite(topScore) && topScore > 0;
+  const viewerScoreBoost = topScoreIsValid ? topScore * 1.15 : 20;
 
-  const scored = candidates.map((candidate) =>
-    scoreInteractionCandidate(candidate)
+  const viewerEntry: ImportantUserScore = {
+    targetUserId: viewerId,
+    score: viewerScoreBoost,
+    interactionWeight: viewerScoreBoost,
+    decayFactor: 1,
+    lastInteractionAt: new Date(),
+  };
+
+  const withoutViewer = importantUsers.filter(
+    (user) => user.targetUserId !== viewerId
   );
-  const finalCount = determineFinalSelectionCount(candidateCount);
-  const importantUsers = scored
-    .sort((a, b) => b.score - a.score)
-    .slice(0, finalCount);
+  const finalImportantUsers = [viewerEntry, ...withoutViewer].sort(
+    (a, b) => b.score - a.score
+  );
 
-  await writeImportantUsersCache(viewerId, importantUsers);
+  await writeImportantUsersCache(viewerId, finalImportantUsers);
 
-  return importantUsers;
+  return finalImportantUsers;
 }

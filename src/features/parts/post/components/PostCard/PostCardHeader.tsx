@@ -15,6 +15,9 @@ export function PostCardHeader({ author, timestamp }: PostCardHeaderProps) {
   const profileHref = author.username
     ? `/user/profile/${author.username}`
     : undefined;
+  const showRelationshipBadges = author.isSelf !== true;
+  const followLabel = author.isFollowing ? "Following" : "Not following";
+  const friendLabel = author.isFriend ? "Friend" : "Not friend";
 
   return (
     <header className="flex items-start gap-3 px-4">
@@ -33,10 +36,16 @@ export function PostCardHeader({ author, timestamp }: PostCardHeaderProps) {
             <span>{author.name}</span>
           )}
 
-          {author.isFollowing && (
-            <span className="rounded-full border border-border/70 px-2 py-0.5 text-xs font-semibold text-primary/80">
-              Following
-            </span>
+          {showRelationshipBadges && (
+            <>
+              <span className="rounded-full border border-border/70 px-2 py-0.5 text-xs font-semibold text-muted-foreground">
+                {followLabel}
+              </span>
+
+              <span className="rounded-full border border-border/70 px-2 py-0.5 text-xs font-semibold text-muted-foreground">
+                {friendLabel}
+              </span>
+            </>
           )}
         </div>
         {formattedTime && (

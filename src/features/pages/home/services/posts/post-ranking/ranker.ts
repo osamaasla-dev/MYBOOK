@@ -1,6 +1,7 @@
 import {
   MAX_POSTS_PER_USER,
   scorePostCandidate,
+  TOP_IMPORTANT_PERCENTILE,
   type PostRankingResult,
   type RankedPost,
 } from "@/features/pages/home/utils/posts/post-ranking";
@@ -11,6 +12,7 @@ import {
   createEmptyInteractionFlags,
   fetchViewerPostInteractions,
 } from "./interactions";
+import { extractImportantFreshPosts, extractViewerFreshPosts } from "./buckets";
 
 export type RankPostsParams = {
   viewerId: string;
@@ -76,6 +78,7 @@ export async function rankPostsForImportantUsersFeed(
         commentsCount: post.commentsCount,
         sharesCount: post.sharesCount,
         viewCount: post.viewCount,
+        reactionSummary: post.reactionSummary,
         userScore: importantUserScoreMap.get(post.authorId) ?? 0,
         interactions:
           viewerInteractions.get(post.id) ?? createEmptyInteractionFlags(),
@@ -106,7 +109,60 @@ export async function rankPostsForImportantUsersFeed(
     perAuthorTop.push(...list.slice(0, perUserLimit));
   }
 
-  const posts = perAuthorTop.sort((a, b) => b.finalScore - a.finalScore);
+  const sortedClassic = perAuthorTop.sort(
+    (a, b) => b.finalScore - a.finalScore
+  );
+
+  const topImportantUserIds = determineTopImportantUsers({
+    importantUsers,
+    viewerId,
+  });
+
+  const { bucket: viewerFresh, remaining: afterViewerFresh } =
+    extractViewerFreshPosts({
+      posts: sortedClassic,
+      viewerId,
+      now,
+    });
+
+  const { bucket: importantFresh, remaining: classicPool } =
+    extractImportantFreshPosts({
+      posts: afterViewerFresh,
+      topImportantUserIds,
+      viewerId,
+      now,
+    });
+
+  const classicFeed = classicPool.sort((a, b) => b.finalScore - a.finalScore);
+  const posts = [...viewerFresh, ...importantFresh, ...classicFeed];
 
   return { posts };
+}
+
+function determineTopImportantUsers({
+  importantUsers,
+  viewerId,
+}: {
+  importantUsers: ImportantUserScore[];
+  viewerId: string;
+}) {
+  if (!importantUsers.length) {
+    return new Set<string>();
+  }
+
+  const sorted = [...importantUsers]
+    .filter((user) => user.targetUserId !== viewerId)
+    .sort((a, b) => b.score - a.score);
+
+  if (!sorted.length) {
+    return new Set<string>();
+  }
+
+  const count = Math.max(
+    1,
+    Math.floor(sorted.length * TOP_IMPORTANT_PERCENTILE)
+  );
+  const topUsers = sorted.slice(0, count).map((user) => user.targetUserId);
+
+  return new Set(topUsers);
 }

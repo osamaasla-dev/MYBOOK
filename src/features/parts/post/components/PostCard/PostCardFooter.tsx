@@ -1,28 +1,47 @@
-import { MessageCircle, Share2, ThumbsUp } from "lucide-react";
+import { useMemo } from "react";
 
 import type { PostStats } from "./types";
 import { formatCount } from "./utils";
-import { ActionButton } from "./ActionButton";
+import { ReactionButton } from "./ReactionButton";
+import { CommentButton } from "./CommentButton";
+import { ShareButton } from "./ShareButton";
+import { PostReactionSummary } from "./PostReactionSummary";
+import { usePostReactionState } from "../../hooks/ui/postReactionState";
 
 type PostCardFooterProps = {
+  postId: string;
   stats?: PostStats;
 };
 
-export function PostCardFooter({ stats }: PostCardFooterProps) {
-  const reactionsLabel =
-    typeof stats?.reactions === "number"
-      ? `${stats.reactionsEmoji ?? "👍"} ${formatCount(stats.reactions)}`
-      : null;
+export function PostCardFooter({ postId, stats }: PostCardFooterProps) {
+  const initialReaction = useMemo(
+    () => stats?.viewerReaction ?? null,
+    [stats?.viewerReaction]
+  );
+  const initialSummary = useMemo(
+    () => stats?.reactionSummary,
+    [stats?.reactionSummary]
+  );
+
+  const {
+    currentReaction,
+    optimisticSummary,
+    handleReactionSelect,
+    handleRemove,
+  } = usePostReactionState({
+    postId,
+    initialReaction,
+    initialSummary,
+  });
 
   return (
     <footer className="mt-4 space-y-3">
       <div className="flex items-center justify-between text-xs text-muted-foreground px-4">
-        <div className="flex items-center gap-2">
-          {reactionsLabel && (
-            <span className="inline-flex items-center gap-1">
-              {reactionsLabel}
-            </span>
-          )}
+        <div className="flex flex-wrap items-center gap-2">
+          <PostReactionSummary
+            stats={stats}
+            optimisticSummary={optimisticSummary}
+          />
         </div>
         <div className="flex items-center gap-4">
           {typeof stats?.comments === "number" && (
@@ -34,10 +53,14 @@ export function PostCardFooter({ stats }: PostCardFooterProps) {
         </div>
       </div>
 
-      <div className="flex items-center justify-between  border-t-border/60 py-2 text-sm font-medium text-muted-foreground">
-        <ActionButton icon={ThumbsUp} label="Like" />
-        <ActionButton icon={MessageCircle} label="Comment" />
-        <ActionButton icon={Share2} label="Share" />
+      <div className="flex items-center justify-between border-t-border/60 py-2 text-sm font-medium text-muted-foreground">
+        <ReactionButton
+          currentReaction={currentReaction}
+          onReactionSelect={handleReactionSelect}
+          onReactionClear={handleRemove}
+        />
+        <CommentButton />
+        <ShareButton />
       </div>
     </footer>
   );

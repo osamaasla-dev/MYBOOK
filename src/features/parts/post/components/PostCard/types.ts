@@ -1,9 +1,13 @@
+import type { PostReactionType } from "../../constants/reactions";
+import type { ReactionSummary } from "../../utils/reaction";
+
 export type PostAuthor = {
   name: string;
   username?: string;
   avatarUrl?: string;
-  secondaryLabel?: string;
   isFollowing?: boolean;
+  isFriend?: boolean;
+  isSelf?: boolean;
 };
 
 export type PostStats = {
@@ -11,6 +15,8 @@ export type PostStats = {
   comments?: number;
   shares?: number;
   reactionsEmoji?: string;
+  viewerReaction?: PostReactionType | null;
+  reactionSummary?: ReactionSummary;
 };
 
 export type PostCardMedia = {
@@ -30,6 +36,7 @@ export type PostCardContent = {
 };
 
 export type PostCardProps = {
+  postId: string;
   author: PostAuthor;
   timestamp?: Date | string;
   content: PostCardContent;

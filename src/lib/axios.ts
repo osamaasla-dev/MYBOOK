@@ -3,6 +3,10 @@ import axios, { AxiosError, AxiosInstance } from "axios";
 const instance: AxiosInstance = axios.create({
   baseURL: "/api",
   timeout: 10000, // 10 seconds
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  },
 });
 
 // ===============================

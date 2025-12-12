@@ -63,6 +63,7 @@ export function filterPostsByVisibility(
       commentsCount: post.commentsCount,
       sharesCount: post.sharesCount,
       viewCount: post.viewCount,
+      reactionSummary: post.reactionSummary,
       author: post.author,
       privacy: {
         visibility: post.visibility,
