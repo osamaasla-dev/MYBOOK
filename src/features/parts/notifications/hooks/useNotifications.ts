@@ -2,11 +2,12 @@
 
 import { useInfiniteQuery } from "@tanstack/react-query";
 
-import { fetchNotificationsPage } from "../services";
 import type { NotificationListItem, NotificationListResult } from "../types";
+import type { NotificationTab } from "../constants";
+import { fetchNotificationsPage } from "../services/client";
 
 export type UseNotificationsOptions = {
-  unreadOnly?: boolean;
+  tab?: NotificationTab;
   initialLimit?: number;
   enabled?: boolean;
 };
@@ -18,15 +19,15 @@ export type NotificationsQueryData = {
   hasMore: boolean;
 };
 
-export const notificationsQueryKey = (unreadOnly = false) =>
-  ["notifications", { unreadOnly }] as const;
+export const notificationsQueryKey = (tab: NotificationTab = "all") =>
+  ["notifications", { tab }] as const;
 
 export function useNotifications({
-  unreadOnly = false,
+  tab = "all",
   initialLimit,
   enabled = true,
 }: UseNotificationsOptions = {}) {
-  const queryKey = notificationsQueryKey(unreadOnly);
+  const queryKey = notificationsQueryKey(tab);
 
   return useInfiniteQuery<
     NotificationListResult,
@@ -40,7 +41,7 @@ export function useNotifications({
     queryFn: async ({ pageParam }) =>
       fetchNotificationsPage({
         cursor: pageParam as string | undefined,
-        unreadOnly,
+        tab,
         limit: initialLimit,
       }),
 

@@ -71,48 +71,8 @@ async function main() {
     });
   }
 
-  const createdUsers = await prisma.user.findMany({
-    where: { email: { in: seedUsers.map((user) => user.email) } },
-    select: { id: true, email: true },
-  });
-
-  const userByEmail = createdUsers.reduce<Record<string, string>>(
-    (acc, user) => ({ ...acc, [user.email]: user.id }),
-    {}
-  );
-
-  const friendships: Array<[string, string]> = [
-    ["user1@example.com", "user4@example.com"],
-  ];
-
-  for (const [emailA, emailB] of friendships) {
-    const userA = userByEmail[emailA];
-    const userB = userByEmail[emailB];
-
-    if (!userA || !userB) {
-      continue;
-    }
-
-    const [userOneId, userTwoId] =
-      userA < userB ? [userA, userB] : [userB, userA];
-
-    await prisma.friend.upsert({
-      where: {
-        userOneId_userTwoId: {
-          userOneId,
-          userTwoId,
-        },
-      },
-      update: {},
-      create: {
-        userOneId,
-        userTwoId,
-      },
-    });
-  }
-
   console.log(
-    `Seeded ${seedUsers.length} users plus ${friendships.length} friendship(s). Default password for all is "${DEFAULT_PASSWORD}".`
+    `Seeded ${seedUsers.length} users Default password for all is "${DEFAULT_PASSWORD}".`
   );
 }
 

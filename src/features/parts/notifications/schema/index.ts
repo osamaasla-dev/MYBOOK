@@ -28,14 +28,10 @@ export const notificationListQuerySchema = z.object({
         : undefined,
     z.string().optional()
   ),
-  unreadOnly: z.preprocess((value) => {
-    if (typeof value === "boolean") return value;
-    if (typeof value === "string") {
-      if (value === "true") return true;
-      if (value === "false") return false;
-    }
-    return undefined;
-  }, z.boolean().default(false)),
+  tab: z.preprocess(
+    (value) => (typeof value === "string" ? value.toLowerCase() : undefined),
+    z.enum(["all", "read", "unread"]).default("all")
+  ),
 });
 
 export type NotificationListQuery = z.infer<typeof notificationListQuerySchema>;

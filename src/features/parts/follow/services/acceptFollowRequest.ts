@@ -11,15 +11,19 @@ import {
 export type AcceptFollowRequestInput = {
   viewerId: string;
   viewerUsername: string;
+  viewerName: string;
   requesterId: string;
   requesterUsername: string;
+  requesterName: string;
 };
 
 export async function acceptFollowRequest({
   viewerId,
   viewerUsername,
+  viewerName,
   requesterId,
   requesterUsername,
+  requesterName,
 }: AcceptFollowRequestInput) {
   if (viewerId === requesterId) {
     throw new Error(followMessages.FOLLOW_ERRORS.selfFollow);
@@ -83,6 +87,7 @@ export async function acceptFollowRequest({
       targetUsername: requesterUsername,
       followId: null,
       kind: "follow-request-approved",
+      status: "accepted",
     });
 
     return { requestId: pendingRequest.id };
@@ -97,8 +102,10 @@ export async function acceptFollowRequest({
     event: "follow:approved",
     followerId: viewerId,
     followerUsername: viewerUsername,
+    followerName: viewerName,
     targetId: requesterId,
     targetUsername: requesterUsername,
+    targetName: requesterName,
     kind: "follow-request-approved",
     followersDelta: 0,
     requestId,
@@ -108,8 +115,10 @@ export async function acceptFollowRequest({
     event: "follow:added",
     followerId: requesterId,
     followerUsername: requesterUsername,
+    followerName: requesterName,
     targetId: viewerId,
     targetUsername: viewerUsername,
+    targetName: viewerName,
     kind: "follow",
     followersDelta: 1,
   });

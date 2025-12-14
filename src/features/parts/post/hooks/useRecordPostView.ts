@@ -2,7 +2,7 @@
 
 import { useCallback, useRef } from "react";
 
-import { recordPostViewApi } from "../services";
+import { recordPostViewApi } from "../services/client";
 import type { RecordPostViewResponse } from "../types";
 
 type RecordPostViewOptions = {

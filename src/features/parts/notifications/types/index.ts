@@ -1,5 +1,7 @@
 import { NotificationType, Prisma } from "@prisma/client";
 
+import type { NotificationTab } from "../constants";
+
 export type PrismaTransaction = Prisma.TransactionClient;
 
 export type NotificationActorSummary = {
@@ -27,7 +29,7 @@ export type FetchNotificationsInput = {
   userId: string;
   limit: number;
   cursor?: string;
-  unreadOnly?: boolean;
+  tab?: NotificationTab;
 };
 
 export type NotificationListResult = {

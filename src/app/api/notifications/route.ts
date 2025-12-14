@@ -3,7 +3,7 @@ import { normalizeError } from "@/lib/http/normalizeError";
 import { notificationMessages } from "@/lib/messages";
 import { getRequestLog } from "@/lib/request-log";
 import { ServerSession } from "@/utils/session";
-import { fetchUserNotifications } from "@/features/parts/notifications/services";
+import { fetchUserNotifications } from "@/features/parts/notifications/services/server";
 import { parseNotificationListQuery } from "@/features/parts/notifications/utils";
 
 const ROUTE = "/api/notifications";
@@ -40,13 +40,13 @@ export async function GET(request: Request) {
       );
     }
 
-    const { limit, cursor, unreadOnly } = parsedQuery.value;
+    const { limit, cursor, tab } = parsedQuery.value;
 
     const notifications = await fetchUserNotifications({
       userId: session.user.id,
       limit,
       cursor,
-      unreadOnly,
+      tab,
     });
 
     log.info(

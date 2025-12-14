@@ -39,6 +39,7 @@ export function PostCardFooter({ postId, stats }: PostCardFooterProps) {
       <div className="flex items-center justify-between text-xs text-muted-foreground px-4">
         <div className="flex flex-wrap items-center gap-2">
           <PostReactionSummary
+            postId={postId}
             stats={stats}
             optimisticSummary={optimisticSummary}
           />

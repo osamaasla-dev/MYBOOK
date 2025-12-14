@@ -25,6 +25,7 @@ export type PreparedFriendAction = {
   requestId: string;
   log: Logger;
   viewerId: string;
+  viewerName: string;
   viewerUsername: string;
   target: ProfileUserRecord;
 };
@@ -45,24 +46,24 @@ export async function prepareFriendAction(
     const clientIp = extractClientIp(request);
     const params = await paramsPromise;
 
-    const limited = await consumeProfileRateLimit({
-      userId: viewerId,
-      ip: clientIp,
-    });
+    // const limited = await consumeProfileRateLimit({
+    //   userId: viewerId,
+    //   ip: clientIp,
+    // });
 
-    if (limited) {
-      log.warn({ viewerId, clientIp }, "Friend request rate-limited");
-      return {
-        ok: false,
-        response: apiResponse(
-          false,
-          {},
-          userMessages.rateLimited,
-          429,
-          requestId
-        ),
-      };
-    }
+    // if (limited) {
+    //   log.warn({ viewerId, clientIp }, "Friend request rate-limited");
+    //   return {
+    //     ok: false,
+    //     response: apiResponse(
+    //       false,
+    //       {},
+    //       userMessages.rateLimited,
+    //       429,
+    //       requestId
+    //     ),
+    //   };
+    // }
 
     if (!viewerId) {
       log.warn("Friend request unauthorized");
@@ -78,7 +79,9 @@ export async function prepareFriendAction(
       };
     }
 
-    const viewerUsername = await fetchViewerUsername(viewerId);
+    const viewer = await fetchViewerUsername(viewerId);
+    const viewerUsername = viewer?.username;
+    const viewerName = viewer?.name || "";
     if (!viewerUsername) {
       log.error({ viewerId }, "Viewer record missing");
       return {
@@ -139,6 +142,7 @@ export async function prepareFriendAction(
         requestId,
         log,
         viewerId,
+        viewerName,
         viewerUsername,
         target: validation.profile,
       },

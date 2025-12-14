@@ -10,6 +10,7 @@ import {
 export type FriendRequestHandlerArgs = {
   viewerId: string;
   viewerUsername: string;
+
   requesterId: string;
   requesterUsername: string;
 };

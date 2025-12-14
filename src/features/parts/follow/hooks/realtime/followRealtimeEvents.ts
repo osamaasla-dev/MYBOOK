@@ -3,6 +3,7 @@ export const FOLLOW_EVENTS = {
   REJECTED: "follow:rejected",
   FOLLOWER_REMOVED: "follower:removed",
   FOLLOW_ADDED: "follow:added",
+  FOLLOW_REQUESTED: "follow:requested",
   FOLLOW_REMOVED: "follow:removed",
 } as const;
 

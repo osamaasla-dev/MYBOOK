@@ -3,7 +3,7 @@
 import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
 
 import type { PostReactionType } from "../constants/reactions";
-import { reactToPostApi } from "../services/postApi";
+import { reactToPostApi } from "../services/client";
 import type { PostReactionResponse } from "../types";
 
 export const REACT_TO_POST_MUTATION_KEY = [

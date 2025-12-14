@@ -1,12 +1,12 @@
 import { apiDeleteR, apiPostR } from "@/lib/api";
 
-import type { CreatePostInput } from "../schemas";
+import type { CreatePostInput } from "../../schemas";
 import type {
   CreatePostResponseData,
   PostReactionResponse,
   RecordPostViewResponse,
-} from "../types";
-import type { PostReactionType } from "../constants/reactions";
+} from "../../types";
+import type { PostReactionType } from "../../constants/reactions";
 
 const CREATE_POST_ENDPOINT = "/post/create";
 

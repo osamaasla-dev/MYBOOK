@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 
-import { buildReactionSummary } from "../../utils/reaction";
+import { buildReactionSummary } from "../../../utils/reaction";
 
 import type { RemovePostReactionParams, PostReactionResult } from "./types";
 

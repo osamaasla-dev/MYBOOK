@@ -1,8 +1,10 @@
 export type FollowSyncResult = {
   followerId: string;
   followerUsername: string;
+  followerName: string;
   targetId: string;
   targetUsername: string;
+  targetName: string;
   createdFollow: boolean;
   acceptedRequestId?: string;
 };
@@ -10,6 +12,7 @@ export type FollowSyncResult = {
 export type SyncParticipant = {
   id: string;
   username: string;
+  name: string;
 };
 
 export type SyncMutualFollowsArgs = {
@@ -20,6 +23,8 @@ export type SyncMutualFollowsArgs = {
 export type FollowSyncArgs = {
   followerId: string;
   followerUsername: string;
+  followerName: string;
   targetId: string;
   targetUsername: string;
+  targetName: string;
 };

@@ -5,7 +5,6 @@ import { prepareFollowAction, type FollowRouteContext } from "../shared";
 import { followProfile } from "@/features/parts/follow/services";
 import { adjustRelationshipSnapshot } from "@/features/parts/interaction/services";
 import { updateRankedPostRelationships } from "@/features/pages/home/utils/posts/post-ranking/cache";
-
 const ROUTE = "/api/follow/[username]/follow";
 
 export async function POST(request: Request, { params }: FollowRouteContext) {
@@ -18,15 +17,16 @@ export async function POST(request: Request, { params }: FollowRouteContext) {
     return preparation.response;
   }
 
-  const { requestId, log, viewerId, viewerUsername, target } =
+  const { requestId, log, viewerId, viewerUsername, viewerName, target } =
     preparation.context;
-
   try {
     const result = await followProfile({
       viewerId,
       viewerUsername,
+      viewerName,
       targetUserId: target.id,
       targetUsername: target.username,
+      targetName: target.name,
       requiresApproval: target.isPrivate,
     });
 

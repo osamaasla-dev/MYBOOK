@@ -96,6 +96,17 @@ export async function runPostViewsAggregationJob() {
       "Post views aggregation job completed"
     );
   } catch (error) {
+    if (error && typeof error === "object" && "code" in error) {
+      const prismaCode = (error as { code?: string }).code;
+      if (prismaCode === "P2002") {
+        log.error(
+          { error, reason: "duplicate_post_view" },
+          "Post views aggregation job failed: duplicate PostView entry"
+        );
+        throw error;
+      }
+    }
+
     log.error({ error }, "Post views aggregation job failed");
     throw error;
   }

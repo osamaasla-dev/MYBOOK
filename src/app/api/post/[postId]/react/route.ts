@@ -12,7 +12,7 @@ import {
 import {
   persistPostReaction,
   removePostReaction,
-} from "@/features/parts/post/services/reaction";
+} from "@/features/parts/post/services/server/reaction";
 import { updateRankedPostCacheEntry } from "@/features/pages/home/utils/posts/post-ranking/cache";
 import { isJsonRequest } from "@/schemas/http";
 import { validateCuid } from "@/schemas/ids";

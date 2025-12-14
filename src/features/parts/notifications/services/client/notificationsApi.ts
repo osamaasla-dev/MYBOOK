@@ -1,17 +1,18 @@
 import { apiGetR, apiPostR } from "@/lib/api";
-import { DEFAULT_NOTIFICATIONS_LIMIT } from "../schema";
-import type { NotificationListResult } from "../types";
+import { DEFAULT_NOTIFICATIONS_LIMIT } from "../../schema";
+import type { NotificationListResult } from "../../types";
+import type { NotificationTab } from "../../constants";
 
 export type NotificationsApiParams = {
   limit?: number;
   cursor?: string;
-  unreadOnly?: boolean;
+  tab?: NotificationTab;
 };
 
 const buildNotificationsQuery = ({
   limit,
   cursor,
-  unreadOnly,
+  tab,
 }: NotificationsApiParams = {}): string => {
   const params = new URLSearchParams();
 
@@ -24,8 +25,8 @@ const buildNotificationsQuery = ({
     params.set("cursor", cursor);
   }
 
-  if (typeof unreadOnly === "boolean") {
-    params.set("unreadOnly", unreadOnly ? "true" : "false");
+  if (tab) {
+    params.set("tab", tab);
   }
 
   const queryString = params.toString();
@@ -44,19 +45,6 @@ export async function fetchNotificationsPage(
 }
 
 ////////////////////////////////////////////////////
-export async function markNotificationsAsReadRequest(): Promise<{
-  updated: number;
-  message: string;
-}> {
-  const { data, message } = await apiPostR<{ updated: number }>(
-    "/notifications/mark-read"
-  );
-
-  return {
-    updated: data.updated,
-    message,
-  };
-}
 
 export async function markNotificationAsReadRequest(notificationId: string) {
   const { data, message } = await apiPostR<{ updated: number }>(

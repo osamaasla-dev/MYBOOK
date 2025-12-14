@@ -6,15 +6,19 @@ import { upsertPendingFriendRequest } from "./friendshipRequestPersistence";
 export type RequestFriendshipInput = {
   viewerId: string;
   viewerUsername: string;
+  viewerName?: string;
   targetUserId: string;
   targetUsername: string;
+  targetName?: string;
 };
 
 export async function requestFriendship({
   viewerId,
   viewerUsername,
+  viewerName,
   targetUserId,
   targetUsername,
+  targetName,
 }: RequestFriendshipInput) {
   await assertFriendshipEligibility({ viewerId, targetUserId });
 
@@ -28,8 +32,10 @@ export async function requestFriendship({
   await broadcastFriendEvent({
     event: "friend:request",
     requesterId: viewerId,
+    requesterName: viewerName,
     requesterUsername: viewerUsername,
     targetId: targetUserId,
+    targetName,
     targetUsername,
     kind: "friend-request",
     requestId: friendRequest.id,

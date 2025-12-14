@@ -9,7 +9,14 @@ import type { FollowSyncArgs, FollowSyncResult } from "./types";
 
 export async function syncFollowDirection(
   tx: Prisma.TransactionClient,
-  { followerId, followerUsername, targetId, targetUsername }: FollowSyncArgs
+  {
+    followerId,
+    followerUsername,
+    followerName,
+    targetId,
+    targetUsername,
+    targetName,
+  }: FollowSyncArgs
 ): Promise<FollowSyncResult> {
   let acceptedRequestId: string | undefined;
 
@@ -100,8 +107,10 @@ export async function syncFollowDirection(
   return {
     followerId,
     followerUsername,
+    followerName,
     targetId,
     targetUsername,
+    targetName,
     createdFollow,
     acceptedRequestId,
   };

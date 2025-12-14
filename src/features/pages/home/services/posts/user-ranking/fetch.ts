@@ -11,30 +11,7 @@ import type {
   ImportantUserScore,
   RawInteractionCandidate,
 } from "@/features/pages/home/utils/posts/user-ranking";
-
-async function getBlockedUserIds(viewerId: string) {
-  const blocks = await prisma.block.findMany({
-    where: {
-      OR: [{ blockerId: viewerId }, { blockedId: viewerId }],
-    },
-    select: {
-      blockerId: true,
-      blockedId: true,
-    },
-  });
-
-  const blockedSet = new Set<string>();
-  for (const block of blocks) {
-    if (block.blockerId === viewerId) {
-      blockedSet.add(block.blockedId);
-    }
-    if (block.blockedId === viewerId) {
-      blockedSet.add(block.blockerId);
-    }
-  }
-
-  return blockedSet;
-}
+import { getBlockedUserIds } from "@/features/services/server/blockedUsers";
 
 export async function getImportantUsersForFeed(viewerId: string) {
   if (!viewerId) return [] as ImportantUserScore[];

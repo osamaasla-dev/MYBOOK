@@ -14,15 +14,17 @@ export async function POST(request: Request, { params }: FriendRouteContext) {
     return preparation.response;
   }
 
-  const { requestId, log, viewerId, viewerUsername, target } =
+  const { requestId, log, viewerId, viewerUsername, viewerName, target } =
     preparation.context;
 
   try {
     const result = await requestFriendship({
       viewerId,
       viewerUsername,
+      viewerName,
       targetUserId: target.id,
       targetUsername: target.username,
+      targetName: target.name,
     });
 
     const res = apiResponse(

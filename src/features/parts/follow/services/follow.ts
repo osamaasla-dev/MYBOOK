@@ -11,15 +11,19 @@ import { FollowNotificationPayload } from "../types";
 export type FollowPublicProfileInput = {
   viewerId: string;
   viewerUsername: string;
+  viewerName: string;
   targetUserId: string;
   targetUsername: string;
+  targetName: string;
 };
 
 export async function followProfile({
   viewerId,
   viewerUsername,
+  viewerName,
   targetUserId,
   targetUsername,
+  targetName,
   requiresApproval,
 }: FollowPublicProfileInput & { requiresApproval: boolean }) {
   if (viewerId === targetUserId) {
@@ -77,6 +81,7 @@ export async function followProfile({
       const notificationId = await createFollowNotification(tx, {
         followerId: viewerId,
         followerUsername: viewerUsername,
+
         targetUserId,
         targetUsername,
         followId: null,
@@ -98,8 +103,10 @@ export async function followProfile({
       event: "follow:requested",
       followerId: viewerId,
       followerUsername: viewerUsername,
+      followerName: viewerName,
       targetId: targetUserId,
       targetUsername,
+      targetName,
       kind: "follow-request",
       followersDelta: 0,
       requestId: followRequest.id,
@@ -114,9 +121,11 @@ export async function followProfile({
   const notificationPayload: FollowNotificationPayload = {
     followerId: viewerId,
     followerUsername: viewerUsername,
+
     targetUserId,
     targetUsername,
     kind: "follow",
+    status: "accepted",
   };
 
   try {
@@ -164,8 +173,10 @@ export async function followProfile({
     event: "follow:added",
     followerId: viewerId,
     followerUsername: viewerUsername,
+    followerName: viewerName,
     targetId: targetUserId,
     targetUsername,
+    targetName,
     kind: "follow",
     followersDelta: 1,
   });

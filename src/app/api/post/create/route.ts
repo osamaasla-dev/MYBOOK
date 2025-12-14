@@ -1,4 +1,4 @@
-import { createPost } from "@/features/parts/post/services";
+import { createPost } from "@/features/parts/post/services/server";
 import { createPostSchema } from "@/features/parts/post/schemas";
 import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
@@ -6,6 +6,10 @@ import { postMessages } from "@/lib/messages";
 import { getRequestLog } from "@/lib/request-log";
 import { ServerSession } from "@/utils/session";
 import { clearRankedPostsCache } from "@/features/pages/home/utils/posts/post-ranking/cache";
+import { broadcastPostCreatedEvent } from "@/features/parts/post/utils/realtime";
+import { getPostNotificationRecipients } from "@/features/parts/post/utils/recipients";
+import { getActor } from "@/features/parts/post/utils/actor";
+import { createPostNotifications } from "@/features/parts/post/services/server/postNotifications";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -54,6 +58,51 @@ export async function POST(request: Request) {
       { postId: post.id, userId: session.user.id },
       "Post created successfully"
     );
+
+    try {
+      const recipients = await getPostNotificationRecipients({
+        authorId: session.user.id,
+        visibility: post.visibility,
+        visibilityPreference: post.visibilityPreference,
+        requestId,
+        ROUTE,
+      });
+
+      if (recipients.length) {
+        const authorRecord = await getActor(session.user.id);
+        const authorName = authorRecord?.name ?? session.user.name ?? "Someone";
+        const authorUsername = authorRecord?.username ?? null;
+
+        await Promise.all([
+          createPostNotifications({
+            actorId: session.user.id,
+            postId: post.id,
+            authorName,
+            authorUsername,
+            recipientIds: recipients,
+            requestId,
+            ROUTE,
+          }),
+          broadcastPostCreatedEvent({
+            postId: post.id,
+            authorId: session.user.id,
+            authorName,
+            recipientIds: recipients,
+          }),
+        ]);
+        log.info(
+          { postId: post.id, recipients: recipients.length },
+          "Post created event broadcasted"
+        );
+      } else {
+        log.warn({ postId: post.id }, "No post notification recipients found");
+      }
+    } catch (broadcastError) {
+      log.error(
+        { error: broadcastError, postId: post.id },
+        "Failed to broadcast post created event"
+      );
+    }
 
     return apiResponse(true, post, postMessages.created, 201, requestId);
   } catch (error: unknown) {

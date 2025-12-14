@@ -3,7 +3,7 @@ import { normalizeError } from "@/lib/http/normalizeError";
 import { notificationMessages } from "@/lib/messages";
 import { getRequestLog } from "@/lib/request-log";
 import { ServerSession } from "@/utils/session";
-import { markNotificationAsRead } from "@/features/parts/notifications/services";
+import { markNotificationAsRead } from "@/features/parts/notifications/services/server";
 
 const ROUTE = "/api/notifications/[notificationId]/mark-read";
 

@@ -11,10 +11,10 @@ export type NotificationAction =
     };
 
 export type NotificationPresentation = {
-  profileHref: string;
-  title: string;
-  subtitle: string;
-  initials: string;
+  profileHref?: string;
+  title?: string;
+  subtitle?: string;
+  initials?: string;
   statusLabel?: string;
   statusTone?: "primary" | "success" | "danger";
   action?: NotificationAction;

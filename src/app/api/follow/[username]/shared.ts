@@ -26,6 +26,7 @@ export type PreparedFollowAction = {
   requestId: string;
   log: Logger;
   viewerId: string;
+  viewerName: string;
   viewerUsername: string;
   target: ProfileUserRecord;
   requiresApproval: boolean;
@@ -102,8 +103,9 @@ export async function prepareFollowAction(
         ),
       };
     }
-
-    const viewerUsername = await fetchViewerUsername(viewerId);
+    const viewer = await fetchViewerUsername(viewerId);
+    const viewerUsername = viewer?.username;
+    const viewerName = viewer?.name ?? "";
     if (!viewerUsername) {
       log.error({ viewerId }, "Viewer record missing");
       return {
@@ -168,6 +170,7 @@ export async function prepareFollowAction(
         requestId,
         log,
         viewerId,
+        viewerName,
         viewerUsername,
         target,
         requiresApproval,

@@ -2,12 +2,16 @@ import { NotificationType } from "@prisma/client";
 
 import type { NotificationListItem } from "../types";
 import type { Builder, NotificationPresentation } from "./presentation/types";
-import { followPresentationBuilder } from "./presentation/follow";
-import { friendPresentationBuilder } from "./presentation/friend";
+import {
+  postPresentationBuilder,
+  followPresentationBuilder,
+  friendPresentationBuilder,
+} from "./presentation/index";
 
 const builders: Partial<Record<NotificationType, Builder>> = {
   [NotificationType.FOLLOW]: followPresentationBuilder,
   [NotificationType.FRIEND]: friendPresentationBuilder,
+  [NotificationType.POST]: postPresentationBuilder,
 };
 
 export function getNotificationPresentation(

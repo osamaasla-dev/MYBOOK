@@ -13,8 +13,10 @@ export type FollowRealtimeKind =
 export type FollowRealtimePayload = {
   followerId: string;
   followerUsername: string;
+  followerName?: string;
   targetId: string;
   targetUsername: string;
+  targetName?: string;
   kind: FollowRealtimeKind;
   followersDelta: number;
   requestId?: string;

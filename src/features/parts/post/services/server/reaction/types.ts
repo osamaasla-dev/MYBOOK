@@ -1,5 +1,8 @@
-import type { PostReactionType } from "../../constants/reactions";
-import type { ReactionSummary, ReactionOperation } from "../../utils/reaction";
+import type { PostReactionType } from "../../../constants/reactions";
+import type {
+  ReactionSummary,
+  ReactionOperation,
+} from "../../../utils/reaction";
 
 export type PersistPostReactionParams = {
   postId: string;

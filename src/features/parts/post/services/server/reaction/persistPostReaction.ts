@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import {
   buildReactionSummary,
   type ReactionOperation,
-} from "../../utils/reaction";
+} from "../../../utils/reaction";
 
 import type { PersistPostReactionParams, PostReactionResult } from "./types";
 

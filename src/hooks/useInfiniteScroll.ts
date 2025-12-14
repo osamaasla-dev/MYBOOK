@@ -24,29 +24,45 @@ export function useInfiniteScroll({
   useEffect(() => {
     if (!enabled || !hasNextPage || isFetching) return;
 
-    const container = containerRef?.current ?? null;
-    const sentinel = sentinelRef.current;
+    let observer: IntersectionObserver | null = null;
+    let rafId: number | null = null;
 
-    if (!sentinel) return;
+    const observe = () => {
+      const container = containerRef?.current ?? null;
+      const sentinel = sentinelRef.current;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const [entry] = entries;
-        // trigger load more if sentinel intersects and conditions met
-        if (entry.isIntersecting && !isFetching && hasNextPage) {
-          onLoadMore();
-        }
-      },
-      {
-        root: container,
-        rootMargin,
-        threshold,
+      if (!sentinel) {
+        rafId = requestAnimationFrame(observe);
+        return;
       }
-    );
 
-    observer.observe(sentinel);
+      observer = new IntersectionObserver(
+        (entries) => {
+          const [entry] = entries;
+          if (entry.isIntersecting && !isFetching && hasNextPage) {
+            onLoadMore();
+          }
+        },
+        {
+          root: container ?? undefined,
+          rootMargin,
+          threshold,
+        }
+      );
 
-    return () => observer.disconnect();
+      observer.observe(sentinel);
+    };
+
+    observe();
+
+    return () => {
+      if (observer) {
+        observer.disconnect();
+      }
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+      }
+    };
   }, [
     containerRef,
     sentinelRef,

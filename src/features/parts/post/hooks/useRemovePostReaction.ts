@@ -2,7 +2,7 @@
 
 import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
 
-import { removePostReactionApi } from "../services/postApi";
+import { removePostReactionApi } from "../services/client";
 import type { PostReactionResponse } from "../types";
 
 export const REMOVE_POST_REACTION_MUTATION_KEY = [

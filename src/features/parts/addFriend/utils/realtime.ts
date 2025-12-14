@@ -11,8 +11,10 @@ export type FriendRealtimeKind =
 export type FriendRealtimePayload = {
   requesterId: string;
   requesterUsername: string;
+  requesterName?: string;
   targetId: string;
   targetUsername: string;
+  targetName?: string;
   kind: FriendRealtimeKind;
   requestId: string;
 };

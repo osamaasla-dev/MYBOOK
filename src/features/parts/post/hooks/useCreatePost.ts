@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
 import type { CreatePostInput } from "../schemas";
-import { submitCreatePost } from "../services";
+import { submitCreatePost } from "../services/client";
 import { postMessages } from "@/lib/messages";
 import type { CreatePostResponseData } from "../types";
 import { HOME_FEED_QUERY_KEY } from "@/features/pages/home/hooks/useHomeFeed";

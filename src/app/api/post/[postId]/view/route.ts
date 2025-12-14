@@ -28,17 +28,7 @@ export async function POST(request: Request, context: RouteParams) {
     }
 
     const session = await ServerSession();
-    if (!session?.user?.id) {
-      log.warn("Create post attempted without authentication");
-      return apiResponse(
-        false,
-        null,
-        postMessages.unauthorized,
-        401,
-        requestId
-      );
-    }
-    const viewerId = session?.user?.id;
+    const viewerId = session?.user?.id ?? null;
     const identity = resolvePostViewIdentity({ request, viewerId });
 
     const limited = await consumePostViewRateLimit(identity.viewerKey, {

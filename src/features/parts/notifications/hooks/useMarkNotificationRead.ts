@@ -2,20 +2,19 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { markNotificationAsReadRequest } from "../services";
+import { invalidateNotificationTabQueries } from "./notificationQueryUtils";
+import { markNotificationAsReadRequest } from "../services/client";
 
 export function useMarkNotificationRead() {
   const queryClient = useQueryClient();
 
-  const mutation = useMutation({
-    mutationFn: markNotificationAsReadRequest,
+  return useMutation({
+    mutationFn: async (notificationId: string) => {
+      await markNotificationAsReadRequest(notificationId);
+    },
 
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["notifications", { unreadOnly: false }],
-      });
+      invalidateNotificationTabQueries(queryClient);
     },
   });
-
-  return mutation;
 }

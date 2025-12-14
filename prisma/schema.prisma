@@ -913,6 +913,7 @@ enum NotificationType {
   FRIEND
   MENTION
   REPLY
+  POST
 }
 
 model UserInteractionStats {

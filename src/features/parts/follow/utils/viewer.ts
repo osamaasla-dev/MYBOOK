@@ -2,11 +2,11 @@ import { prisma } from "@/lib/prisma";
 
 export async function fetchViewerUsername(
   viewerId: string
-): Promise<string | null> {
+): Promise<{ username: string; name: string } | null> {
   const viewer = await prisma.user.findUnique({
     where: { id: viewerId },
-    select: { username: true },
+    select: { username: true, name: true },
   });
 
-  return viewer?.username ?? null;
+  return viewer ?? null;
 }

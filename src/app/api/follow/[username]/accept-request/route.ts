@@ -17,15 +17,17 @@ export async function POST(request: Request, { params }: FollowRouteContext) {
     return preparation.response;
   }
 
-  const { requestId, log, viewerId, viewerUsername, target } =
+  const { requestId, log, viewerId, viewerName, viewerUsername, target } =
     preparation.context;
 
   try {
     const result = await acceptFollowRequest({
       viewerId,
       viewerUsername,
+      viewerName,
       requesterId: target.id,
       requesterUsername: target.username,
+      requesterName: target.name,
     });
 
     await adjustRelationshipSnapshot({

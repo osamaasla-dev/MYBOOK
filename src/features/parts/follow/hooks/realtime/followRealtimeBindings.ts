@@ -26,6 +26,7 @@ export function buildFollowRealtimeBindings(
       event: FOLLOW_EVENTS.FOLLOW_ADDED,
       onEvent: handlers.onFollowAdded,
     },
+
     {
       event: FOLLOW_EVENTS.FOLLOW_REMOVED,
       onEvent: handlers.onFollowRemoved,

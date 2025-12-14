@@ -19,15 +19,19 @@ export async function syncMutualFollows(
   const viewerFollow = await syncFollowDirection(tx, {
     followerId: viewer.id,
     followerUsername: viewer.username,
+    followerName: viewer.name,
     targetId: requester.id,
     targetUsername: requester.username,
+    targetName: requester.name,
   });
 
   const requesterFollow = await syncFollowDirection(tx, {
     followerId: requester.id,
     followerUsername: requester.username,
+    followerName: requester.name,
     targetId: viewer.id,
     targetUsername: viewer.username,
+    targetName: viewer.name,
   });
 
   return [viewerFollow, requesterFollow];

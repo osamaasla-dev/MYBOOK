@@ -6,8 +6,10 @@ import { FollowSyncResult } from "./followSync/types";
 export type EventsBroadcasterArgs = {
   viewerId: string;
   viewerUsername: string;
+  viewerName: string;
   requesterId: string;
   requesterUsername: string;
+  requesterName: string;
   followResults: FollowSyncResult[];
   friendRequestId: string;
 };
@@ -15,8 +17,10 @@ export type EventsBroadcasterArgs = {
 export async function broadcastAcceptanceEvents({
   viewerId,
   viewerUsername,
+  viewerName,
   requesterId,
   requesterUsername,
+  requesterName,
   followResults,
   friendRequestId,
 }: EventsBroadcasterArgs) {
@@ -26,9 +30,11 @@ export async function broadcastAcceptanceEvents({
       broadcastFollowEvent({
         event: "follow:approved",
         followerId: result.targetId,
+        followerName: result.targetName,
         followerUsername: result.targetUsername,
         targetId: result.followerId,
         targetUsername: result.followerUsername,
+        targetName: result.followerName,
         kind: "follow-request-approved",
         followersDelta: 0,
         requestId: result.acceptedRequestId,
@@ -41,8 +47,10 @@ export async function broadcastAcceptanceEvents({
       broadcastFollowEvent({
         event: "follow:added",
         followerId: result.followerId,
+        followerName: result.followerName,
         followerUsername: result.followerUsername,
         targetId: result.targetId,
+        targetName: result.targetName,
         targetUsername: result.targetUsername,
         kind: "follow",
         followersDelta: 1,
@@ -60,8 +68,10 @@ export async function broadcastAcceptanceEvents({
     event: "friend:accepted",
     requesterId: viewerId,
     requesterUsername: viewerUsername,
+    requesterName: viewerName,
     targetId: requesterId,
     targetUsername: requesterUsername,
+    targetName: requesterName,
     kind: "friend-request-accepted",
     requestId: friendRequestId,
   });

@@ -15,8 +15,8 @@ export type FollowRealtimeHandlers = {
 };
 
 type CreateHandlersArgs = {
-  profileUsername: string;
-  profileKey: ReturnType<typeof profileQueryKey>;
+  profileUsername?: string;
+  profileKey?: ReturnType<typeof profileQueryKey>;
   queryClient: QueryClient;
 };
 
@@ -26,11 +26,15 @@ export function createFollowRealtimeHandlers({
   queryClient,
 }: CreateHandlersArgs): FollowRealtimeHandlers {
   const ensureSameFollower = (payload: FollowRealtimePayload) =>
-    payload.followerUsername === profileUsername;
+    !profileUsername || payload.followerUsername === profileUsername;
 
   const updateProfileViewer = (
     updater: (viewer: ProfileRouteData["viewer"]) => ProfileRouteData["viewer"]
   ) => {
+    if (!profileKey) {
+      return;
+    }
+
     queryClient.setQueryData<ProfileRouteData>(profileKey, (previous) => {
       if (!previous) {
         return previous;
@@ -45,6 +49,10 @@ export function createFollowRealtimeHandlers({
 
   return {
     onFollowApproved: (payload) => {
+      if (!profileUsername || !profileKey) {
+        return;
+      }
+
       if (!ensureSameFollower(payload)) {
         return;
       }
@@ -52,6 +60,12 @@ export function createFollowRealtimeHandlers({
       queryClient.invalidateQueries({ queryKey: profileKey });
     },
     onFollowRejected: (payload) => {
+      console.log("ghhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh");
+
+      if (!profileUsername) {
+        return;
+      }
+
       if (!ensureSameFollower(payload)) {
         return;
       }
@@ -62,6 +76,10 @@ export function createFollowRealtimeHandlers({
       }));
     },
     onFollowerRemoved: (payload) => {
+      if (!profileUsername) {
+        return;
+      }
+
       if (!ensureSameFollower(payload)) {
         return;
       }
@@ -73,6 +91,10 @@ export function createFollowRealtimeHandlers({
       }));
     },
     onFollowAdded: (payload) => {
+      if (!profileUsername) {
+        return;
+      }
+
       if (!ensureSameFollower(payload) || payload.kind !== "follow") {
         return;
       }
@@ -83,6 +105,10 @@ export function createFollowRealtimeHandlers({
       }));
     },
     onFollowRemoved: (payload) => {
+      if (!profileUsername) {
+        return;
+      }
+
       if (!ensureSameFollower(payload) || payload.kind !== "unfollow") {
         return;
       }

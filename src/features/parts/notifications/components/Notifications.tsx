@@ -14,6 +14,9 @@ import { useNotificationsRealtime } from "../hooks/useNotificationsRealtime";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import type { NotificationListItem } from "../types";
 import { useMarkNotificationRead } from "../hooks/useMarkNotificationRead";
+import { useRealtimeNotificationToasts } from "../hooks/toasts/useRealtimeNotificationToasts";
+import type { NotificationTab } from "../constants";
+import { notificationsQueryKey } from "../hooks/useNotifications";
 
 import {
   NotificationBellButton,
@@ -24,6 +27,7 @@ import {
 export function Notifications() {
   const queryClient = useQueryClient();
   const { data: currentUser } = useCurrentUser();
+  const [currentTab, setCurrentTab] = useState<NotificationTab>("all");
   const {
     data,
     isLoading,
@@ -34,8 +38,7 @@ export function Notifications() {
     hasNextPage,
     isFetchingNextPage,
     isFetching,
-  } = useNotifications({ initialLimit: 10 });
-
+  } = useNotifications({ initialLimit: 10, tab: currentTab });
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const listRef = useRef<HTMLDivElement | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -54,15 +57,17 @@ export function Notifications() {
 
   const invalidateNotifications = useCallback(() => {
     queryClient.invalidateQueries({
-      queryKey: ["notifications", { unreadOnly: false }],
+      queryKey: notificationsQueryKey(currentTab),
     });
-  }, [queryClient]);
+  }, [queryClient, currentTab]);
 
   useNotificationsRealtime(
     subscriptionChannel,
     Boolean(subscriptionChannel),
     invalidateNotifications
   );
+
+  useRealtimeNotificationToasts();
 
   useInfiniteScroll({
     containerRef: listRef,
@@ -72,7 +77,6 @@ export function Notifications() {
     onLoadMore: fetchNextPage,
     rootMargin: "0px 0px 300px 0px",
   });
-
   const handleNotificationSelect = useCallback(
     (notification: NotificationListItem) => {
       if (!notification.id || notification.isRead) {
@@ -81,6 +85,14 @@ export function Notifications() {
       markNotificationMutation.mutate(notification.id);
     },
     [markNotificationMutation]
+  );
+
+  const handleTabChange = useCallback(
+    (tab: NotificationTab) => {
+      if (tab === currentTab) return;
+      setCurrentTab(tab);
+    },
+    [currentTab]
   );
 
   return (
@@ -98,7 +110,11 @@ export function Notifications() {
         sideOffset={12}
         data-testid="navbar-notifications-dropdown"
       >
-        <NotificationDropdownHeader onRefresh={refetch} />
+        <NotificationDropdownHeader
+          onRefresh={refetch}
+          tab={currentTab}
+          onTabChange={handleTabChange}
+        />
 
         <NotificationList
           items={items}

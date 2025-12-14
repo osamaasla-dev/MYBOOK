@@ -32,7 +32,7 @@ function ImageGrid({ items }: { items: PostCardMedia[] }) {
           alt="Post media"
           width={1200}
           height={1200}
-          className="w-full h-auto rounded-xl object-cover"
+          className="w-full h-auto  object-cover"
           sizes="100vw"
           priority={items.length === 1}
         />

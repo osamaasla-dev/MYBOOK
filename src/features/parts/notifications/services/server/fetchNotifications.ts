@@ -1,30 +1,52 @@
 import type { Prisma } from "@prisma/client";
 
-import { prisma } from "@/lib/prisma";
 import type {
   FetchNotificationsInput,
   NotificationListItem,
   NotificationListResult,
-} from "../types";
-import { MAX_NOTIFICATIONS_LIMIT } from "../schema";
+} from "../../types";
+import { MAX_NOTIFICATIONS_LIMIT } from "../../schema";
+import { prisma } from "@/lib/prisma";
+import { getBlockedUserIds } from "@/features/services/server/blockedUsers";
 
 export async function fetchUserNotifications({
   userId,
   limit,
   cursor,
-  unreadOnly,
+  tab = "all",
 }: FetchNotificationsInput): Promise<NotificationListResult> {
   const take = Math.min(Math.max(limit, 1), MAX_NOTIFICATIONS_LIMIT);
 
-  const where: Prisma.NotificationWhereInput = {
-    userId,
-    ...(unreadOnly ? { isRead: false } : {}),
-    NOT: {
+  const tabFilter: Prisma.NotificationWhereInput =
+    tab === "read"
+      ? { isRead: true }
+      : tab === "unread"
+      ? { isRead: false }
+      : {};
+
+  const blockedUserIds = await getBlockedUserIds(userId);
+
+  const notFilters: Prisma.NotificationWhereInput[] = [
+    {
       metadata: {
         path: "status",
         equals: "canceled",
       },
     },
+  ];
+
+  if (blockedUserIds.size) {
+    notFilters.push({
+      actorId: {
+        in: Array.from(blockedUserIds),
+      },
+    });
+  }
+
+  const where: Prisma.NotificationWhereInput = {
+    userId,
+    ...tabFilter,
+    NOT: notFilters,
   };
 
   const notifications = await prisma.notification.findMany({

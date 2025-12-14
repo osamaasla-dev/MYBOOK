@@ -1,5 +1,5 @@
-import type { CreatePostInput } from "../schemas";
-import { mapUploadMediaToCreateInput } from "../utils";
+import type { CreatePostInput } from "../../schemas";
+import { mapUploadMediaToCreateInput } from "../../utils";
 import { prisma } from "@/lib/prisma";
 
 export type CreatePostParams = {
