@@ -46,25 +46,12 @@ export function filterPostsByVisibility(
       id: post.id,
       authorId: post.authorId,
       publishedAt: post.publishedAt,
-      content: {
-        text: post.content,
-        richText: post.richContent,
-        media: post.media.map((media) => ({
-          id: media.id,
-          url: media.url,
-          type: media.type,
-          width: media.width,
-          height: media.height,
-          duration: media.duration,
-        })),
-        linkPreview: post.linkPreview,
-      },
-      likesCount: post.reactionsCount,
+
+      reactionsCount: post.reactionsCount,
       commentsCount: post.commentsCount,
       sharesCount: post.sharesCount,
       viewCount: post.viewCount,
-      reactionSummary: post.reactionSummary,
-      author: post.author,
+
       privacy: {
         visibility: post.visibility,
         visibilityPreference: post.visibilityPreference,

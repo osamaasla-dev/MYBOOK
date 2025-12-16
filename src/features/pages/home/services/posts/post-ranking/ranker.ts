@@ -2,7 +2,7 @@ import {
   MAX_POSTS_PER_USER,
   scorePostCandidate,
   TOP_IMPORTANT_PERCENTILE,
-  type PostRankingResult,
+  type PostsRankingResult,
   type RankedPost,
 } from "@/features/pages/home/utils/posts/post-ranking";
 import type { ImportantUserScore } from "@/features/pages/home/utils/posts/user-ranking";
@@ -25,7 +25,7 @@ export type RankPostsParams = {
 
 export async function rankPostsForImportantUsersFeed(
   params: RankPostsParams
-): Promise<PostRankingResult> {
+): Promise<PostsRankingResult> {
   const {
     viewerId,
     importantUsers,
@@ -36,7 +36,7 @@ export async function rankPostsForImportantUsersFeed(
   } = params;
 
   if (!viewerId) {
-    return { posts: [] };
+    return { postsIds: [] };
   }
 
   const postFetchResults = await fetchPostsForImportantUsers(importantUsers, {
@@ -47,7 +47,7 @@ export async function rankPostsForImportantUsersFeed(
   });
 
   if (!postFetchResults.length) {
-    return { posts: [] };
+    return { postsIds: [] };
   }
 
   const importantUserScoreMap = new Map<string, number>();
@@ -57,7 +57,7 @@ export async function rankPostsForImportantUsersFeed(
 
   const allPosts = postFetchResults.flatMap((result) => result.posts);
   if (!allPosts.length) {
-    return { posts: [] };
+    return { postsIds: [] };
   }
 
   const postIds = allPosts.map((post) => post.id);
@@ -73,16 +73,14 @@ export async function rankPostsForImportantUsersFeed(
         postId: post.id,
         authorId: post.authorId,
         publishedAt: post.publishedAt,
-        content: post.content,
-        likesCount: post.likesCount,
+        reactionsCount: post.reactionsCount,
         commentsCount: post.commentsCount,
         sharesCount: post.sharesCount,
         viewCount: post.viewCount,
-        reactionSummary: post.reactionSummary,
         userScore: importantUserScoreMap.get(post.authorId) ?? 0,
         interactions:
           viewerInteractions.get(post.id) ?? createEmptyInteractionFlags(),
-        author: post.author,
+
         privacy: post.privacy,
         viewerRelationship: post.viewerRelationship,
       },
@@ -93,7 +91,7 @@ export async function rankPostsForImportantUsersFeed(
   }
 
   if (!candidates.length) {
-    return { posts: [] };
+    return { postsIds: [] };
   }
 
   const perAuthor = new Map<string, RankedPost[]>();
@@ -136,7 +134,7 @@ export async function rankPostsForImportantUsersFeed(
   const classicFeed = classicPool.sort((a, b) => b.finalScore - a.finalScore);
   const posts = [...viewerFresh, ...importantFresh, ...classicFeed];
 
-  return { posts };
+  return { postsIds: posts.map((post) => post.postId) };
 }
 
 function determineTopImportantUsers({

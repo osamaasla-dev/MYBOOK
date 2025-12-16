@@ -6,7 +6,7 @@ export function NavbarClient() {
       className="bg-primary text-white shadow-sm"
       data-testid="navbar-shell"
     >
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-3 md:flex-row md:items-center md:justify-between">
+      <div className="mx-auto flex w-full max-w-8xl flex-col gap-3 px-4 py-3 md:flex-row md:items-center md:justify-between">
         <NavbarBrand />
 
         <NavbarSearch />

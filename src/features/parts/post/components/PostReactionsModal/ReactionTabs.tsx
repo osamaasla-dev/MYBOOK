@@ -4,8 +4,10 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui";
 
 import type { ReactionTab } from "../../services/server/reactions";
 import type { ReactionOptionCount } from "./types";
+import { usePrefetchPostReactions } from "../../hooks/usePrefetchPostReactions";
 
 type ReactionTabsProps = {
+  postId: string;
   currentTab: ReactionTab;
   onTabChange: (value: ReactionTab) => void;
   reactionTabs: ReactionOptionCount[];
@@ -13,13 +15,22 @@ type ReactionTabsProps = {
 };
 
 export function ReactionTabs({
+  postId,
   currentTab,
   onTabChange,
   reactionTabs,
   resolvedAllCount,
 }: ReactionTabsProps) {
+  const prefetchReactions = usePrefetchPostReactions({
+    postId,
+  });
+
   const handleChange = (value: string) => {
     onTabChange(value as ReactionTab);
+  };
+
+  const handlePrefetch = (value: ReactionTab) => () => {
+    prefetchReactions({ tab: value });
   };
 
   return (
@@ -28,6 +39,8 @@ export function ReactionTabs({
         <TabsTrigger
           value="all"
           className="cursor-pointer flex-auto rounded-full border px-4 py-1.5 text-sm font-semibold data-[state=active]:border-primary data-[state=active]:bg-primary/10 hover:border-primary hover:bg-primary/10"
+          onMouseEnter={handlePrefetch("all")}
+          onFocus={handlePrefetch("all")}
         >
           <span className="flex items-center">
             All
@@ -41,6 +54,8 @@ export function ReactionTabs({
             key={tab.id}
             value={tab.id}
             className="cursor-pointer flex-auto rounded-full border px-4 py-1.5 text-sm font-semibold data-[state=active]:border-primary data-[state=active]:bg-primary/10 hover:border-primary hover:bg-primary/10"
+            onMouseEnter={handlePrefetch(tab.id)}
+            onFocus={handlePrefetch(tab.id)}
           >
             <span className="flex items-center">
               <span aria-hidden="true">{tab.emoji}</span>

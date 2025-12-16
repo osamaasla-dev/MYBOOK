@@ -4,7 +4,6 @@ import type {
   Visibility,
 } from "@prisma/client";
 import type { PostReactionType } from "@/features/parts/post/constants/reactions";
-import type { ReactionSummary } from "@/features/parts/post/utils/reaction";
 
 export type ViewerRelationshipSnapshot = {
   isSelf: boolean;
@@ -47,13 +46,12 @@ export type PostWithStats = {
   id: string;
   authorId: string;
   publishedAt: Date;
-  content: PostContentPayload;
-  likesCount: number;
+
+  reactionsCount: number;
   commentsCount: number;
   sharesCount: number;
   viewCount: number;
-  reactionSummary: ReactionSummary | null;
-  author: PostAuthorMeta;
+
   privacy: PostPrivacySnapshot;
   viewerRelationship: ViewerRelationshipSnapshot;
 };
@@ -74,15 +72,14 @@ export type PostCandidate = {
   postId: string;
   authorId: string;
   publishedAt: Date;
-  content: PostContentPayload;
-  likesCount: number;
+
+  reactionsCount: number;
   commentsCount: number;
   sharesCount: number;
   viewCount: number;
-  reactionSummary: ReactionSummary | null;
   userScore: number;
   interactions: PostInteractionFlags;
-  author: PostAuthorMeta;
+
   privacy: PostPrivacySnapshot;
   viewerRelationship: ViewerRelationshipSnapshot;
 };
@@ -94,14 +91,18 @@ export type RankedPost = PostCandidate & {
   finalScore: number;
 };
 
-export type PostRankingResult = {
-  posts: RankedPost[];
+export type PostsRankingResult = {
+  postsIds: string[];
 };
 
 export type RankedFeedPage = {
-  posts: RankedPost[];
+  postsIds: string[];
   nextCursor: number | null;
   total: number;
   storedAt: number | null;
   cacheHit: boolean;
+};
+export type RankedPostsCacheRecord = {
+  storedAt: number;
+  postsIds: string[];
 };

@@ -18,6 +18,7 @@ export type NotificationPresentation = {
   statusLabel?: string;
   statusTone?: "primary" | "success" | "danger";
   action?: NotificationAction;
+  postId?: string | null;
 };
 
 export type Builder = (

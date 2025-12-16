@@ -1,13 +1,13 @@
 "use client";
 
-import type { RankedPost } from "@/features/pages/home/utils/posts/post-ranking";
-import { PostCard } from "@/features/parts/post/components/PostCard/PostCard";
-import { buildPostCardPropsFromRankedPost } from "@/features/parts/post/components/PostCard/buildPost";
+import type { FeedPost } from "@/features/pages/home/utils/posts/feed-response";
+import { PostCard } from "@/features/parts/post/components/PostCard";
+import { buildPostCardPropsFromFeedPost } from "@/features/parts/post/components/PostCard/buildPost";
 
 type FeedItemProps = {
-  post: RankedPost;
+  post: FeedPost;
 };
 
 export function FeedItem({ post }: FeedItemProps) {
-  return <PostCard {...buildPostCardPropsFromRankedPost(post)} />;
+  return <PostCard {...buildPostCardPropsFromFeedPost(post)} />;
 }

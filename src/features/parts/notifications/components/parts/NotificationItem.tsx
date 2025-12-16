@@ -1,10 +1,14 @@
-import Link from "next/link";
+"use client";
 
-import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { useCallback } from "react";
+
 import type { NotificationListItem } from "@/features/parts/notifications/types";
 import { getNotificationPresentation } from "@/features/parts/notifications/utils/presentation";
 import { FollowRequestActions } from "@/features/parts/follow/components/FollowRequestActions";
 import { AcceptRejectFriendButtons } from "@/features/parts/addFriend/components/AcceptRejectFriendButtons";
+import { usePostDetailsModalNavigation } from "@/features/parts/post/hooks";
+import { NotificationContent } from "./NotificationContent";
 
 type NotificationItemProps = {
   notification: NotificationListItem;
@@ -31,6 +35,18 @@ export function NotificationItem({
   const statusLabel = presentation?.statusLabel;
   const statusTone = presentation?.statusTone;
   const action = presentation?.action;
+  const postId = presentation?.postId ?? notification.related.postId ?? null;
+  const { openPostDetails } = usePostDetailsModalNavigation();
+
+  const handlePostClick = useCallback(() => {
+    if (!postId) return;
+    openPostDetails(postId);
+    onSelect?.(notification);
+  }, [notification, onSelect, openPostDetails, postId]);
+
+  const handleLinkClick = useCallback(() => {
+    onSelect?.(notification);
+  }, [notification, onSelect]);
 
   const actionContent = (() => {
     if (!action) return null;
@@ -56,73 +72,54 @@ export function NotificationItem({
     }
   })();
 
+  const avatarNode = notification.actor?.avatarUrl ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={notification.actor.avatarUrl}
+      alt={fallbackUsername || "notification"}
+      className="h-full w-full rounded-full object-cover"
+      referrerPolicy="no-referrer"
+    />
+  ) : (
+    <span className="flex h-full w-full items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+      {initials}
+    </span>
+  );
+
+  const body = (
+    <NotificationContent
+      title={title}
+      subtitle={subtitle}
+      statusLabel={statusLabel}
+      statusTone={statusTone}
+      createdAt={notification.createdAt}
+      isRead={notification.isRead}
+      avatar={avatarNode}
+    />
+  );
+
   return (
-    <li
-      role="listitem"
-      data-testid="navbar-notification-item"
-      className="border-b border-border/40 last:border-none"
-    >
+    <li role="listitem" data-testid="navbar-notification-item">
       <div className="flex flex-col gap-3 px-4 py-3 transition hover:bg-accent/40">
-        <Link
-          href={profileHref}
-          className="flex gap-3"
-          aria-label={`${title} ${subtitle}`.trim() || "notification"}
-          onClick={() => onSelect?.(notification)}
-        >
-          <div
-            className="relative h-10 w-10 shrink-0"
-            data-testid="navbar-notification-avatar"
+        {postId ? (
+          <button
+            type="button"
+            className="cursor-pointer flex w-full gap-3 text-left"
+            aria-label={`${title} ${subtitle}`.trim() || "notification"}
+            onClick={handlePostClick}
           >
-            {notification.actor?.avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={notification.actor.avatarUrl}
-                alt={fallbackUsername || "notification"}
-                className="h-full w-full rounded-full object-cover"
-                referrerPolicy="no-referrer"
-              />
-            ) : (
-              <span className="flex h-full w-full items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                {initials}
-              </span>
-            )}
-          </div>
-
-          <div
-            className="min-w-0 flex-1"
-            data-testid="navbar-notification-body"
+            {body}
+          </button>
+        ) : (
+          <Link
+            href={profileHref}
+            className="flex gap-3"
+            aria-label={`${title} ${subtitle}`.trim() || "notification"}
+            onClick={handleLinkClick}
           >
-            <p className="text-sm font-medium text-foreground">
-              {title}
-              <span className="font-normal text-muted-foreground">
-                {" "}
-                {subtitle}
-              </span>
-            </p>
-            <div className="mt-1 text-xs text-muted-foreground">
-              <div>{new Date(notification.createdAt).toLocaleString()}</div>
-              {statusLabel && (
-                <div
-                  className={cn(
-                    "font-semibold uppercase tracking-wide text-right",
-                    statusTone === "primary" && "text-primary",
-                    statusTone === "success" && "text-emerald-500",
-                    statusTone === "danger" && "text-danger"
-                  )}
-                >
-                  {statusLabel}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {!notification.isRead && (
-            <span
-              className="mt-1 inline-flex h-2 w-2 shrink-0 rounded-full bg-primary"
-              aria-label="notification unread"
-            />
-          )}
-        </Link>
+            {body}
+          </Link>
+        )}
 
         {actionContent && actionContent}
       </div>

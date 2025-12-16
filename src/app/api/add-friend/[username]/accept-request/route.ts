@@ -5,7 +5,6 @@ import { prisma } from "@/lib/prisma";
 
 import { acceptFriendRequest } from "@/features/parts/addFriend/services";
 import { adjustRelationshipSnapshot } from "@/features/parts/interaction/services";
-import { updateRankedPostRelationships } from "@/features/pages/home/utils/posts/post-ranking/cache";
 import { prepareFriendAction, type FriendRouteContext } from "../shared";
 
 const ROUTE = "/api/add-friend/[username]/accept-request";
@@ -46,21 +45,6 @@ export async function POST(request: Request, { params }: FriendRouteContext) {
         prismaClient: tx,
       });
     });
-
-    await Promise.all([
-      updateRankedPostRelationships({
-        viewerId,
-        authorId: target.id,
-        isFriend: true,
-        isFollowing: true,
-      }),
-      updateRankedPostRelationships({
-        viewerId: target.id,
-        authorId: viewerId,
-        isFriend: true,
-        isFollowing: true,
-      }),
-    ]);
 
     return apiResponse(
       true,

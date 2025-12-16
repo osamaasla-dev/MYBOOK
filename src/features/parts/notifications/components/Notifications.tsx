@@ -79,6 +79,8 @@ export function Notifications() {
   });
   const handleNotificationSelect = useCallback(
     (notification: NotificationListItem) => {
+      setIsDropdownOpen(false);
+
       if (!notification.id || notification.isRead) {
         return;
       }

@@ -1,11 +1,11 @@
 "use client";
 
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 
 import type {
-  RankedFeedPage,
-  RankedPost,
-} from "@/features/pages/home/utils/posts/post-ranking";
+  FeedPost,
+  FeedPostsPage,
+} from "@/features/pages/home/utils/posts/feed-response";
 import { fetchHomeFeedPage } from "../services/posts/feedApi";
 
 export type UseHomeFeedOptions = {
@@ -14,9 +14,9 @@ export type UseHomeFeedOptions = {
 };
 
 export type HomeFeedQueryData = {
-  pages: RankedFeedPage[];
+  pages: FeedPostsPage[];
   pageParams: Array<number | undefined>;
-  posts: RankedPost[];
+  posts: FeedPost[];
   hasMore: boolean;
 };
 
@@ -27,7 +27,7 @@ export function useHomeFeed({
   enabled = true,
 }: UseHomeFeedOptions = {}) {
   return useInfiniteQuery<
-    RankedFeedPage,
+    FeedPostsPage,
     Error,
     HomeFeedQueryData,
     typeof HOME_FEED_QUERY_KEY,
@@ -42,16 +42,21 @@ export function useHomeFeed({
         pageSize: initialPageSize,
       }),
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
-    select: (data) => ({
-      pages: data.pages,
-      pageParams: data.pageParams as Array<number | undefined>,
-      posts: data.pages.flatMap((page) => page.posts),
-      hasMore: data.pages.length
-        ? Boolean(data.pages[data.pages.length - 1].nextCursor)
-        : false,
-    }),
+    select: (data) => {
+      const pages = data.pages;
+      const flattenedPosts = pages.flatMap((page) => page.posts);
+      const lastPage = pages[pages.length - 1];
+
+      return {
+        pages,
+        pageParams: data.pageParams as Array<number | undefined>,
+        posts: flattenedPosts,
+        hasMore: pages.length ? Boolean(lastPage?.nextCursor) : false,
+      };
+    },
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
+    placeholderData: keepPreviousData,
     staleTime: 0,
     gcTime: 0,
   });

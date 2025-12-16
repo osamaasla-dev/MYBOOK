@@ -6,11 +6,9 @@ import { QueryProvider } from "@/components";
 export default function UserLayout({ children }: { children: ReactNode }) {
   return (
     <QueryProvider>
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-secondary">
         <Navbar />
-        <main className="bg-secondary mx-auto w-full max-w-6xl px-4 py-6">
-          {children}
-        </main>
+        <main className="mx-auto w-full px-4 py-3 lg:px-8">{children}</main>
       </div>
     </QueryProvider>
   );

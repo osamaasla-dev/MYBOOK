@@ -1,4 +1,5 @@
 import { ProfilePage } from "@/features/pages/profile/page";
+import { PostDetailsModalLayer } from "@/features/parts/post/components/PostDetailsModal/PostDetailsModalLayer";
 
 type RouteProps = {
   params: { username: string };
@@ -6,5 +7,10 @@ type RouteProps = {
 
 export default async function RouteProfilePage({ params }: RouteProps) {
   const { username } = await params;
-  return <ProfilePage username={username} />;
+  return (
+    <>
+      <PostDetailsModalLayer />
+      <ProfilePage username={username} />
+    </>
+  );
 }

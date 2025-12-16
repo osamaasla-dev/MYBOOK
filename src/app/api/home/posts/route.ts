@@ -8,7 +8,7 @@ import {
   getRankedFeedPage,
   type FeedPageParams,
 } from "@/features/pages/home/services/posts/post-ranking";
-
+import { fetchFeedPostsForViewer } from "@/features/pages/home/services/posts/feed";
 const ROUTE = "/api/home/posts";
 
 export async function GET(request: Request) {
@@ -38,9 +38,13 @@ export async function GET(request: Request) {
       const parsed = Number(pageSizeParam);
       if (Number.isNaN(parsed) || parsed <= 0) {
         log.warn("Invalid pageSize param");
+        const responsePayload = {
+          posts: [],
+          nextCursor: null,
+        };
         return apiResponse(
           false,
-          {},
+          responsePayload,
           userMessages.invalidParams,
           400,
           requestId
@@ -63,17 +67,34 @@ export async function GET(request: Request) {
     };
 
     const page = await getRankedFeedPage(feedParams);
+
+    const posts = await fetchFeedPostsForViewer({
+      viewerId: session.user.id,
+      postIds: page.postsIds,
+    });
+
+    const responsePayload = {
+      posts,
+      nextCursor: page.nextCursor,
+    };
+
     log.info(
       {
         viewerId: session.user.id,
-        fetchedPosts: page.posts.length,
-        nextCursor: page.nextCursor,
+        fetchedPosts: posts.length,
+        nextCursor: responsePayload.nextCursor,
         cacheHit: page.cacheHit,
       },
       "Feed posts request finished"
     );
 
-    return apiResponse(true, page, genericMessages.success, 200, requestId);
+    return apiResponse(
+      true,
+      responsePayload,
+      genericMessages.success,
+      200,
+      requestId
+    );
   } catch (err) {
     const error = normalizeError(err);
     log.error({ err, status: error.status }, "Feed posts request failed");

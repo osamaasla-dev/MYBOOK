@@ -138,6 +138,7 @@ export function PostReactionsModal({
 
           <section className="flex flex-col gap-4 px-5 py-4">
             <ReactionTabs
+              postId={postId}
               currentTab={currentTab}
               onTabChange={setCurrentTab}
               reactionTabs={reactionTabs}

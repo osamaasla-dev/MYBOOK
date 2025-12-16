@@ -13,7 +13,7 @@ export const VIEWER_LIKE_BOOST = 20;
 export const VIEWER_COMMENT_BOOST = 40;
 export const VIEWER_SHARE_BOOST = 70;
 
-export const RANKED_POSTS_CACHE_NAMESPACE = "feed:posts";
+export const RANKED_POST_IDS_CACHE_NAMESPACE = "feed:post-ids";
 export const RANKED_POSTS_CACHE_TTL_SECONDS = 60 * 5; // 5 minutes
 
 export const RANKED_POSTS_STALE_MS = 60 * 1000; // 1 minute freshness window

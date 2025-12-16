@@ -12,5 +12,6 @@ export const postPresentationBuilder: Builder = (notification) => {
   return {
     title: name,
     subtitle: "shared a new post",
+    postId: notification.related?.postId ?? null,
   };
 };

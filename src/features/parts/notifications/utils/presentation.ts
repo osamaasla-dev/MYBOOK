@@ -6,12 +6,14 @@ import {
   postPresentationBuilder,
   followPresentationBuilder,
   friendPresentationBuilder,
+  reactionPresentationBuilder,
 } from "./presentation/index";
 
 const builders: Partial<Record<NotificationType, Builder>> = {
   [NotificationType.FOLLOW]: followPresentationBuilder,
   [NotificationType.FRIEND]: friendPresentationBuilder,
   [NotificationType.POST]: postPresentationBuilder,
+  [NotificationType.LIKE]: reactionPresentationBuilder,
 };
 
 export function getNotificationPresentation(

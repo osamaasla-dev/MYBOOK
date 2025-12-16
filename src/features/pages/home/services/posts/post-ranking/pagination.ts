@@ -39,7 +39,7 @@ export async function getRankedFeedPage(
 
   if (!viewerId) {
     return {
-      posts: [],
+      postsIds: [],
       nextCursor: null,
       total: 0,
       storedAt: null,
@@ -49,13 +49,13 @@ export async function getRankedFeedPage(
 
   const nowMs = now.getTime();
   const cached = await readRankedPostsCache(viewerId);
-  let rankedPosts = cached?.posts;
+  let rankedPostsIds = cached?.postsIds ?? [];
   let storedAt = cached?.storedAt ?? null;
-  let cacheHit = Boolean(rankedPosts && rankedPosts.length);
+  let cacheHit = Boolean(rankedPostsIds.length);
   const isStale =
     Boolean(storedAt) && nowMs - (storedAt as number) > RANKED_POSTS_STALE_MS;
 
-  if (rankedPosts?.length && isStale) {
+  if (rankedPostsIds.length && isStale) {
     scheduleRevalidation({
       viewerId,
       importantUsers,
@@ -65,7 +65,7 @@ export async function getRankedFeedPage(
     });
   }
 
-  if (!rankedPosts || !rankedPosts.length) {
+  if (!rankedPostsIds.length) {
     const freshlyRanked = await rankPostsForImportantUsersFeed({
       viewerId,
       importantUsers,
@@ -75,20 +75,20 @@ export async function getRankedFeedPage(
       now,
     });
 
-    rankedPosts = freshlyRanked.posts;
-    storedAt = rankedPosts.length ? nowMs : null;
+    rankedPostsIds = freshlyRanked.postsIds;
+    storedAt = rankedPostsIds.length ? nowMs : null;
     cacheHit = false;
 
-    if (rankedPosts.length) {
-      await writeRankedPostsCache(viewerId, rankedPosts);
+    if (rankedPostsIds.length) {
+      await writeRankedPostsCache(viewerId, rankedPostsIds);
     } else {
       await clearRankedPostsCache(viewerId);
     }
   }
 
-  if (!rankedPosts.length) {
+  if (!rankedPostsIds.length) {
     return {
-      posts: [],
+      postsIds: [],
       nextCursor: null,
       total: 0,
       storedAt,
@@ -98,13 +98,13 @@ export async function getRankedFeedPage(
 
   const start = cursor;
   const end = cursor + pageSize;
-  const pagePosts = rankedPosts.slice(start, end);
-  const nextCursor = end < rankedPosts.length ? end : null;
+  const pagePosts = rankedPostsIds.slice(start, end);
+  const nextCursor = end < rankedPostsIds.length ? end : null;
 
   return {
-    posts: pagePosts,
+    postsIds: pagePosts,
     nextCursor,
-    total: rankedPosts.length,
+    total: rankedPostsIds.length,
     storedAt,
     cacheHit,
   };
@@ -147,8 +147,8 @@ async function revalidateRankedFeed(params: RevalidationParams) {
       now: new Date(),
     });
 
-    if (ranked.posts.length) {
-      await writeRankedPostsCache(viewerId, ranked.posts);
+    if (ranked.postsIds.length) {
+      await writeRankedPostsCache(viewerId, ranked.postsIds);
     } else {
       await clearRankedPostsCache(viewerId);
     }

@@ -11,9 +11,14 @@ import { usePostReactionState } from "../../hooks/ui/postReactionState";
 type PostCardFooterProps = {
   postId: string;
   stats?: PostStats;
+  onCommentClick?: () => void;
 };
 
-export function PostCardFooter({ postId, stats }: PostCardFooterProps) {
+export function PostCardFooter({
+  postId,
+  stats,
+  onCommentClick,
+}: PostCardFooterProps) {
   const initialReaction = useMemo(
     () => stats?.viewerReaction ?? null,
     [stats?.viewerReaction]
@@ -60,7 +65,7 @@ export function PostCardFooter({ postId, stats }: PostCardFooterProps) {
           onReactionSelect={handleReactionSelect}
           onReactionClear={handleRemove}
         />
-        <CommentButton />
+        <CommentButton onClick={onCommentClick} />
         <ShareButton />
       </div>
     </footer>

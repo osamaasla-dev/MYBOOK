@@ -13,7 +13,6 @@ import {
   persistPostReaction,
   removePostReaction,
 } from "@/features/parts/post/services/server/reaction";
-import { updateRankedPostCacheEntry } from "@/features/pages/home/utils/posts/post-ranking/cache";
 import { isJsonRequest } from "@/schemas/http";
 import { validateCuid } from "@/schemas/ids";
 
@@ -62,7 +61,7 @@ export async function POST(request: Request, context: RouteParams) {
     let body: Awaited<ReturnType<typeof parseReactionPayload>>["data"];
     try {
       const json = await request.json();
-      console.log(json);
+
       const parsed = parseReactionPayload(json);
       if (!parsed.success) {
         const firstIssue = parsed.error.issues?.[0];
@@ -116,11 +115,6 @@ export async function POST(request: Request, context: RouteParams) {
       },
       `reaction.${result.operation}`
     );
-
-    await updateRankedPostCacheEntry(session.user.id, normalizedPostId, {
-      reactionSummary: result.reactionSummary,
-      viewerReaction: result.reaction,
-    });
 
     return apiResponse(
       true,
@@ -196,11 +190,6 @@ export async function DELETE(request: Request, context: RouteParams) {
       },
       "reaction.removed"
     );
-
-    await updateRankedPostCacheEntry(session.user.id, normalizedPostId, {
-      reactionSummary: result.reactionSummary,
-      viewerReaction: result.reaction,
-    });
 
     return apiResponse(
       true,

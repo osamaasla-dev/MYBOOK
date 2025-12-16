@@ -5,7 +5,7 @@ export const PageContainer = forwardRef<
   { children: ReactNode }
 >(function PageContainerBase({ children }, ref) {
   return (
-    <div ref={ref} className="">
+    <div ref={ref} className="grid grid-cols-5 gap-6">
       {children}
     </div>
   );

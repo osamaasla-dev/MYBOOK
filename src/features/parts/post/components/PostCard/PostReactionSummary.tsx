@@ -1,4 +1,4 @@
-import { useMemo, useState, type KeyboardEvent } from "react";
+import { useMemo, useState, useCallback, type KeyboardEvent } from "react";
 
 import {
   isValidPostReactionType,
@@ -8,6 +8,7 @@ import type { ReactionSummary } from "../../utils/reaction";
 import type { PostStats } from "./types";
 import { formatCount } from "./utils";
 import { PostReactionsModal } from "../PostReactionsModal";
+import { usePrefetchPostReactions } from "../../hooks/usePrefetchPostReactions";
 
 type PostReactionSummaryProps = {
   postId: string;
@@ -31,6 +32,11 @@ export function PostReactionSummary({
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const initialSummary = optimisticSummary ?? stats?.reactionSummary ?? null;
+  const prefetchReactions = usePrefetchPostReactions({ postId });
+
+  const handlePrefetch = useCallback(() => {
+    prefetchReactions();
+  }, [prefetchReactions]);
 
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
@@ -41,16 +47,12 @@ export function PostReactionSummary({
     }
   };
 
-  if (chips.length === 0 && typeof stats?.reactions !== "number") {
-    return null;
-  }
-
   const summaryContent =
     chips.length === 0
       ? [
           <span
             key="placeholder"
-            className={`inline-flex items-center gap-2 rounded-full border px-2 py-0.5 ${"border-border/60"}`}
+            className={`inline-flex items-center gap-1 px-1 py-0.5 `}
           >
             <span>👍</span>
             <span className="font-semibold">0</span>
@@ -64,7 +66,7 @@ export function PostReactionSummary({
           return (
             <span
               key={emoji}
-              className={`inline-flex items-center gap-2 rounded-full border px-2 py-0.5 ${"border-border/60"}`}
+              className={`inline-flex items-center gap-1 px-1 py-0.5`}
             >
               <span aria-hidden="true">{displayEmoji}</span>
               <span className="font-semibold">{formatCount(count)}</span>
@@ -79,6 +81,8 @@ export function PostReactionSummary({
         tabIndex={0}
         onClick={handleOpenModal}
         onKeyDown={handleKeyDown}
+        onMouseEnter={handlePrefetch}
+        onFocus={handlePrefetch}
         className="curaor-pointer flex items-center gap-1 cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
         aria-label="View all reactions"
       >

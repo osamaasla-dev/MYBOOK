@@ -24,9 +24,9 @@ export function computePostDecayFactor(
 }
 
 export function computeEngagementScore(candidate: PostCandidate) {
-  const { likesCount, commentsCount, sharesCount, viewCount } = candidate;
+  const { reactionsCount, commentsCount, sharesCount, viewCount } = candidate;
   return (
-    likesCount * ENGAGEMENT_LIKE_WEIGHT +
+    reactionsCount * ENGAGEMENT_LIKE_WEIGHT +
     commentsCount * ENGAGEMENT_COMMENT_WEIGHT +
     sharesCount * ENGAGEMENT_SHARE_WEIGHT +
     viewCount * ENGAGEMENT_VIEW_WEIGHT

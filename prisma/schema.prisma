@@ -906,15 +906,7 @@ model MessageReceipt {
   @@index([messageId, status])
 }
 
-enum NotificationType {
-  LIKE
-  COMMENT
-  FOLLOW
-  FRIEND
-  MENTION
-  REPLY
-  POST
-}
+
 
 model UserInteractionStats {
   id            String   @id @default(cuid())
@@ -926,22 +918,23 @@ model UserInteractionStats {
   targetUser    User     @relation("UserInteractionTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
   
   // Counters
-  messagesCount Int      @default(0)
-  likesCount    Int      @default(0)
-  commentsCount Int      @default(0)
-  profileVisits Int      @default(0)
-
+  messagesCount   Int      @default(0)
+  reactionsCount  Int      @default(0) 
+  commentsCount   Int      @default(0)
+  sharesCount     Int      @default(0)  
+  profileVisits   Int      @default(0)
 
   // Timers
-  lastMessageAt    DateTime?
-  lastLikeAt       DateTime?
-  lastCommentAt    DateTime?
-  lastVisitAt      DateTime?
+  lastMessageAt     DateTime?
+  lastReactionAt    DateTime? 
+  lastCommentAt     DateTime?
+  lastShareAt       DateTime? 
+  lastVisitAt       DateTime?
   lastInteractionAt DateTime?
 
   // Status
-  isFriend    Boolean @default(false)
-  isFollowing Boolean @default(false)
+  isFriend     Boolean @default(false)
+  isFollowing  Boolean @default(false)
 
   // Scores
   interactionWeight Float @default(0)
@@ -952,6 +945,16 @@ model UserInteractionStats {
   @@unique([userId, targetUserId])
   @@index([userId])
   @@index([targetUserId])
+}
+
+enum NotificationType {
+  LIKE
+  COMMENT
+  FOLLOW
+  FRIEND
+  MENTION
+  REPLY
+  POST
 }
 
 enum Visibility {

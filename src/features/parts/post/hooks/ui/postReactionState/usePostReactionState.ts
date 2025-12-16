@@ -2,6 +2,13 @@
 
 import { useCallback } from "react";
 
+import { useCurrentUser } from "@/features/hooks";
+import { buildUserChannel } from "@/features/utils/realtime";
+import { usePusherChannel } from "@/hooks/usePusherChannel";
+import {
+  POST_REACTION_EVENT,
+  type PostReactionEventPayload,
+} from "../../../events/postReactionEvent";
 import type { PostReactionType } from "../../../constants/reactions";
 import { useReactToPost } from "../../useReactToPost";
 import { useRemovePostReaction } from "../../useRemovePostReaction";
@@ -17,6 +24,7 @@ export function usePostReactionState({
   initialReaction = null,
   initialSummary,
 }: UsePostReactionStateOptions): UsePostReactionStateResult {
+  const { data: currentUser } = useCurrentUser();
   const {
     actionIdRef,
     resolvedActionIdRef,
@@ -30,6 +38,27 @@ export function usePostReactionState({
 
   const reactMutation = useReactToPost();
   const removeMutation = useRemovePostReaction();
+  const channelName = currentUser?.id ? buildUserChannel(currentUser.id) : "";
+
+  const handleRealtimeReaction = useCallback(
+    (payload?: PostReactionEventPayload) => {
+      if (!payload || payload.postId !== postId) return;
+
+      setOptimisticSummary(() => {
+        committedSummaryRef.current = payload.reactionSummary ?? null;
+        return payload.reactionSummary ?? null;
+      });
+      // Placeholder for future stats syncing (comments, shares, etc.)
+    },
+    [committedSummaryRef, postId, setOptimisticSummary]
+  );
+
+  usePusherChannel<PostReactionEventPayload>({
+    channelName,
+    event: POST_REACTION_EVENT,
+    enabled: Boolean(channelName),
+    onEvent: handleRealtimeReaction,
+  });
 
   const startAction = useCallback(() => {
     actionIdRef.current += 1;

@@ -1,32 +1,47 @@
-import { RankedPost } from "@/features/pages/home/utils/posts/post-ranking";
+import type { FeedPost } from "@/features/pages/home/utils/posts/feed-response";
+import type { PostCardMedia } from "./types";
 import { PostCardProps } from "./types";
 
-export function buildPostCardPropsFromRankedPost(
-  post: RankedPost
-): PostCardProps {
+const MEDIA_TYPES: PostCardMedia["type"][] = [
+  "IMAGE",
+  "VIDEO",
+  "AUDIO",
+  "DOCUMENT",
+];
+
+function toPostCardMediaType(
+  type: string | null | undefined
+): PostCardMedia["type"] {
+  if (type && MEDIA_TYPES.includes(type as PostCardMedia["type"])) {
+    return type as PostCardMedia["type"];
+  }
+  return "IMAGE";
+}
+
+export function buildPostCardPropsFromFeedPost(post: FeedPost): PostCardProps {
   return {
     postId: post.postId,
     author: {
       name: post.author.name ?? post.author.username ?? "User",
       username: post.author.username ?? undefined,
       avatarUrl: post.author.avatarUrl ?? undefined,
-
-      isFollowing: post.viewerRelationship.isFollower,
-      isFriend: post.viewerRelationship.isFriend,
-      isSelf: post.viewerRelationship.isSelf,
+      isFollowing: post.author.isFollowing,
+      isFriend: post.author.isFriend,
+      isSelf: post.author.isSelf,
     },
     timestamp: post.publishedAt,
     content: {
       text: post.content.text ?? "This post has no text.",
       media:
-        post.content.media?.map((item) => ({
-          id: item.id,
-          url: item.url,
-          type: item.type,
-        })) ?? [],
+        post.content.media?.map(
+          (item): PostCardMedia => ({
+            id: item.id,
+            url: item.url,
+            type: toPostCardMediaType(item.type),
+          })
+        ) ?? [],
     },
     stats: {
-      reactions: post.likesCount,
       comments: post.commentsCount,
       shares: post.sharesCount,
       viewerReaction: post.interactions.viewerReaction,
