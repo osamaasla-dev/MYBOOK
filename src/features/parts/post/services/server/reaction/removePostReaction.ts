@@ -1,7 +1,10 @@
 import { prisma } from "@/lib/prisma";
 
 import { buildReactionSummary } from "../../../utils/reaction";
-import { broadcastPostReactionEvent } from "../../../utils/realtime";
+import {
+  broadcastPostDetailMetaEvent,
+  broadcastPostReactionEvent,
+} from "../../../utils/realtime";
 import type { PostReactionType } from "../../../constants/reactions";
 import { cancelPostReactionNotification } from "../reactionNotifications";
 
@@ -81,8 +84,16 @@ export async function removePostReaction({
       reactorName: reactor?.name ?? "Someone",
       postAuthorId,
       operation: "removed",
+      reactionSummary: result.reactionSummary ?? null,
+      reactionsCount: result.reactionsCount,
     });
   }
+
+  await broadcastPostDetailMetaEvent({
+    postId,
+    reactionsCount: result.reactionsCount,
+    reactionSummary: result.reactionSummary ?? null,
+  });
 
   return result;
 }

@@ -8,6 +8,7 @@ import type {
 import { MAX_NOTIFICATIONS_LIMIT } from "../../schema";
 import { prisma } from "@/lib/prisma";
 import { getBlockedUserIds } from "@/features/services/server/blockedUsers";
+import { groupNotificationItems } from "./groupNotificationItems";
 
 export async function fetchUserNotifications({
   userId,
@@ -101,8 +102,10 @@ export async function fetchUserNotifications({
     },
   }));
 
+  const groupedItems = groupNotificationItems(items);
+
   return {
-    items,
+    items: groupedItems,
     nextCursor,
     hasNextPage: Boolean(nextCursor),
   };

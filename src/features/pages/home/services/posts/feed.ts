@@ -5,6 +5,7 @@ import {
   createFeedRelationshipSnapshot,
   type FeedPost,
 } from "@/features/pages/home/utils/posts/feed-response";
+import { buildFeedPost } from "@/features/parts/post/utils";
 
 type FetchFeedPostsParams = {
   viewerId: string;
@@ -84,43 +85,11 @@ export async function fetchFeedPostsForViewer({
       const viewerReaction =
         (post.reactions[0]?.emoji as PostReactionType | undefined) ?? null;
 
-      const feedPost: FeedPost = {
-        postId: post.id,
-        author: {
-          id: post.author.id,
-          name: post.author.name ?? post.author.username ?? "User",
-          username: post.author.username ?? undefined,
-          avatarUrl: post.author.avatarUrl ?? undefined,
-          isVerified: post.author.isVerified,
-          isPrivate: post.author.isPrivate,
-          isFollowing: relationship.isFollower,
-          isFriend: relationship.isFriend,
-          isSelf: relationship.isSelf,
-        },
-        publishedAt: post.publishedAt,
-        content: {
-          text: post.content ?? null,
-          richText: post.richContent ?? null,
-          media: post.media.map((item) => ({
-            id: item.id,
-            url: item.url,
-            type: item.type,
-          })),
-          linkPreview: post.linkPreview ?? null,
-        },
-        reactionsCount: post.reactionsCount,
-        commentsCount: post.commentsCount,
-        sharesCount: post.sharesCount,
-        viewCount: post.viewCount,
-        interactions: {
-          hasLiked: Boolean(viewerReaction),
-          hasCommented: false,
-          hasShared: false,
-          viewerReaction,
-        },
-        reactionSummary:
-          (post.reactionSummary as Record<string, number> | null) ?? undefined,
-      };
+      const feedPost: FeedPost = buildFeedPost({
+        post,
+        relationship,
+        viewerReaction,
+      });
 
       return feedPost;
     })

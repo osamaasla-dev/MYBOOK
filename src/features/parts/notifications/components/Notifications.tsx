@@ -16,6 +16,7 @@ import type { NotificationListItem } from "../types";
 import { useMarkNotificationRead } from "../hooks/useMarkNotificationRead";
 import { useRealtimeNotificationToasts } from "../hooks/toasts/useRealtimeNotificationToasts";
 import type { NotificationTab } from "../constants";
+import { NOTIFICATION_PAGE_SIZE } from "../constants";
 import { notificationsQueryKey } from "../hooks/useNotifications";
 
 import {
@@ -38,7 +39,10 @@ export function Notifications() {
     hasNextPage,
     isFetchingNextPage,
     isFetching,
-  } = useNotifications({ initialLimit: 10, tab: currentTab });
+  } = useNotifications({
+    initialLimit: NOTIFICATION_PAGE_SIZE,
+    tab: currentTab,
+  });
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const listRef = useRef<HTMLDivElement | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -70,7 +74,6 @@ export function Notifications() {
   useRealtimeNotificationToasts();
 
   useInfiniteScroll({
-    containerRef: listRef,
     sentinelRef,
     hasNextPage: Boolean(hasNextPage),
     isFetching: isFetchingNextPage,

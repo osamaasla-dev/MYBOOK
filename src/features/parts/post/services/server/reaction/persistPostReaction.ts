@@ -4,7 +4,10 @@ import {
   buildReactionSummary,
   type ReactionOperation,
 } from "../../../utils/reaction";
-import { broadcastPostReactionEvent } from "../../../utils/realtime";
+import {
+  broadcastPostDetailMetaEvent,
+  broadcastPostReactionEvent,
+} from "../../../utils/realtime";
 import {
   upsertPostReactionNotification,
   cancelPostReactionNotification,
@@ -132,6 +135,12 @@ export async function persistPostReaction({
       });
     }
   }
+
+  await broadcastPostDetailMetaEvent({
+    postId,
+    reactionsCount: result.reactionsCount,
+    reactionSummary: result.reactionSummary ?? null,
+  });
 
   return result;
 }

@@ -36,7 +36,7 @@ export type CancelReactionNotificationInput = {
   tx?: PrismaTransaction;
 };
 
-const NOTIFICATION_TYPE = NotificationType.LIKE;
+const NOTIFICATION_TYPE = NotificationType.REACTION;
 
 function getClient(tx?: PrismaTransaction): Client {
   return tx ?? prisma;
@@ -121,6 +121,7 @@ export async function upsertPostReactionNotification({
         data: {
           metadata: nextMeta as Prisma.JsonObject,
           isRead: false,
+          createdAt: new Date(),
         },
       });
 

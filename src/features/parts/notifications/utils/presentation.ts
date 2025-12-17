@@ -13,7 +13,7 @@ const builders: Partial<Record<NotificationType, Builder>> = {
   [NotificationType.FOLLOW]: followPresentationBuilder,
   [NotificationType.FRIEND]: friendPresentationBuilder,
   [NotificationType.POST]: postPresentationBuilder,
-  [NotificationType.LIKE]: reactionPresentationBuilder,
+  [NotificationType.REACTION]: reactionPresentationBuilder,
 };
 
 export function getNotificationPresentation(

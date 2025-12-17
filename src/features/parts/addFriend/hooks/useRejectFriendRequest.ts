@@ -1,6 +1,10 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  notifyManager,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
 import friendMessages from "@/lib/messages/addFriend";
@@ -10,7 +14,7 @@ import {
 } from "../services/addFriendApi";
 import { profileQueryKey } from "@/features/pages/profile/hooks/useProfile";
 import type { ProfileRouteData } from "@/features/pages/profile/types";
-import { notificationsQueryKey } from "../../notifications/hooks/useNotifications";
+import { invalidateNotificationTabQueries } from "../../notifications/hooks/notificationQueryUtils";
 import { relationsQueryKey } from "@/features/pages/relations/hooks/useRelationsInfiniteList";
 
 export type UseRejectFriendRequestArgs = {
@@ -52,14 +56,12 @@ export function useRejectFriendRequest({
 
       toast.dismiss();
       toast.success(message ?? friendMessages.FEEDBACK.rejectRequestSuccess);
-      await queryClient.invalidateQueries({
-        queryKey: notificationsQueryKey(false),
-      });
-      await queryClient.invalidateQueries({
-        queryKey: notificationsQueryKey(true),
-      });
-      await queryClient.invalidateQueries({
-        queryKey: relationsQueryKey("friend-requests"),
+
+      notifyManager.batch(() => {
+        invalidateNotificationTabQueries(queryClient);
+        queryClient.invalidateQueries({
+          queryKey: relationsQueryKey("friend-requests"),
+        });
       });
     },
     onError: (error) => {

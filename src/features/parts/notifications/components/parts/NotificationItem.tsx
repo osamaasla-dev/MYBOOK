@@ -7,8 +7,8 @@ import type { NotificationListItem } from "@/features/parts/notifications/types"
 import { getNotificationPresentation } from "@/features/parts/notifications/utils/presentation";
 import { FollowRequestActions } from "@/features/parts/follow/components/FollowRequestActions";
 import { AcceptRejectFriendButtons } from "@/features/parts/addFriend/components/AcceptRejectFriendButtons";
-import { usePostDetailsModalNavigation } from "@/features/parts/post/hooks";
 import { NotificationContent } from "./NotificationContent";
+import { usePostDetailsModalNavigation } from "@/features/parts/postDetails/hooks";
 
 type NotificationItemProps = {
   notification: NotificationListItem;

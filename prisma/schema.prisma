@@ -948,7 +948,8 @@ model UserInteractionStats {
 }
 
 enum NotificationType {
-  LIKE
+  REACTION
+  SHARE
   COMMENT
   FOLLOW
   FRIEND

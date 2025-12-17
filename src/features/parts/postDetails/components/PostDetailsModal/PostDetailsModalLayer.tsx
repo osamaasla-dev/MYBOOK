@@ -1,7 +1,7 @@
 "use client";
 
-import { PostDetailsModal } from "../PostDetailsModal";
 import { usePostDetailsModalNavigation } from "../../hooks";
+import { PostDetailsModal } from "../PostDetailsModal";
 
 export function PostDetailsModalLayer() {
   const { currentPostId, isPostDetailsOpen, closePostDetails } =

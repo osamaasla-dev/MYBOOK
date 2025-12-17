@@ -12,7 +12,7 @@ import {
   acceptFriendRequestApi,
   type AcceptFriendRequestApiResponse,
 } from "../services/addFriendApi";
-import { notificationsQueryKey } from "../../notifications/hooks/useNotifications";
+import { invalidateNotificationTabQueries } from "../../notifications/hooks/notificationQueryUtils";
 import { profileQueryKey } from "@/features/pages/profile/hooks/useProfile";
 
 export type UseAcceptFriendRequestArgs = {
@@ -41,13 +41,7 @@ export function useAcceptFriendRequest({
         queryClient.invalidateQueries({
           queryKey: profileQueryKey(profileUsername),
         });
-        queryClient.invalidateQueries({
-          queryKey: notificationsQueryKey(false),
-        });
-        queryClient.invalidateQueries({
-          queryKey: notificationsQueryKey(true),
-        });
-
+        invalidateNotificationTabQueries(queryClient);
         queryClient.invalidateQueries({ queryKey: ["relations"] });
       });
     },

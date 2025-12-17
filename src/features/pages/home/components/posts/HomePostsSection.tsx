@@ -8,8 +8,7 @@ import { PostTrigger } from "@/features/parts/post/components/PostTrigger";
 import { QueryError, QueryLoading } from "@/components";
 import { EmptyState } from "@/components/EmptyState";
 import { FeedList } from "./FeedList";
-
-const INITIAL_PAGE_SIZE = 5;
+import { INITIAL_PAGE_SIZE } from "../../constants";
 
 export function HomePostsSection() {
   const {
@@ -25,11 +24,9 @@ export function HomePostsSection() {
   const hasMore = data?.hasMore ?? false;
   const isInitialLoading = isLoading && !data;
 
-  const feedContainerRef = useRef<HTMLDivElement | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   useInfiniteScroll({
-    containerRef: feedContainerRef,
     sentinelRef,
     hasNextPage: hasMore,
     isFetching: isFetchingNextPage,
@@ -50,7 +47,7 @@ export function HomePostsSection() {
     <section className="space-y-6 col-span-3">
       <PostTrigger />
 
-      <div ref={feedContainerRef} className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6">
         {!posts.length ? (
           <EmptyState title={"No posts found"} className="bg-white" />
         ) : (

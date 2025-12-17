@@ -1,7 +1,6 @@
 import { useEffect, type RefObject } from "react";
 
 export type UseInfiniteScrollOptions = {
-  containerRef?: RefObject<HTMLElement | null>;
   sentinelRef: RefObject<HTMLElement | null>;
   hasNextPage: boolean;
   isFetching: boolean;
@@ -12,7 +11,6 @@ export type UseInfiniteScrollOptions = {
 };
 
 export function useInfiniteScroll({
-  containerRef,
   sentinelRef,
   hasNextPage,
   isFetching,
@@ -28,7 +26,6 @@ export function useInfiniteScroll({
     let rafId: number | null = null;
 
     const observe = () => {
-      const container = containerRef?.current ?? null;
       const sentinel = sentinelRef.current;
 
       if (!sentinel) {
@@ -44,7 +41,7 @@ export function useInfiniteScroll({
           }
         },
         {
-          root: container ?? undefined,
+          root: undefined,
           rootMargin,
           threshold,
         }
@@ -64,7 +61,6 @@ export function useInfiniteScroll({
       }
     };
   }, [
-    containerRef,
     sentinelRef,
     hasNextPage,
     isFetching,

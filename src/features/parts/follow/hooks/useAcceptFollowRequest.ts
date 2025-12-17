@@ -11,7 +11,7 @@ import { followMessages } from "@/lib/messages";
 import type { FollowActionInput, FollowApiResponse } from "../types";
 import { acceptFollowRequestApi } from "../services/followApi";
 import { relationsQueryKey } from "@/features/pages/relations/hooks/useRelationsInfiniteList";
-import { notificationsQueryKey } from "@/features/parts/notifications/hooks/useNotifications";
+import { invalidateNotificationTabQueries } from "@/features/parts/notifications/hooks";
 
 const RELATION_TABS_TO_INVALIDATE = ["follow-requests", "followers"] as const;
 
@@ -33,12 +33,7 @@ export function useAcceptFollowRequest() {
         RELATION_TABS_TO_INVALIDATE.forEach((tab) =>
           queryClient.invalidateQueries({ queryKey: relationsQueryKey(tab) })
         );
-        queryClient.invalidateQueries({
-          queryKey: notificationsQueryKey(false),
-        });
-        queryClient.invalidateQueries({
-          queryKey: notificationsQueryKey(true),
-        });
+        invalidateNotificationTabQueries(queryClient);
       });
     },
     onError: (err) => {

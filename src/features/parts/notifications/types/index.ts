@@ -11,6 +11,11 @@ export type NotificationActorSummary = {
   name: string;
 };
 
+export type NotificationGroupingSummary = {
+  totalActors: number;
+  othersCount: number;
+};
+
 export type NotificationListItem = {
   id: string;
   type: NotificationType;
@@ -23,6 +28,7 @@ export type NotificationListItem = {
     postId: string | null;
     commentId: string | null;
   };
+  grouping?: NotificationGroupingSummary | null;
 };
 
 export type FetchNotificationsInput = {

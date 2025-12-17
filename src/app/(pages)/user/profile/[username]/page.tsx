@@ -1,5 +1,5 @@
 import { ProfilePage } from "@/features/pages/profile/page";
-import { PostDetailsModalLayer } from "@/features/parts/post/components/PostDetailsModal/PostDetailsModalLayer";
+import { PostDetailsModalLayer } from "@/features/parts/postDetails/components/PostDetailsModal/PostDetailsModalLayer";
 
 type RouteProps = {
   params: { username: string };

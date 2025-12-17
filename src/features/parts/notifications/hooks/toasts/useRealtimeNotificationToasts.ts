@@ -8,12 +8,12 @@ import {
   usePusherChannel,
   type UsePusherBinding,
 } from "@/hooks/usePusherChannel";
-import { usePostDetailsModalNavigation } from "@/features/parts/post/hooks";
 
 import { buildFollowToastBindings } from "./followToastBindings";
 import { buildFriendToastBindings } from "./friendToastBindings";
 import { buildPostToastBindings } from "./postToastBindings";
 import { buildReactionToastBindings } from "./reactionToastBindings";
+import { usePostDetailsModalNavigation } from "@/features/parts/postDetails/hooks";
 
 export function useRealtimeNotificationToasts() {
   const { data: currentUser } = useCurrentUser();

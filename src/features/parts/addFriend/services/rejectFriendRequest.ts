@@ -4,10 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { friendMessages } from "@/lib/messages";
 import { invalidateProfileCache } from "@/features/pages/profile/utils";
 import { broadcastFriendEvent } from "../utils/realtime";
-import {
-  createFriendNotification,
-  updateFriendNotification,
-} from "./friendNotifications";
+import { updateFriendNotification } from "./friendNotifications";
 
 export type RejectFriendRequestInput = {
   viewerId: string;
@@ -59,16 +56,6 @@ export async function rejectFriendRequest({
         status: "rejected",
       });
     }
-
-    await createFriendNotification(tx, {
-      requesterId: viewerId,
-      requesterUsername,
-      targetUserId: requesterId,
-      targetUsername: requesterUsername,
-      requestId: pendingRequest.id,
-      kind: "friend-request-rejected",
-      status: "rejected",
-    });
 
     return { requestId: pendingRequest.id };
   });

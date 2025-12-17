@@ -35,6 +35,8 @@ export function usePrefetchPostReactions({
       const targetTab = overrides?.tab ?? tab;
       const targetLimit = overrides?.limit ?? limit;
       const queryKey = postReactionsQueryKey(postId, targetTab);
+      const existing = queryClient.getQueryData(queryKey);
+      if (existing) return;
 
       await queryClient.prefetchInfiniteQuery({
         queryKey,
@@ -48,6 +50,8 @@ export function usePrefetchPostReactions({
         initialPageParam: undefined as string | undefined,
         getNextPageParam: (lastPage: PostReactionsResponse) =>
           lastPage.nextCursor ?? undefined,
+        staleTime: 60_000,
+        gcTime: 60_000,
       });
     },
     [postId, tab, limit, queryClient]

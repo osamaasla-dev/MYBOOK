@@ -7,17 +7,20 @@ import { CommentButton } from "./CommentButton";
 import { ShareButton } from "./ShareButton";
 import { PostReactionSummary } from "./PostReactionSummary";
 import { usePostReactionState } from "../../hooks/ui/postReactionState";
+import { usePrefetchPostDetails } from "@/features/parts/postDetails/hooks";
 
 type PostCardFooterProps = {
   postId: string;
   stats?: PostStats;
   onCommentClick?: () => void;
+  isCommentDisabled?: boolean;
 };
 
 export function PostCardFooter({
   postId,
   stats,
   onCommentClick,
+  isCommentDisabled = false,
 }: PostCardFooterProps) {
   const initialReaction = useMemo(
     () => stats?.viewerReaction ?? null,
@@ -38,6 +41,8 @@ export function PostCardFooter({
     initialReaction,
     initialSummary,
   });
+
+  const prefetchPostDetails = usePrefetchPostDetails({ postId });
 
   return (
     <footer className="mt-4 space-y-3">
@@ -65,7 +70,11 @@ export function PostCardFooter({
           onReactionSelect={handleReactionSelect}
           onReactionClear={handleRemove}
         />
-        <CommentButton onClick={onCommentClick} />
+        <CommentButton
+          onClick={onCommentClick}
+          onHover={prefetchPostDetails}
+          disabled={isCommentDisabled}
+        />
         <ShareButton />
       </div>
     </footer>

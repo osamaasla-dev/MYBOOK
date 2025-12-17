@@ -1,3 +1,5 @@
+export const NOTIFICATION_PAGE_SIZE = 10;
+
 export const NOTIFICATION_TAB_VALUES = ["all", "read", "unread"] as const;
 
 export type NotificationTab = (typeof NOTIFICATION_TAB_VALUES)[number];
