@@ -3,10 +3,12 @@ import { prisma } from "@/lib/prisma";
 import { buildReactionSummary } from "../../../utils/reaction";
 import {
   broadcastPostDetailMetaEvent,
+  broadcastPostMetaEvent,
   broadcastPostReactionEvent,
 } from "../../../utils/realtime";
 import type { PostReactionType } from "../../../constants/reactions";
 import { cancelPostReactionNotification } from "../reactionNotifications";
+import { applyNegativeSignal } from "@/features/parts/interaction/services";
 
 import type { RemovePostReactionParams, PostReactionResult } from "./types";
 
@@ -46,7 +48,11 @@ export async function removePostReaction({
           reactionsCount: summary.reactionsCount,
           reactionSummary: summary.reactionSummary,
         },
-        select: { authorId: true },
+        select: {
+          authorId: true,
+          commentsCount: true,
+          sharesCount: true,
+        },
       });
 
       const postAuthorId = post?.authorId ?? null;
@@ -64,6 +70,8 @@ export async function removePostReaction({
           reaction: null,
           operation: "removed",
           ...summary,
+          commentsCount: post?.commentsCount ?? undefined,
+          sharesCount: post?.sharesCount ?? undefined,
         } satisfies PostReactionResult,
         removedReaction,
         postAuthorId,
@@ -84,8 +92,18 @@ export async function removePostReaction({
       reactorName: reactor?.name ?? "Someone",
       postAuthorId,
       operation: "removed",
-      reactionSummary: result.reactionSummary ?? null,
-      reactionsCount: result.reactionsCount,
+    });
+
+    void applyNegativeSignal({
+      actorId: userId,
+      targetUserId: postAuthorId,
+      type: "unreact",
+    }).catch((error) => {
+      console.warn("Failed to apply negative signal for reaction removal", {
+        error,
+        actorId: userId,
+        targetUserId: postAuthorId,
+      });
     });
   }
 
@@ -93,7 +111,18 @@ export async function removePostReaction({
     postId,
     reactionsCount: result.reactionsCount,
     reactionSummary: result.reactionSummary ?? null,
+    commentsCount: result.commentsCount,
+    sharesCount: result.sharesCount,
   });
 
+  await broadcastPostMetaEvent({
+    postAuthorId,
+    initiatorId: userId,
+    postId,
+    reactionsCount: result.reactionsCount,
+    reactionSummary: result.reactionSummary ?? null,
+    commentsCount: result.commentsCount,
+    sharesCount: result.sharesCount,
+  });
   return result;
 }

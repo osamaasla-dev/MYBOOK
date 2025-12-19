@@ -1,4 +1,5 @@
 import type { FeedRelationshipSnapshot } from "@/features/pages/home/utils/posts/feed-response";
+import type { PostVisibilityPreference, Visibility } from "@prisma/client";
 import type {
   FeedPost,
   FeedPostAuthor,
@@ -14,6 +15,8 @@ export type FeedPostRecord = {
   richContent: unknown | null;
   linkPreview: unknown | null;
   publishedAt: Date;
+  visibility: Visibility;
+  visibilityPreference: PostVisibilityPreference;
   reactionsCount: number;
   commentsCount: number;
   sharesCount: number;
@@ -26,6 +29,9 @@ export type FeedPostRecord = {
     avatarUrl: string | null;
     isVerified: boolean;
     isPrivate: boolean;
+    privacySetting?: {
+      postsVisibility: Visibility;
+    } | null;
   };
   media: {
     id: string;

@@ -8,6 +8,9 @@ import { postDetailsLogger } from "../../utils/logger";
 import { fetchPostDetails } from "./fetchPostDetails";
 import { fetchViewerPostReaction } from "./fetchViewerPostReaction";
 import { resolvePostAuthorRelationship } from "./resolvePostAuthorRelationship";
+import { resolveEffectiveVisibility } from "@/features/pages/home/services/posts/post-ranking/privacy";
+import { canViewerSeePost } from "@/features/pages/home/services/posts/post-ranking/visibility";
+import { Visibility } from "@prisma/client";
 
 type GetPostDetailsForViewerInput = {
   postId: string;
@@ -49,6 +52,27 @@ export async function getPostDetailsForViewer({
   });
 
   log.debug("Built post details payload");
+
+  const authorDefaultVisibility =
+    postRecord.author.privacySetting?.postsVisibility ?? Visibility.PUBLIC;
+  const effectiveVisibility = resolveEffectiveVisibility(
+    postRecord.visibility,
+    postRecord.visibilityPreference,
+    authorDefaultVisibility
+  );
+
+  if (!canViewerSeePost(effectiveVisibility, relationship)) {
+    log.warn(
+      {
+        postId,
+        viewerId,
+        visibility: postRecord.visibility,
+        visibilityPreference: postRecord.visibilityPreference,
+      },
+      "Viewer not permitted to see post"
+    );
+    return null;
+  }
 
   return { post: feedPost, viewerReaction };
 }

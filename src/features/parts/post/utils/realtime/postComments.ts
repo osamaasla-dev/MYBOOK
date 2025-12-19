@@ -1,17 +1,13 @@
 import { pusherServer } from "@/lib/pusher/server";
 import { buildUserChannel } from "@/features/utils/realtime";
 
-import { POST_COMMENT_EVENT } from "../../events/postCommentEvent";
-import type { ReactionSummary } from "../reaction";
+import {
+  POST_COMMENT_EVENT,
+  type PostCommentEventPayload,
+} from "../../events/postCommentEvent";
 import { postRealtimeLogger } from "./logger";
 
-type PostCommentOwnerEventPayload = {
-  postId: string;
-  commentAuthorId: string;
-  reactionSummary: ReactionSummary | null;
-};
-
-export type BroadcastPostCommentInput = PostCommentOwnerEventPayload & {
+export type BroadcastPostCommentInput = PostCommentEventPayload & {
   postAuthorId: string;
 };
 

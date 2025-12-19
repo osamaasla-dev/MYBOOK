@@ -1,4 +1,3 @@
-import { redis } from "@/lib/redis";
 import type { Logger } from "pino";
 
 import {
@@ -6,10 +5,7 @@ import {
   POST_VIEW_RATE_LIMIT_NAMESPACE,
   POST_VIEW_RATE_LIMIT_WINDOW_SECONDS,
 } from "./constants";
-
-function rateLimitKey(viewerKey: string, windowSeconds: number) {
-  return `${POST_VIEW_RATE_LIMIT_NAMESPACE}:${viewerKey}:${windowSeconds}`;
-}
+import { consumeRateLimit } from "@/features/utils/rateLimit";
 
 export async function consumePostViewRateLimit(
   viewerKey: string | null,
@@ -21,16 +17,13 @@ export async function consumePostViewRateLimit(
 ): Promise<boolean> {
   if (!viewerKey) return false;
 
-  const redisKey = rateLimitKey(viewerKey, windowSeconds);
-
   try {
-    const current = await redis.incr(redisKey);
-
-    if (current === 1) {
-      await redis.expire(redisKey, windowSeconds);
-    }
-
-    return current > limit;
+    return await consumeRateLimit({
+      namespace: POST_VIEW_RATE_LIMIT_NAMESPACE,
+      identifiers: [{ key: "viewer", value: viewerKey }],
+      windowSeconds,
+      maxRequests: limit,
+    });
   } catch (error) {
     log?.error({ viewerKey, error }, "consumePostViewRateLimit failed");
     return false;

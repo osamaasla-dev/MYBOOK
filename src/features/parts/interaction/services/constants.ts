@@ -4,9 +4,9 @@ export const COUNTER_FIELD_MAP: Record<
   InteractionType,
   { counter: string; timestamp: string }
 > = {
-  like: {
-    counter: "likesCount",
-    timestamp: "lastLikeAt",
+  react: {
+    counter: "reactionsCount",
+    timestamp: "lastReactionAt",
   },
   comment: {
     counter: "commentsCount",
@@ -25,7 +25,7 @@ export const COUNTER_FIELD_MAP: Record<
 export const INTERACTION_WEIGHTS: Record<InteractionWeightKey, number> = {
   message: 5,
   comment: 3,
-  like: 1,
+  react: 1,
   profileVisit: 0.5,
   friend: 10,
   follow: 5,
@@ -34,5 +34,5 @@ export const INTERACTION_WEIGHTS: Record<InteractionWeightKey, number> = {
   hidePost: -5,
   report: -12,
   notInterested: -6,
-  dislike: -1,
+  unreact: -1,
 };

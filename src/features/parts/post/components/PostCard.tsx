@@ -4,15 +4,13 @@ import { useCallback } from "react";
 
 import { cn } from "@/lib/utils";
 
-import { usePostViewObserver } from "../hooks";
+import { usePostViewObserver, useRealtimeSummary } from "../hooks";
 import type { PostCardProps } from "./PostCard/types";
 import { PostCardHeader } from "./PostCard/PostCardHeader";
 import { PostCardBody } from "./PostCard/PostCardBody";
 import { PostCardFooter } from "./PostCard/PostCardFooter";
 import { usePostDetailsModalNavigation } from "../../postDetails/hooks";
-
-const VIEW_THRESHOLD = 0.5;
-const VIEW_DWELL_MS = 3_000;
+import { VIEW_THRESHOLD, VIEW_DWELL_MS } from "../constants";
 
 export function PostCard({
   postId,
@@ -34,14 +32,21 @@ export function PostCard({
   }, [openPostDetails, postId]);
 
   const isDetailsOpen = currentPostId === postId;
+  const isViewerPostAuthor = Boolean(author?.isSelf);
+
+  const enableUserChannel = isViewerPostAuthor && !isDetailsOpen;
+  const enablePostDetailChannel = isDetailsOpen;
+
+  useRealtimeSummary({
+    postId,
+    enableUserChannel,
+    enablePostDetailChannel,
+  });
 
   return (
     <article
       ref={targetRef}
-      className={cn(
-        "rounded-xl border border-border/60 bg-white shadow-sm pt-4 ",
-        className
-      )}
+      className={cn("rounded-xl  bg-white shadow-sm pt-4 ", className)}
     >
       <PostCardHeader author={author} timestamp={timestamp} />
       <PostCardBody content={content} />
@@ -49,7 +54,7 @@ export function PostCard({
         postId={postId}
         stats={stats}
         onCommentClick={handleOpenDetails}
-        isCommentDisabled={isDetailsOpen}
+        isDetailsOpen={isDetailsOpen}
       />
     </article>
   );

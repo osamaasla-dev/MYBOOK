@@ -8,6 +8,7 @@ export type UseInfiniteScrollOptions = {
   rootMargin?: string;
   threshold?: number | number[];
   enabled?: boolean;
+  rootRef?: RefObject<HTMLElement | null>;
 };
 
 export function useInfiniteScroll({
@@ -18,9 +19,10 @@ export function useInfiniteScroll({
   rootMargin = "0px 0px 1px 0px",
   threshold = 0,
   enabled = true,
+  rootRef,
 }: UseInfiniteScrollOptions) {
   useEffect(() => {
-    if (!enabled || !hasNextPage || isFetching) return;
+    if (!enabled || !hasNextPage) return;
 
     let observer: IntersectionObserver | null = null;
     let rafId: number | null = null;
@@ -41,7 +43,7 @@ export function useInfiniteScroll({
           }
         },
         {
-          root: undefined,
+          root: rootRef?.current ?? null,
           rootMargin,
           threshold,
         }
@@ -68,5 +70,6 @@ export function useInfiniteScroll({
     rootMargin,
     threshold,
     enabled,
+    rootRef,
   ]);
 }

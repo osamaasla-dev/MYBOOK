@@ -11,15 +11,16 @@ import {
 } from "../../constants/reactions";
 
 import { motion, AnimatePresence } from "framer-motion";
+import { PostStats } from "./types";
 
 type ReactionButtonProps = {
-  currentReaction?: PostReactionType | null;
+  stats?: PostStats;
   onReactionSelect: (reactionId: PostReactionType) => void;
   onReactionClear?: () => void;
 };
 
 export function ReactionButton({
-  currentReaction = null,
+  stats,
   onReactionSelect,
   onReactionClear,
 }: ReactionButtonProps) {
@@ -56,7 +57,7 @@ export function ReactionButton({
     onReactionClear?.();
     setIsPickerOpen(false);
   };
-
+  const reaction = stats?.viewerReaction ?? null;
   return (
     <div ref={reactionPickerRef} className="relative flex flex-1">
       <Button
@@ -66,18 +67,17 @@ export function ReactionButton({
         aria-expanded={isPickerOpen}
         onClick={togglePicker}
       >
-        {currentReaction ? (
+        {reaction ? (
           <span className="mr-2 text-lg" aria-hidden="true">
-            {POST_REACTION_OPTIONS.find((item) => item.id === currentReaction)
+            {POST_REACTION_OPTIONS.find((item) => item.id === reaction)
               ?.emoji ?? "👍"}
           </span>
         ) : (
           <ThumbsUp className="mr-2 size-4" aria-hidden="true" />
         )}
         <span className="font-semibold">
-          {currentReaction
-            ? POST_REACTION_OPTIONS.find((opt) => opt.id === currentReaction)
-                ?.label
+          {reaction
+            ? POST_REACTION_OPTIONS.find((opt) => opt.id === reaction)?.label
             : "React"}
         </span>
       </Button>
@@ -93,7 +93,7 @@ export function ReactionButton({
             className="absolute bottom-full left-0 mb-2 rounded-2xl border border-border/60 bg-white shadow-xl"
           >
             <div className="flex items-center">
-              {currentReaction && onReactionClear && (
+              {reaction && onReactionClear && (
                 <button
                   type="button"
                   className="cursor-pointer group relative flex size-10 items-center justify-center rounded-xl text-2xl hover:bg-destructive/10"

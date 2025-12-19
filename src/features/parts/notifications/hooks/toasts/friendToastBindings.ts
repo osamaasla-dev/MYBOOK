@@ -14,8 +14,8 @@ type ToastHandler = (message: string) => string | number;
 type ToastMessageBuilder = (payload: FriendRealtimePayload) => string;
 
 const EVENT_TOASTERS: Partial<Record<FriendEventName, ToastHandler>> = {
-  [FRIEND_EVENTS.REQUEST]: toast.success,
-  [FRIEND_EVENTS.ACCEPTED]: toast.success,
+  [FRIEND_EVENTS.REQUEST]: toast,
+  [FRIEND_EVENTS.ACCEPTED]: toast,
 };
 
 const EVENT_MESSAGES: Partial<Record<FriendEventName, ToastMessageBuilder>> = {

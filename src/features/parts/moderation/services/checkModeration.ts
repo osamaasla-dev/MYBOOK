@@ -1,6 +1,7 @@
 import ModerationAPI from "@moderation-api/sdk";
 
-import { decideModerationAction } from "@/features/parts/moderation/constants/moderationThresholds";
+import { decideModerationAction } from "@/features/parts/moderation/utils";
+import { MODERATION_CHANNEL_NAME } from "../constants";
 import type {
   ModerationAPIResponse,
   ModerationCheckResult,
@@ -120,6 +121,7 @@ async function submitModerationContent(
 
   try {
     const result = (await moderationClient.content.submit({
+      channel: MODERATION_CHANNEL_NAME,
       content: normalizeContentInput(input),
     })) as ModerationAPIResponse;
 

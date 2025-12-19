@@ -1,10 +1,24 @@
 "use client";
 
-import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import type { PostReactionType } from "../constants/reactions";
 import { reactToPostApi } from "../services/client";
 import type { PostReactionResponse } from "../types";
+import type { FeedPost } from "@/features/pages/home/utils/posts/feed-response";
+import {
+  cancelRelatedQueries,
+  invalidateHomeFeed,
+  invalidatePostDetails,
+  optimisticUpdateFeed,
+  optimisticUpdatePostDetails,
+  type ReactionMutationContext,
+  type ReactionMutationVariables,
+} from "./utils/reactMutationHelpers";
+import {
+  HOME_FEED_QUERY_KEY,
+  type HomeFeedQueryData,
+} from "@/features/pages/home/hooks/useHomeFeed";
+import { postDetailsQueryKey } from "@/features/parts/postDetails/hooks";
 
 export const REACT_TO_POST_MUTATION_KEY = [
   "post",
@@ -12,23 +26,51 @@ export const REACT_TO_POST_MUTATION_KEY = [
   "react",
 ] as const;
 
-export type ReactToPostVariables = {
-  postId: string;
-  reaction: PostReactionType;
-  actionId?: number;
-};
+export function useReactToPost() {
+  const queryClient = useQueryClient();
 
-export function useReactToPost(
-  options?: UseMutationOptions<
+  return useMutation<
     PostReactionResponse,
     Error,
-    ReactToPostVariables,
-    unknown
-  >
-) {
-  return useMutation<PostReactionResponse, Error, ReactToPostVariables>({
+    ReactionMutationVariables,
+    ReactionMutationContext
+  >({
     mutationKey: REACT_TO_POST_MUTATION_KEY,
-    mutationFn: ({ postId, reaction }) => reactToPostApi(postId, reaction),
-    ...options,
+    mutationFn: ({ postId, reaction }) => {
+      if (!reaction) {
+        throw new Error("Reaction type is required.");
+      }
+      return reactToPostApi(postId, reaction);
+    },
+    onMutate: async (variables) => {
+      await cancelRelatedQueries(queryClient, variables.postId);
+      const previousHomeFeed =
+        queryClient.getQueryData<HomeFeedQueryData>(HOME_FEED_QUERY_KEY);
+      const previousPostDetails = queryClient.getQueryData<FeedPost>(
+        postDetailsQueryKey(variables.postId)
+      );
+      optimisticUpdateFeed(queryClient, variables);
+
+      optimisticUpdatePostDetails(queryClient, variables);
+      return { previousHomeFeed, previousPostDetails };
+    },
+    onSuccess: async (_data, variables) => {
+      await Promise.all([
+        invalidateHomeFeed(queryClient),
+        invalidatePostDetails(queryClient, variables.postId),
+      ]);
+    },
+    onError: async (_error, variables, context) => {
+      if (context?.previousHomeFeed) {
+        queryClient.setQueryData(HOME_FEED_QUERY_KEY, context.previousHomeFeed);
+      }
+
+      if (context?.previousPostDetails) {
+        queryClient.setQueryData(
+          postDetailsQueryKey(variables.postId),
+          context.previousPostDetails
+        );
+      }
+    },
   });
 }

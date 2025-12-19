@@ -1,4 +1,4 @@
-import { decideModerationAction } from "@/features/parts/moderation/constants/moderationThresholds";
+import { decideModerationAction } from "@/features/parts/moderation/utils";
 import { checkModerationSchema } from "@/features/parts/moderation/schemas/checkModerationSchema";
 import {
   checkModeration,
@@ -19,6 +19,7 @@ export async function POST(request: Request) {
   const { requestId, log } = await getRequestLog({ route: ROUTE });
 
   try {
+    log.info("moderation started");
     const body = await request.json();
     const parsed = checkModerationSchema.safeParse(body);
 

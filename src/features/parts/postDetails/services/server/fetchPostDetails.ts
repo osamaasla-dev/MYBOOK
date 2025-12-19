@@ -26,6 +26,8 @@ export async function fetchPostDetails({
       richContent: true,
       linkPreview: true,
       publishedAt: true,
+      visibility: true,
+      visibilityPreference: true,
       reactionsCount: true,
       commentsCount: true,
       sharesCount: true,
@@ -39,6 +41,11 @@ export async function fetchPostDetails({
           avatarUrl: true,
           isVerified: true,
           isPrivate: true,
+          privacySetting: {
+            select: {
+              postsVisibility: true,
+            },
+          },
         },
       },
       media: {

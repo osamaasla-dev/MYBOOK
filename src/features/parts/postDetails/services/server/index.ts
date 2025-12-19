@@ -2,3 +2,8 @@ export * from "./fetchPostDetails";
 export * from "./resolvePostAuthorRelationship";
 export * from "./fetchViewerPostReaction";
 export * from "./getPostDetailsForViewer";
+export * from "./comment/comments";
+export * from "./comment/fetchPostComments";
+export * from "./comment/commentAccess";
+export * from "./comment/commentContext";
+export * from "./comment/commentNotifications";

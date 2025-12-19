@@ -1,12 +1,15 @@
 "use client";
 
+import { useCallback, useRef } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { X } from "lucide-react";
 
-import { usePostDetails } from "../hooks";
-import { PostCard } from "../../post/components/PostCard";
-import { buildPostCardPropsFromFeedPost } from "../../post/components/PostCard/buildPost";
-import { QueryError, QueryLoading } from "@/components";
+import { usePostComments, usePostDetails } from "../hooks";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+import {
+  PostDetailsHeader,
+  PostDetailsFooter,
+  PostDetailsContent,
+} from "./PostDetailsModal/index";
 
 type PostDetailsModalProps = {
   postId: string;
@@ -36,43 +39,68 @@ export function PostDetailsModal({
   });
 
   const hasPost = Boolean(post);
-  const cardProps = post ? buildPostCardPropsFromFeedPost(post) : null;
+
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+
+  const {
+    data: commentsData,
+    isLoading: areCommentsLoading,
+    isError: areCommentsError,
+    isFetchingNextPage,
+    fetchNextPage,
+    refetch: refetchComments,
+  } = usePostComments({
+    postId,
+    enabled: open && hasPost,
+  });
+
+  const comments = commentsData?.items ?? [];
+  const hasMoreComments = commentsData?.hasMore ?? false;
+  const commentsEmpty =
+    !areCommentsLoading && !areCommentsError && comments.length === 0;
+
+  const loadMoreComments = useCallback(() => {
+    if (!hasMoreComments || isFetchingNextPage) {
+      return;
+    }
+    void fetchNextPage();
+  }, [fetchNextPage, hasMoreComments, isFetchingNextPage]);
+
+  useInfiniteScroll({
+    sentinelRef,
+    rootRef: scrollContainerRef,
+    hasNextPage: hasMoreComments,
+    isFetching: isFetchingNextPage,
+    onLoadMore: loadMoreComments,
+    enabled: open && hasPost,
+    rootMargin: "0px 0px 300px 0px",
+  });
 
   return (
     <Dialog.Root open={open} onOpenChange={handleOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex w-full max-w-3xl -translate-x-1/2 -translate-y-1/2 flex-col rounded-xl border border-border/60 bg-white shadow-2xl outline-none focus-visible:outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:zoom-in-90 data-[state=closed]:zoom-out-90">
-          <header className="flex items-center justify-between border-b border-border/60 px-2 ">
-            <Dialog.Title className="text-lg font-semibold text-foreground">
-              Post details
-            </Dialog.Title>
-            <Dialog.Close asChild>
-              <button
-                type="button"
-                className="cursor-pointer flex size-9 items-center justify-center rounded-full text-muted-foreground transition hover:bg-secondary hover:text-foreground"
-                aria-label="Close post details"
-              >
-                <X className="size-4" />
-              </button>
-            </Dialog.Close>
-          </header>
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex max-h-[90vh] w-full max-w-3xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-border/60 bg-white shadow-2xl outline-none focus-visible:outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:zoom-in-90 data-[state=closed]:zoom-out-90">
+          <PostDetailsHeader onClose={onClose} />
 
-          <section>
-            {isLoading && <QueryLoading />}
+          <PostDetailsContent
+            post={post ?? null}
+            isLoading={isLoading}
+            isError={isError}
+            refetch={refetch}
+            scrollContainerRef={scrollContainerRef}
+            comments={comments}
+            areCommentsLoading={areCommentsLoading}
+            areCommentsError={areCommentsError}
+            commentsEmpty={commentsEmpty}
+            onRetry={refetchComments}
+            sentinelRef={sentinelRef}
+            isFetchingNextPage={isFetchingNextPage}
+            hasMoreComments={hasMoreComments}
+          />
 
-            {isError && <QueryError onRetry={refetch} />}
-
-            {hasPost && cardProps && (
-              <PostCard {...cardProps} className="shadow-lg rounded-none" />
-            )}
-
-            {!isLoading && !hasPost && !isError && (
-              <div className="rounded-2xl border border-dashed border-border/60 bg-secondary/30 px-4 py-8 text-center text-sm text-muted-foreground">
-                Post details are unavailable right now.
-              </div>
-            )}
-          </section>
+          <PostDetailsFooter postId={postId} hasPost={hasPost} />
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

@@ -1,4 +1,4 @@
-import { decideModerationAction } from "@/features/parts/moderation/constants/moderationThresholds";
+import { decideModerationAction } from "@/features/parts/moderation/utils";
 import {
   checkImageModeration,
   checkVideoModeration,

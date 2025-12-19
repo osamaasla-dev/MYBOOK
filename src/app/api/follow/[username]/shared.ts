@@ -5,15 +5,20 @@ import type { Logger } from "pino";
 
 import {
   fetchProfileUserByUsername,
-  consumeProfileRateLimit,
   getViewerSession,
 } from "@/features/pages/profile/utils";
 import {
-  extractClientIp,
   fetchViewerUsername,
   normalizeFollowUsername,
   validateFollowTarget,
 } from "@/features/parts/follow/utils";
+import { extractClientIp } from "@/features/parts/follow/utils/request";
+import { consumeRateLimit } from "@/features/utils/rateLimit";
+import {
+  PROFILE_RATE_MAX,
+  PROFILE_RATE_NAMESPACE,
+  PROFILE_RATE_WINDOW_SECONDS,
+} from "@/features/pages/profile/constants";
 import type { ProfileUserRecord } from "@/features/pages/profile/types";
 
 export type FollowRouteParams = { username?: string };
@@ -71,9 +76,14 @@ export async function prepareFollowAction(
     const clientIp = extractClientIp(request);
     const params = await paramsPromise;
 
-    const limited = await consumeProfileRateLimit({
-      userId: viewerId,
-      ip: clientIp,
+    const limited = await consumeRateLimit({
+      namespace: PROFILE_RATE_NAMESPACE,
+      identifiers: [
+        { key: "user", value: viewerId },
+        { key: "ip", value: clientIp },
+      ],
+      windowSeconds: PROFILE_RATE_WINDOW_SECONDS,
+      maxRequests: PROFILE_RATE_MAX,
     });
 
     // if (limited) {

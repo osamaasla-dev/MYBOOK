@@ -42,4 +42,5 @@ export type PostCardProps = {
   content: PostCardContent;
   stats?: PostStats;
   className?: string;
+  detailMetaEnabled?: boolean;
 };

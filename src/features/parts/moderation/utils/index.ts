@@ -1,7 +1,27 @@
-import type { ModerationContext, ModerationDecision } from "@/features/types";
+import type {
+  ModerationContext,
+  ModerationDecision,
+  ModerationDecisionStatus,
+} from "@/features/types";
+import { MODERATION_THRESHOLDS } from "../constants";
 
-import { decideModerationAction } from "@/features/parts/moderation/constants/moderationThresholds";
 import type { ModerationCheckResult } from "@/features/parts/moderation/types/moderationTypes";
+
+export function decideModerationAction(
+  context: ModerationContext,
+  severity: number
+): ModerationDecision {
+  const threshold = MODERATION_THRESHOLDS[context];
+  const status: ModerationDecisionStatus =
+    severity <= threshold ? "allow" : "reject";
+
+  return {
+    context,
+    severity,
+    threshold,
+    status,
+  };
+}
 
 type RunTextModerationParams = {
   content: string;

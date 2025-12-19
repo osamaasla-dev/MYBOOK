@@ -49,5 +49,5 @@ function showPostReactionToast(
   const reactorName = payload.reactorName?.trim() || "Someone";
   const emoji = reactionTypeToEmoji(payload.reaction) ?? "";
 
-  toast.success(` ${reactorName}  ${emoji} your post `);
+  toast(` ${reactorName}  ${emoji} your post `);
 }

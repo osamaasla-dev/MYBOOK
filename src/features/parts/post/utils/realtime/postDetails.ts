@@ -20,7 +20,7 @@ type BroadcastPostDetailCommentInput = {
   contentPreview: string;
   contentHtml?: string | null;
   replyToId?: string | null;
-  reactionSummary?: ReactionSummary | null;
+  commentsCount: number;
 };
 
 export async function broadcastPostDetailCommentEvent(
@@ -56,7 +56,7 @@ type BroadcastPostDetailShareInput = {
   sharedByName: string;
   channel: string;
   message?: string | null;
-  reactionSummary?: ReactionSummary | null;
+  sharesCount: number;
 };
 
 export async function broadcastPostDetailShareEvent(
@@ -107,14 +107,9 @@ export async function broadcastPostDetailMetaEvent(
     return;
   }
 
-  try {
-    await pusherServer.trigger(
-      buildPostDetailChannel(input.postId),
-      POST_DETAIL_META_EVENT,
-      input
-    );
-    log.debug("Broadcasted post detail meta update");
-  } catch (error) {
-    log.error({ error }, "Failed to broadcast post detail meta update");
-  }
+  await pusherServer.trigger(
+    buildPostDetailChannel(input.postId),
+    POST_DETAIL_META_EVENT,
+    input
+  );
 }

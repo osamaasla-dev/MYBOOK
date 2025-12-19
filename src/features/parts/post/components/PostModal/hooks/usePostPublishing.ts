@@ -1,8 +1,8 @@
+import { runTextModeration } from "@/features/parts/moderation/utils";
 import {
   type PublishArgs,
   type UsePostPublishingOptions,
   buildPostPayload,
-  runTextModeration,
   uploadAllMedia,
   validateCanPublish,
   usePublishingProgress,

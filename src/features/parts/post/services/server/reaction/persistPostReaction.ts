@@ -3,15 +3,15 @@ import { prisma } from "@/lib/prisma";
 import {
   buildReactionSummary,
   type ReactionOperation,
+  type ReactionSummary,
 } from "../../../utils/reaction";
 import {
   broadcastPostDetailMetaEvent,
+  broadcastPostMetaEvent,
   broadcastPostReactionEvent,
 } from "../../../utils/realtime";
-import {
-  upsertPostReactionNotification,
-  cancelPostReactionNotification,
-} from "../reactionNotifications";
+import { upsertPostReactionNotification } from "../reactionNotifications";
+import { recordInteraction } from "@/features/parts/interaction/services";
 
 import type { PersistPostReactionParams, PostReactionResult } from "./types";
 
@@ -20,18 +20,35 @@ export async function persistPostReaction({
   userId,
   reaction,
 }: PersistPostReactionParams): Promise<PostReactionResult> {
+  let postAuthorId: string | null = null;
+
   const result = await prisma.$transaction(async (tx) => {
     const existing = await tx.postReaction.findFirst({
       where: { postId, userId },
     });
 
-    let currentReaction: PostReactionResult["reaction"] = reaction;
+    const currentReaction: PostReactionResult["reaction"] = reaction;
     let operation: ReactionOperation = "added";
 
     if (existing?.emoji === reaction) {
-      await tx.postReaction.delete({ where: { id: existing.id } });
-      currentReaction = null;
-      operation = "removed";
+      operation = "noop";
+      const post = await tx.post.findUnique({
+        where: { id: postId },
+        select: {
+          authorId: true,
+          reactionsCount: true,
+          reactionSummary: true,
+        },
+      });
+      postAuthorId = post?.authorId ?? null;
+
+      return {
+        reaction: existing.emoji as PostReactionResult["reaction"],
+        operation,
+        reactionsCount: post?.reactionsCount ?? 0,
+        reactionSummary:
+          (post?.reactionSummary as ReactionSummary | null) ?? {},
+      } satisfies PostReactionResult;
     } else {
       if (existing) {
         await tx.postReaction.deleteMany({
@@ -70,10 +87,15 @@ export async function persistPostReaction({
         reactionsCount: summary.reactionsCount,
         reactionSummary: summary.reactionSummary,
       },
-      select: { authorId: true },
+      select: {
+        authorId: true,
+        commentsCount: true,
+        sharesCount: true,
+      },
     });
+    postAuthorId = post?.authorId ?? null;
 
-    if (post?.authorId && post.authorId !== userId) {
+    if (postAuthorId && postAuthorId !== userId) {
       const reactor = await tx.user.findUnique({
         where: { id: userId },
         select: {
@@ -82,65 +104,84 @@ export async function persistPostReaction({
         },
       });
 
-      if (currentReaction) {
-        await upsertPostReactionNotification({
-          postId,
-          postAuthorId: post.authorId,
-          reactorId: userId,
-          reaction: currentReaction,
-          reactorName: reactor?.name,
-          reactorUsername: reactor?.username,
-          tx,
-        });
-      } else {
-        await cancelPostReactionNotification({
-          postId,
-          postAuthorId: post.authorId,
-          reactorId: userId,
-          tx,
-        });
-      }
+      await upsertPostReactionNotification({
+        postId,
+        postAuthorId,
+        reactorId: userId,
+        reaction: currentReaction,
+        reactorName: reactor?.name,
+        reactorUsername: reactor?.username,
+        tx,
+      });
     }
 
     return {
       reaction: currentReaction,
       operation,
       ...summary,
+      commentsCount: post?.commentsCount ?? undefined,
+      sharesCount: post?.sharesCount ?? undefined,
     } satisfies PostReactionResult;
   });
 
-  const reactionForEvent = result.reaction ?? reaction;
-  if (reactionForEvent) {
-    const [post, reactor] = await Promise.all([
-      prisma.post.findUnique({
-        where: { id: postId },
-        select: { authorId: true },
-      }),
-      prisma.user.findUnique({
-        where: { id: userId },
-        select: { name: true },
-      }),
-    ]);
-
-    if (post?.authorId && post.authorId !== userId) {
-      await broadcastPostReactionEvent({
-        postId,
-        reaction: reactionForEvent,
-        reactorId: userId,
-        reactorName: reactor?.name ?? "Someone",
-        postAuthorId: post.authorId,
-        operation: result.operation,
-        reactionSummary: result.reactionSummary ?? null,
-        reactionsCount: result.reactionsCount,
+  if (
+    (result.operation === "added" || result.operation === "updated") &&
+    postAuthorId &&
+    postAuthorId !== userId
+  ) {
+    void recordInteraction({
+      actorId: userId,
+      targetUserId: postAuthorId,
+      type: "react",
+    }).catch((error) => {
+      console.warn("Failed to record reaction interaction", {
+        error,
+        actorId: userId,
+        targetUserId: postAuthorId,
       });
-    }
+    });
   }
 
-  await broadcastPostDetailMetaEvent({
-    postId,
-    reactionsCount: result.reactionsCount,
-    reactionSummary: result.reactionSummary ?? null,
-  });
+  if (
+    result.operation !== "noop" &&
+    result.reaction &&
+    postAuthorId &&
+    postAuthorId !== userId
+  ) {
+    const reactor = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true },
+    });
+
+    await broadcastPostReactionEvent({
+      postId,
+      reaction: result.reaction,
+      reactorId: userId,
+      reactorName: reactor?.name ?? "Someone",
+      postAuthorId,
+      operation: result.operation,
+    });
+  }
+
+  if (result.operation !== "noop") {
+    const metaPayload = {
+      postId,
+      reactionsCount: result.reactionsCount,
+      reactionSummary: result.reactionSummary ?? null,
+      commentsCount: result.commentsCount ?? undefined,
+      sharesCount: result.sharesCount ?? undefined,
+    };
+    await Promise.allSettled([
+      broadcastPostDetailMetaEvent(metaPayload),
+      postAuthorId && postAuthorId !== userId
+        ? broadcastPostMetaEvent({
+            postAuthorId,
+            initiatorId: userId,
+            ...metaPayload,
+          })
+        : null,
+    ]);
+  }
 
   return result;
 }

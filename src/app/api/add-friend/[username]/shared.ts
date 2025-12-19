@@ -4,16 +4,19 @@ import { getRequestLog } from "@/lib/request-log";
 import type { Logger } from "pino";
 
 import {
-  consumeProfileRateLimit,
   fetchProfileUserByUsername,
   getViewerSession,
 } from "@/features/pages/profile/utils";
 import type { ProfileUserRecord } from "@/features/pages/profile/types";
 import { usernameSchema } from "@/features/pages/profile/types";
+import { fetchViewerUsername } from "@/features/parts/follow/utils";
+import { extractClientIp } from "@/features/parts/follow/utils/request";
+import { consumeRateLimit } from "@/features/utils/rateLimit";
 import {
-  extractClientIp,
-  fetchViewerUsername,
-} from "@/features/parts/follow/utils";
+  PROFILE_RATE_MAX,
+  PROFILE_RATE_NAMESPACE,
+  PROFILE_RATE_WINDOW_SECONDS,
+} from "@/features/pages/profile/constants";
 
 export type FriendRouteParams = { username?: string };
 
@@ -46,10 +49,15 @@ export async function prepareFriendAction(
     const clientIp = extractClientIp(request);
     const params = await paramsPromise;
 
-    // const limited = await consumeProfileRateLimit({
-    //   userId: viewerId,
-    //   ip: clientIp,
-    // });
+    const limited = await consumeRateLimit({
+      namespace: PROFILE_RATE_NAMESPACE,
+      identifiers: [
+        { key: "user", value: viewerId },
+        { key: "ip", value: clientIp },
+      ],
+      windowSeconds: PROFILE_RATE_WINDOW_SECONDS,
+      maxRequests: PROFILE_RATE_MAX,
+    });
 
     // if (limited) {
     //   log.warn({ viewerId, clientIp }, "Friend request rate-limited");

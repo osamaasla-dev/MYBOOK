@@ -43,6 +43,7 @@ export function Notifications() {
     initialLimit: NOTIFICATION_PAGE_SIZE,
     tab: currentTab,
   });
+
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const listRef = useRef<HTMLDivElement | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);

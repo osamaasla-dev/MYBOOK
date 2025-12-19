@@ -1,7 +1,7 @@
 import { apiPostR } from "@/lib/api";
 
-import type { CheckModerationInput } from "../schemas";
 import type { ModerationCheckResult } from "../../../types";
+import { CheckModerationInput } from "../schemas/checkModerationSchema";
 
 const MODERATION_CHECK_ENDPOINT = "/moderation/check";
 

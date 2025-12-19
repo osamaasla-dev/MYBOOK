@@ -1,7 +1,7 @@
 import { pusherServer } from "@/lib/pusher/server";
 import { buildUserChannel } from "@/features/utils/realtime";
 import type { PostReactionType } from "../../constants/reactions";
-import type { ReactionOperation, ReactionSummary } from "../reaction";
+import type { ReactionOperation } from "../reaction";
 import {
   POST_REACTION_EVENT,
   type PostReactionEventPayload,
@@ -15,8 +15,6 @@ export type BroadcastPostReactionInput = {
   reactorName: string;
   postAuthorId: string;
   operation: ReactionOperation;
-  reactionSummary: ReactionSummary | null;
-  reactionsCount: number;
 };
 
 export async function broadcastPostReactionEvent({
@@ -26,8 +24,6 @@ export async function broadcastPostReactionEvent({
   reactorName,
   postAuthorId,
   operation,
-  reactionSummary,
-  reactionsCount,
 }: BroadcastPostReactionInput) {
   const log = postRealtimeLogger.child({
     func: "broadcastPostReactionEvent",
@@ -52,19 +48,11 @@ export async function broadcastPostReactionEvent({
     reactorId,
     reactorName,
     operation,
-    reactionSummary,
-    reactionsCount,
   };
 
-  try {
-    await pusherServer.trigger(
-      buildUserChannel(postAuthorId),
-      POST_REACTION_EVENT,
-      payload
-    );
-
-    log.debug("Broadcasted post reaction event");
-  } catch (error) {
-    log.error({ error }, "Failed to broadcast post reaction event");
-  }
+  await pusherServer.trigger(
+    buildUserChannel(postAuthorId),
+    POST_REACTION_EVENT,
+    payload
+  );
 }

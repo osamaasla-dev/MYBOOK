@@ -26,5 +26,5 @@ function showPostToast(payload?: PostCreatedToastPayload) {
   if (!payload) return;
 
   const authorName = payload.authorName?.trim() || "Someone";
-  toast.success(`${authorName} shared a new post`);
+  toast(`${authorName} shared a new post`);
 }

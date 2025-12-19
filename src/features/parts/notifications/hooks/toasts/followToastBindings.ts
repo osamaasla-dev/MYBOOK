@@ -14,9 +14,9 @@ type ToastHandler = (message: string) => string | number;
 type ToastMessageBuilder = (payload: FollowRealtimePayload) => string;
 
 const EVENT_TOASTERS: Partial<Record<FollowEventName, ToastHandler>> = {
-  [FOLLOW_EVENTS.APPROVED]: toast.success,
-  [FOLLOW_EVENTS.FOLLOW_ADDED]: toast.success,
-  [FOLLOW_EVENTS.FOLLOW_REQUESTED]: toast.success,
+  [FOLLOW_EVENTS.APPROVED]: toast,
+  [FOLLOW_EVENTS.FOLLOW_ADDED]: toast,
+  [FOLLOW_EVENTS.FOLLOW_REQUESTED]: toast,
 };
 
 const EVENT_MESSAGES: Partial<Record<FollowEventName, ToastMessageBuilder>> = {

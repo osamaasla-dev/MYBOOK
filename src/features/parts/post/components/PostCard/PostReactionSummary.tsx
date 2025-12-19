@@ -4,7 +4,7 @@ import {
   isValidPostReactionType,
   reactionTypeToEmoji,
 } from "../../constants/reactions";
-import type { ReactionSummary } from "../../utils/reaction";
+import { calculateReactionsCount } from "../../hooks/utils/reactionSummary";
 import type { PostStats } from "./types";
 import { formatCount } from "./utils";
 import { PostReactionsModal } from "../PostReactionsModal";
@@ -13,25 +13,33 @@ import { usePrefetchPostReactions } from "../../hooks/usePrefetchPostReactions";
 type PostReactionSummaryProps = {
   postId: string;
   stats?: PostStats;
-  optimisticSummary?: ReactionSummary | null;
 };
 
 export function PostReactionSummary({
   postId,
   stats,
-  optimisticSummary,
 }: PostReactionSummaryProps) {
-  const chips = useMemo(() => {
-    if (!optimisticSummary) return [];
+  const initialSummary = stats?.reactionSummary ?? null;
 
-    return Object.entries(optimisticSummary)
+  const chips = useMemo(() => {
+    if (!initialSummary) return [];
+
+    return Object.entries(initialSummary)
       .filter(([, count]) => typeof count === "number" && count > 0)
       .map(([emoji, count]) => ({ emoji, count }))
       .sort((a, b) => b.count - a.count);
-  }, [optimisticSummary]);
+  }, [initialSummary]);
+
+  const totalReactions = useMemo(() => {
+    if (typeof stats?.reactions === "number") {
+      return stats.reactions;
+    }
+    return calculateReactionsCount(initialSummary);
+  }, [initialSummary, stats?.reactions]);
+
+  const topEmojis = useMemo(() => chips.map(({ emoji }) => emoji), [chips]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const initialSummary = optimisticSummary ?? stats?.reactionSummary ?? null;
   const prefetchReactions = usePrefetchPostReactions({ postId });
 
   const handlePrefetch = useCallback(() => {
@@ -47,32 +55,11 @@ export function PostReactionSummary({
     }
   };
 
-  const summaryContent =
-    chips.length === 0
-      ? [
-          <span
-            key="placeholder"
-            className={`inline-flex items-center gap-1 px-1 py-0.5 `}
-          >
-            <span>👍</span>
-            <span className="font-semibold">0</span>
-          </span>,
-        ]
-      : chips.map(({ emoji, count }) => {
-          const displayEmoji = isValidPostReactionType(emoji)
-            ? reactionTypeToEmoji(emoji)
-            : emoji;
+  const hasReactions = totalReactions > 0;
 
-          return (
-            <span
-              key={emoji}
-              className={`inline-flex items-center gap-1 px-1 py-0.5`}
-            >
-              <span aria-hidden="true">{displayEmoji}</span>
-              <span className="font-semibold">{formatCount(count)}</span>
-            </span>
-          );
-        });
+  const stackedEmojis = (hasReactions ? topEmojis : ["👍"]).map((emoji) => {
+    return isValidPostReactionType(emoji) ? reactionTypeToEmoji(emoji) : emoji;
+  });
 
   return (
     <>
@@ -83,10 +70,22 @@ export function PostReactionSummary({
         onKeyDown={handleKeyDown}
         onMouseEnter={handlePrefetch}
         onFocus={handlePrefetch}
-        className="curaor-pointer flex items-center gap-1 cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
-        aria-label="View all reactions"
+        className="curaor-pointer flex items-center gap-2 cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
       >
-        {summaryContent}
+        <div className="flex items-center">
+          {stackedEmojis.map((emoji, index) => (
+            <span
+              key={`${emoji}-${index}`}
+              aria-hidden="true"
+              className={`flex h-6 w-6 items-center justify-center rounded-full text-base  ${
+                index === 0 ? "" : "-ml-2"
+              }`}
+            >
+              {emoji}
+            </span>
+          ))}
+        </div>
+        <span className="text-md">{formatCount(totalReactions)}</span>
       </div>
       <PostReactionsModal
         postId={postId}

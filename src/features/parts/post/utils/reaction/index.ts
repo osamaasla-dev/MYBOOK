@@ -1,6 +1,11 @@
 import { redis } from "@/lib/redis";
 
 import { postReactionSchema } from "../../schemas/reactionSchema";
+import {
+  POST_REACTION_MAX_ACTIONS,
+  POST_REACTION_RATE_NAMESPACE,
+  POST_REACTION_WINDOW_MS,
+} from "../../constants";
 
 export type ReactionSummary = Record<string, number>;
 
@@ -9,7 +14,7 @@ type ReactionAggregate = {
   count: number;
 };
 
-export type ReactionOperation = "added" | "updated" | "removed";
+export type ReactionOperation = "added" | "updated" | "removed" | "noop";
 
 export function buildReactionSummary(aggregates: ReactionAggregate[]): {
   reactionsCount: number;
@@ -49,10 +54,10 @@ type RateLimitOptions = {
 export async function isReactionRateLimited({
   userId,
   postId,
-  windowMs = 10_000,
-  maxActions = 10,
+  windowMs = POST_REACTION_WINDOW_MS,
+  maxActions = POST_REACTION_MAX_ACTIONS,
 }: RateLimitOptions): Promise<boolean> {
-  const key = `post:reaction:rate:${postId}:${userId}`;
+  const key = `${POST_REACTION_RATE_NAMESPACE}:${postId}:${userId}`;
   const ttlSeconds = Math.ceil(windowMs / 1000);
 
   const count = await redis.incr(key);

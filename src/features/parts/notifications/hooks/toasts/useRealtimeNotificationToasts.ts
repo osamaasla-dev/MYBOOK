@@ -13,6 +13,7 @@ import { buildFollowToastBindings } from "./followToastBindings";
 import { buildFriendToastBindings } from "./friendToastBindings";
 import { buildPostToastBindings } from "./postToastBindings";
 import { buildReactionToastBindings } from "./reactionToastBindings";
+import { buildCommentToastBindings } from "./commentToastBindings";
 import { usePostDetailsModalNavigation } from "@/features/parts/postDetails/hooks";
 
 export function useRealtimeNotificationToasts() {
@@ -49,9 +50,18 @@ export function useRealtimeNotificationToasts() {
     }
   }, [postModalContext]);
 
+  const commentBindings = useMemo<UsePusherBinding<unknown>[]>(() => {
+    try {
+      return buildCommentToastBindings({ context: postModalContext });
+    } catch (error) {
+      console.error("Failed to build comment toast bindings", error);
+      return [];
+    }
+  }, [postModalContext]);
+
   const bindings = useMemo<UsePusherBinding<unknown>[]>(() => {
-    return [...staticBindings, ...reactionBindings];
-  }, [reactionBindings, staticBindings]);
+    return [...staticBindings, ...reactionBindings, ...commentBindings];
+  }, [commentBindings, reactionBindings, staticBindings]);
 
   const channelName = currentUser?.id ? buildUserChannel(currentUser.id) : "";
 

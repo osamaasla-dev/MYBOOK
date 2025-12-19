@@ -1,6 +1,6 @@
 import { PrismaClient, Prisma } from "@prisma/client";
 
-export type InteractionType = "like" | "comment" | "message" | "profileVisit";
+export type InteractionType = "react" | "comment" | "message" | "profileVisit";
 
 export type RelationshipWeightKey = "friend" | "follow";
 
@@ -10,7 +10,7 @@ export type NegativeWeightKey =
   | "hidePost"
   | "report"
   | "notInterested"
-  | "dislike";
+  | "unreact";
 
 export type InteractionWeightKey =
   | InteractionType

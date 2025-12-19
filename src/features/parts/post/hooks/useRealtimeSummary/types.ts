@@ -1,0 +1,50 @@
+"use client";
+
+import type { ReactionSummary } from "../../utils/reaction";
+
+export type ReactionSummaryUpdatePayload = {
+  postId: string;
+  reactionSummary?: ReactionSummary | null;
+  reactionsCount?: number;
+  commentsCount?: number;
+  sharesCount?: number;
+};
+
+export type PostDetailMetaEventPayload = {
+  postId: string;
+  reactionsCount?: number;
+  reactionSummary?: ReactionSummary | null;
+  commentsCount?: number;
+  sharesCount?: number;
+};
+
+export type PostDetailCommentEventPayload = {
+  postId: string;
+  commentId: string;
+  authorId: string;
+  authorName: string;
+  authorUsername?: string | null;
+  authorAvatarUrl?: string | null;
+  contentPreview?: string;
+  contentHtml?: string | null;
+  replyToId?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type UseRealtimeSummaryOptions = {
+  /**
+   * Post being observed (needed for the detail/meta channel).
+   */
+  postId?: string;
+  /**
+   * Whether to subscribe to the user channel (authored posts).
+   * Defaults to true when the current user exists.
+   */
+  enableUserChannel?: boolean;
+  /**
+   * Whether to subscribe to the post-details meta channel.
+   * Defaults to true when postId is provided.
+   */
+  enablePostDetailChannel?: boolean;
+};

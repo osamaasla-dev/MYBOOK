@@ -1,6 +1,6 @@
 import { createHash } from "crypto";
 
-import { extractClientIp } from "@/features/parts/follow/utils";
+import { extractClientIp } from "@/features/parts/follow/utils/request";
 
 export type PostViewIdentity = {
   viewerId: string | null;

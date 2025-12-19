@@ -9,3 +9,4 @@ export { default as friendMessages } from "./addFriend";
 export { default as uploadMessages } from "./upload";
 export { default as moderationMessages } from "./moderation";
 export { default as postMessages } from "./post";
+export { default as commentMessages } from "./comments";

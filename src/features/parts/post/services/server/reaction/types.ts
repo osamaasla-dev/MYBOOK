@@ -20,4 +20,7 @@ export type PostReactionResult = {
   reactionsCount: number;
   reactionSummary: ReactionSummary;
   operation: ReactionOperation;
+  commentsCount?: number;
+  sharesCount?: number;
+  latestActivityAt?: Date | string | null;
 };

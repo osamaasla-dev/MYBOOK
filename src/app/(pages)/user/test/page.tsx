@@ -5,9 +5,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui";
 import { useMediaUpload } from "@/features/parts/media/hooks/useMediaUpload";
-import { decideModerationAction } from "@/features/parts/moderation/constants/moderationThresholds";
 import type { ModerationContext } from "@/features/types";
 import { useModerationCheck } from "@/features/parts/moderation/hooks/useModerationCheck";
+import { decideModerationAction } from "@/features/parts/moderation/utils";
 
 export default function UserTestModerationPage() {
   const [content, setContent] = useState("");
@@ -147,6 +147,7 @@ export default function UserTestModerationPage() {
               {mediaUploadMutation.data.moderationContext})
             </p>
             {mediaUploadMutation.data.asset ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={mediaUploadMutation.data.asset.url}
                 alt="Uploaded preview"

@@ -3,3 +3,4 @@ export * from "./post";
 export * from "./follow";
 export * from "./friend";
 export * from "./reaction";
+export * from "./comment";
