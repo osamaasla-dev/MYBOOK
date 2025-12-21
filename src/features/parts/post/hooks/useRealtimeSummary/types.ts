@@ -32,6 +32,12 @@ export type PostDetailCommentEventPayload = {
   updatedAt?: string;
 };
 
+export type PostDetailCommentDeletedEventPayload = {
+  postId: string;
+  commentId: string;
+  parentId?: string | null;
+};
+
 export type UseRealtimeSummaryOptions = {
   /**
    * Post being observed (needed for the detail/meta channel).

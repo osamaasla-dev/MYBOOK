@@ -1,18 +1,21 @@
 import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
 import { getRequestLog } from "@/lib/request-log";
-import { commentMessages, userMessages } from "@/lib/messages";
+import {
+  commentMessages,
+  moderationMessages,
+  userMessages,
+} from "@/lib/messages";
 import { ServerSession } from "@/utils/session";
 import { validateCuid } from "@/schemas/ids";
 import { recordInteraction } from "@/features/parts/interaction/services";
 
 import {
-  createComment,
   createPostCommentNotification,
   resolveCommentContext,
 } from "@/features/parts/postDetails/services/server";
 import {
-  broadcastCommentEvents,
+  broadcastCreateCommentEvents,
   isCommentRouteError,
   parseCreateCommentPayload,
 } from "@/features/parts/postDetails/utils/server/comments";
@@ -23,6 +26,12 @@ import {
   MAX_REQUESTS,
   WINDOW_SECONDS,
 } from "@/features/parts/postDetails/constants";
+import { createComment } from "@/features/parts/postDetails/services/server/comment";
+import {
+  MissingModerationAPIKeyError,
+  ModerationProviderError,
+  moderateText,
+} from "@/features/parts/moderation/services";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -59,6 +68,52 @@ export async function POST(request: Request, routeContext: RouteParams) {
 
     const payload = await parseCreateCommentPayload(request, log);
 
+    try {
+      const decision = await moderateText(payload.content, "comment");
+      if (decision.status === "reject") {
+        log.warn(
+          { postId: normalizedPostId, viewerId: session.user.id },
+          "Comment blocked by moderation"
+        );
+        return apiResponse(
+          false,
+          null,
+          moderationMessages.textBlocked,
+          422,
+          requestId
+        );
+      }
+    } catch (error) {
+      if (error instanceof MissingModerationAPIKeyError) {
+        log.error("Moderation key missing, rejecting comment");
+        return apiResponse(
+          false,
+          null,
+          moderationMessages.missingKey,
+          500,
+          requestId
+        );
+      }
+      if (error instanceof ModerationProviderError) {
+        log.warn(
+          { status: error.status, details: error.details },
+          "Moderation provider error while adding comment"
+        );
+        const friendlyMessage =
+          error.status === 429
+            ? moderationMessages.rateLimited
+            : moderationMessages.failed;
+        return apiResponse(
+          false,
+          null,
+          friendlyMessage,
+          error.status,
+          requestId
+        );
+      }
+      throw error;
+    }
+
     const clientIp = extractClientIp(request);
     const limited = await consumeRateLimit({
       namespace: COMMENT_RATE_NAMESPACE,
@@ -77,19 +132,17 @@ export async function POST(request: Request, routeContext: RouteParams) {
       return apiResponse(false, null, userMessages.rateLimited, 429, requestId);
     }
 
-    const commentContext = await resolveCommentContext({
-      postId: normalizedPostId,
-      parentId: payload.parentId ?? null,
-      viewerId: session.user.id,
-    });
-
     const comment = await createComment({
       authorId: session.user.id,
       postId: normalizedPostId,
       content: payload.content,
       parentId: payload.parentId ?? null,
     });
-
+    const commentContext = await resolveCommentContext({
+      postId: normalizedPostId,
+      parentId: payload.parentId ?? null,
+      viewerId: session.user.id,
+    });
     void recordInteraction({
       actorId: session.user.id,
       targetUserId: commentContext.post.authorId,
@@ -113,7 +166,7 @@ export async function POST(request: Request, routeContext: RouteParams) {
       log.error({ error }, "Failed to create post comment notification");
     });
 
-    void broadcastCommentEvents({
+    void broadcastCreateCommentEvents({
       comment,
       postAuthorId: commentContext.post.authorId,
       parentId: payload.parentId ?? null,

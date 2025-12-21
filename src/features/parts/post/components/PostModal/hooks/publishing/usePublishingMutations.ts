@@ -2,7 +2,6 @@
 
 import { useMutationState } from "@tanstack/react-query";
 
-import { useModerationCheck } from "@/features/parts/moderation/hooks/useModerationCheck";
 import { useMediaUpload } from "@/features/parts/media/hooks/useMediaUpload";
 import {
   CREATE_POST_MUTATION_KEY,
@@ -10,7 +9,6 @@ import {
 } from "@/features/parts/post/hooks/useCreatePost";
 
 export function usePublishingMutations() {
-  const moderationMutation = useModerationCheck();
   const mediaUploadMutation = useMediaUpload();
   const createPostMutation = useCreatePost();
 
@@ -23,12 +21,9 @@ export function usePublishingMutations() {
   });
 
   const isPublishing =
-    moderationMutation.isPending ||
-    mediaUploadMutation.isPending ||
-    createPostPendingStates.some(Boolean);
+    mediaUploadMutation.isPending || createPostPendingStates.some(Boolean);
 
   return {
-    moderationMutation,
     mediaUploadMutation,
     createPostMutation,
     isPublishing,

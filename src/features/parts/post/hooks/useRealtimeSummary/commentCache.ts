@@ -2,13 +2,19 @@
 
 import type { QueryClient } from "@tanstack/react-query";
 
-import { insertCommentAtTop } from "@/features/parts/postDetails/hooks/utils";
+import {
+  insertCommentAtTop,
+  removeCommentFromCache,
+} from "@/features/parts/postDetails/hooks/utils";
 import type { PostCommentListItem } from "@/features/parts/postDetails/services/client/fetchPostCommentsApi";
 import {
   postCommentsQueryKey,
   type PostCommentsQueryData,
 } from "@/features/parts/postDetails/hooks/usePostComments";
-import type { PostDetailCommentEventPayload } from "./types";
+import type {
+  PostDetailCommentDeletedEventPayload,
+  PostDetailCommentEventPayload,
+} from "./types";
 
 export function applyPostDetailCommentUpdate(
   queryClient: QueryClient,
@@ -24,6 +30,26 @@ export function applyPostDetailCommentUpdate(
 
   queryClient.setQueryData<PostCommentsQueryData>(cacheKey, (current) =>
     insertCommentAtTop(current, commentToInsert, commentToInsert.id)
+  );
+}
+
+export function applyPostDetailCommentDeletedUpdate(
+  queryClient: QueryClient,
+  payload: PostDetailCommentDeletedEventPayload
+) {
+  if (!payload.postId || !payload.commentId) {
+    return;
+  }
+
+  const parentId = payload.parentId ?? null;
+  const cacheKey = postCommentsQueryKey(payload.postId, parentId);
+
+  queryClient.setQueryData<PostCommentsQueryData | undefined>(
+    cacheKey,
+    (currentData) =>
+      removeCommentFromCache(currentData, payload.commentId) as
+        | PostCommentsQueryData
+        | undefined
   );
 }
 

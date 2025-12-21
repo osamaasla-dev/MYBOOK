@@ -6,5 +6,5 @@ export default async function Home() {
   if (session?.user?.role === "USER") {
     return redirect("/user");
   }
-  return redirect("/signup");
+  return redirect("/signin");
 }

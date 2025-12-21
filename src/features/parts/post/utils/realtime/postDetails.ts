@@ -2,6 +2,7 @@ import { pusherServer } from "@/lib/pusher/server";
 
 import {
   POST_DETAIL_COMMENT_EVENT,
+  POST_DETAIL_COMMENT_DELETED_EVENT,
   POST_DETAIL_META_EVENT,
   POST_DETAIL_REPLY_EVENT,
   POST_DETAIL_SHARE_EVENT,
@@ -112,4 +113,36 @@ export async function broadcastPostDetailMetaEvent(
     POST_DETAIL_META_EVENT,
     input
   );
+}
+
+type BroadcastPostDetailCommentDeletedInput = {
+  postId: string;
+  commentId: string;
+  parentId?: string | null;
+};
+
+export async function broadcastPostDetailCommentDeletedEvent(
+  input: BroadcastPostDetailCommentDeletedInput
+) {
+  const log = postRealtimeLogger.child({
+    func: "broadcastPostDetailCommentDeletedEvent",
+    postId: input.postId,
+    commentId: input.commentId,
+  });
+
+  if (!input.postId || !input.commentId) {
+    log.warn("Skipping detail comment delete broadcast due to invalid inputs");
+    return;
+  }
+
+  try {
+    await pusherServer.trigger(
+      buildPostDetailChannel(input.postId),
+      POST_DETAIL_COMMENT_DELETED_EVENT,
+      input
+    );
+    log.debug("Broadcasted post detail comment deletion");
+  } catch (error) {
+    log.error({ error }, "Failed to broadcast post detail comment deletion");
+  }
 }

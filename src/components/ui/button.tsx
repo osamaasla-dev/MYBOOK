@@ -9,8 +9,11 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
+        none: "",
         default: "bg-primary text-white hover:bg-primary/90",
+        item: "",
         reject: "bg-danger text-white hover:bg-danger/90",
+        danger: "bg-danger text-white hover:bg-danger/90",
         accept: "bg-success text-white hover:bg-success/90",
         destructive:
           "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",

@@ -19,7 +19,7 @@ type BroadcastCommentEventsInput = {
   log: Logger;
 };
 
-export async function broadcastCommentEvents({
+export async function broadcastCreateCommentEvents({
   comment,
   postAuthorId,
   parentId,

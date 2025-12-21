@@ -12,6 +12,7 @@ import { uploadToCloudinary } from "./uploadToCloudinary";
 import { buildMetadata } from "./buildMetadata";
 import { evaluateModeration } from "./evaluateModeration";
 import { promoteMedia, removePendingAsset } from "./assetLifecycle";
+import moderationMessages from "@/lib/messages/moderation";
 
 type HandleMediaUploadParams = {
   req: Request;
@@ -59,13 +60,10 @@ export async function handleMediaUpload({
       { metadata, decision },
       "Media rejected during moderation; asset removed"
     );
-
-    return {
-      moderationSeverity: decision.severity,
-      moderationContext: decision.context,
-      moderationThreshold: decision.threshold,
-      moderationStatus: decision.status,
-    };
+    throw new MediaUploadError("rejected", 422, {
+      message: moderationMessages.mediaBlocked,
+      details: { metadata, decision },
+    });
   }
 
   const promoted = await promoteMedia(metadata.publicId);

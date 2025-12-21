@@ -43,7 +43,7 @@ export function PostActions({
           title="Discard draft?"
           description="Your current text and visibility settings will be cleared. This action can't be undone."
           confirmLabel="Confirm"
-          confirmVariant="reject"
+          confirmVariant="danger"
           cancelLabel="Cancel"
           onConfirm={onResetDraft}
           trigger={

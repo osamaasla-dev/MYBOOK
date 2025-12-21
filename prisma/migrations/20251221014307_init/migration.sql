@@ -287,12 +287,14 @@ CREATE TABLE "Comment" (
     "isEdited" BOOLEAN NOT NULL DEFAULT false,
     "isDeleted" BOOLEAN NOT NULL DEFAULT false,
     "deletedAt" DATETIME,
+    "deletedById" TEXT,
     "metadata" JSONB,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
     CONSTRAINT "Comment_postId_fkey" FOREIGN KEY ("postId") REFERENCES "Post" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "Comment_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT "Comment_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "Comment" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+    CONSTRAINT "Comment_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "Comment" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT "Comment_deletedById_fkey" FOREIGN KEY ("deletedById") REFERENCES "User" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -773,6 +775,9 @@ CREATE INDEX "Comment_authorId_createdAt_idx" ON "Comment"("authorId", "createdA
 
 -- CreateIndex
 CREATE INDEX "Comment_parentId_idx" ON "Comment"("parentId");
+
+-- CreateIndex
+CREATE INDEX "Comment_deletedById_idx" ON "Comment"("deletedById");
 
 -- CreateIndex
 CREATE INDEX "CommentReaction_commentId_emoji_idx" ON "CommentReaction"("commentId", "emoji");

@@ -1,17 +1,18 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import toast from "react-hot-toast";
 
 import type { CreateCommentInput } from "../schemas";
 import { createPostCommentRequest } from "../services/client/createCommentApi";
 import commentMessages from "@/lib/messages/comments";
 
+import type { FeedPost } from "@/features/pages/home/utils/posts/feed-response";
 import type { PostComment } from "../services/client/createCommentApi";
 import {
   postCommentsQueryKey,
   type PostCommentsQueryData,
 } from "./usePostComments";
+import { postDetailsQueryKey } from "./usePostDetails";
 import {
   buildOptimisticComment,
   insertCommentAtTop,
@@ -50,16 +51,16 @@ export function useCreatePostComment({
       return createPostCommentRequest(postId, input);
     },
     onMutate: async (input) => {
-      toast.dismiss();
-      toast.loading(commentMessages.created);
-
       const parentId = input.parentId ?? null;
       const cacheKey = postCommentsQueryKey(postId, parentId);
 
       await queryClient.cancelQueries({ queryKey: cacheKey });
+      const postDetailsKey = postDetailsQueryKey(postId);
 
       const previousData =
         queryClient.getQueryData<PostCommentsQueryData>(cacheKey);
+      const previousPostDetails =
+        queryClient.getQueryData<FeedPost>(postDetailsKey);
 
       const optimisticComment = buildOptimisticComment({
         postId,
@@ -72,16 +73,27 @@ export function useCreatePostComment({
         insertCommentAtTop(currentData, optimisticComment, undefined)
       );
 
+      queryClient.setQueryData<FeedPost | undefined>(
+        postDetailsKey,
+        (currentDetails) => {
+          if (!currentDetails) return currentDetails;
+
+          return {
+            ...currentDetails,
+            commentsCount: (currentDetails.commentsCount ?? 0) + 1,
+          };
+        }
+      );
+
       return {
         cacheKey,
         previousData,
         optimisticId: optimisticComment.id,
+        postDetailsKey,
+        previousPostDetails,
       };
     },
     onSuccess: async (comment, variables, context) => {
-      toast.dismiss();
-      toast.success(commentMessages.created);
-
       const parentId = variables.parentId ?? null;
       const cacheKey =
         context?.cacheKey ?? postCommentsQueryKey(postId, parentId);
@@ -95,14 +107,16 @@ export function useCreatePostComment({
         )
       );
     },
-    onError: (error, _variables, context) => {
-      toast.dismiss();
-      toast.error(error.message ?? commentMessages.unexpectedError, {
-        duration: 5000,
-      });
-
+    onError: (_error, _variables, context) => {
       if (context?.cacheKey) {
         queryClient.setQueryData(context.cacheKey, context.previousData);
+      }
+
+      if (context?.postDetailsKey) {
+        queryClient.setQueryData(
+          context.postDetailsKey,
+          context.previousPostDetails
+        );
       }
     },
   });
@@ -112,4 +126,6 @@ type CreateCommentContext = {
   cacheKey: ReturnType<typeof postCommentsQueryKey>;
   previousData: PostCommentsQueryData | undefined;
   optimisticId: string;
+  postDetailsKey: ReturnType<typeof postDetailsQueryKey>;
+  previousPostDetails?: FeedPost;
 };

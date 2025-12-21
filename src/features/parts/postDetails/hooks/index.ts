@@ -3,3 +3,4 @@ export * from "./usePostDetails";
 export * from "./usePrefetchPostDetails";
 export * from "./useCreatePostComment";
 export * from "./usePostComments";
+export * from "./useDeletePostComment";

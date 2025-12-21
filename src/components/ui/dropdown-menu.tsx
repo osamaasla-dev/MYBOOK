@@ -3,8 +3,9 @@
 import * as React from "react";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react";
-
+import { Button } from "./button";
 import { cn } from "@/lib/utils";
+type ButtonVariant = React.ComponentProps<typeof Button>["variant"];
 
 function DropdownMenu({
   ...props
@@ -66,7 +67,7 @@ function DropdownMenuItem({
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Item> & {
   inset?: boolean;
-  variant?: "default" | "destructive";
+  variant?: ButtonVariant;
 }) {
   return (
     <DropdownMenuPrimitive.Item

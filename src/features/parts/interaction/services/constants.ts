@@ -35,4 +35,5 @@ export const INTERACTION_WEIGHTS: Record<InteractionWeightKey, number> = {
   report: -12,
   notInterested: -6,
   unreact: -1,
+  deleteComment: -2,
 };

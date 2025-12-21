@@ -5,6 +5,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 
 import { usePostComments, usePostDetails } from "../hooks";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+import { useCurrentUser } from "@/features/hooks";
 import {
   PostDetailsHeader,
   PostDetailsFooter,
@@ -38,7 +39,11 @@ export function PostDetailsModal({
     enabled: open,
   });
 
+  const { data: currentUser } = useCurrentUser(open);
+
   const hasPost = Boolean(post);
+  const viewerId = currentUser?.id ?? null;
+  const postAuthorId = post?.author.id ?? null;
 
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
@@ -86,6 +91,7 @@ export function PostDetailsModal({
 
           <PostDetailsContent
             post={post ?? null}
+            postId={postId}
             isLoading={isLoading}
             isError={isError}
             refetch={refetch}
@@ -98,6 +104,8 @@ export function PostDetailsModal({
             sentinelRef={sentinelRef}
             isFetchingNextPage={isFetchingNextPage}
             hasMoreComments={hasMoreComments}
+            viewerId={viewerId}
+            postAuthorId={postAuthorId}
           />
 
           <PostDetailsFooter postId={postId} hasPost={hasPost} />

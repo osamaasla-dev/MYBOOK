@@ -427,6 +427,8 @@ model Comment {
   isEdited    Boolean @default(false)
   isDeleted   Boolean @default(false)
   deletedAt   DateTime?
+  deletedById String?
+  deletedBy   User?    @relation("UserDeletedComments", fields: [deletedById], references: [id], onDelete: SetNull)
   metadata    Json?
 
   createdAt   DateTime @default(now())
@@ -439,6 +441,7 @@ model Comment {
   @@index([postId, createdAt])
   @@index([authorId, createdAt])
   @@index([parentId])
+  @@index([deletedById])
 }
 
 model CommentReaction {
@@ -552,6 +555,7 @@ model User {
   commentReports     CommentReport[] @relation("UserCommentReports")
   handledCommentReports CommentReport[] @relation("UserHandledCommentReports")
   commentEditHistory CommentEditHistory[] @relation("UserCommentEdits")
+  deletedComments    Comment[] @relation("UserDeletedComments")
   postDrafts         PostDraft[] @relation("UserPostDrafts")
   postModerationLogs PostModerationLog[] @relation("UserPostModerationLogs")
   followers          Follow[]  @relation("UserFollowers")

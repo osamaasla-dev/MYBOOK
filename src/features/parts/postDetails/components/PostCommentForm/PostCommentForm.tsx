@@ -14,6 +14,7 @@ export function PostCommentForm(props: PostCommentFormProps) {
     isDisabled,
     charactersCount,
     handleClear,
+    moderationError,
   } = usePostCommentForm(props);
 
   return (
@@ -28,6 +29,10 @@ export function PostCommentForm(props: PostCommentFormProps) {
           disabled={isDisabled}
           hasError={hasContentError}
         />
+
+        {moderationError && (
+          <p className="text-sm font-medium text-danger">{moderationError}</p>
+        )}
 
         <PostCommentFormActions
           isDisabled={isDisabled}

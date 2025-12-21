@@ -122,3 +122,30 @@ export function insertCommentAtTop(
     nextCursor: baseData.nextCursor,
   };
 }
+
+export function removeCommentFromCache(
+  data: PostCommentsQueryData | undefined,
+  commentId: string
+): PostCommentsQueryData | undefined {
+  if (!data) {
+    return data;
+  }
+
+  const nextPages = data.pages.map((page) => {
+    const comments = Array.isArray(page.comments) ? page.comments : [];
+    return {
+      ...page,
+      comments: comments.filter((comment) => comment.id !== commentId),
+    };
+  });
+
+  const nextItems = Array.isArray(data.items)
+    ? data.items.filter((item) => item.id !== commentId)
+    : [];
+
+  return {
+    ...data,
+    pages: nextPages,
+    items: nextItems,
+  };
+}

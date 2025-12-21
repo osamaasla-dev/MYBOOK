@@ -1,14 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import toast from "react-hot-toast";
 import { z } from "zod";
 
-import { runTextModeration } from "@/features/parts/moderation/utils";
-import { useModerationCheck } from "@/features/parts/moderation/hooks/useModerationCheck";
-import moderationMessages from "@/lib/messages/moderation";
 import commentMessages from "@/lib/messages/comments";
 import { useCurrentUser } from "@/features/hooks";
 import { useCreatePostComment } from "../../hooks/useCreatePostComment";
@@ -23,6 +19,7 @@ export function usePostCommentForm({
 }: PostCommentFormProps) {
   const initialParentId = parentId ?? null;
   const { data: currentUser } = useCurrentUser();
+  const [moderationError, setModerationError] = useState<string | null>(null);
 
   const createCommentMutation = useCreatePostComment({
     postId,
@@ -35,7 +32,6 @@ export function usePostCommentForm({
         }
       : null,
   });
-  const moderationCheck = useModerationCheck();
 
   const {
     register,
@@ -50,8 +46,7 @@ export function usePostCommentForm({
 
   const contentValue = watch("content") ?? "";
   const charactersCount = contentValue.length;
-  const isMutating =
-    createCommentMutation.isPending || moderationCheck.isPending;
+  const isMutating = createCommentMutation.isPending;
   const isDisabled = isSubmitting || isMutating;
   const hasContentError = Boolean(errors.content);
 
@@ -68,32 +63,35 @@ export function usePostCommentForm({
   const onSubmit = handleSubmit(async (values) => {
     try {
       const normalizedValues = createCommentSchema.parse(values);
-
-      const decision = await runTextModeration({
-        content: normalizedValues.content,
-        context: "comment",
-        mutateAsync: moderationCheck.mutateAsync,
-      });
-
-      if (decision.status === "reject") {
-        toast.error(moderationMessages.blocked);
-        return;
-      }
+      setModerationError(null);
 
       await createCommentMutation.mutateAsync(normalizedValues);
       reset({ content: "", parentId: initialParentId });
-    } catch (error) {
+      setModerationError(null);
+    } catch {
       const message =
-        error instanceof Error
-          ? error.message
-          : commentMessages.unexpectedError;
-      toast.error(message);
+        createCommentMutation.error?.message ?? commentMessages.unexpectedError;
+      setModerationError(message);
     }
   });
 
   const handleClear = () => {
     reset({ content: "", parentId: initialParentId });
   };
+
+  useEffect(() => {
+    if (!moderationError) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setModerationError(null);
+    }, 5000);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [moderationError]);
 
   return {
     contentFieldRegister: register("content"),
@@ -104,6 +102,6 @@ export function usePostCommentForm({
     isDisabled,
     charactersCount,
     handleClear,
-    isModerationPending: moderationCheck.isPending,
+    moderationError,
   };
 }

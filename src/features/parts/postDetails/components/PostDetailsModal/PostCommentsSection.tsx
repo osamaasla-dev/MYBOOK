@@ -15,6 +15,9 @@ export type PostCommentsSectionProps = {
   sentinelRef: RefObject<HTMLDivElement | null>;
   isFetchingNextPage: boolean;
   hasMoreComments: boolean;
+  viewerId: string | null;
+  postAuthorId: string | null;
+  postId: string;
 };
 
 export function PostCommentsSection({
@@ -26,6 +29,9 @@ export function PostCommentsSection({
   sentinelRef,
   isFetchingNextPage,
   hasMoreComments,
+  viewerId,
+  postAuthorId,
+  postId,
 }: PostCommentsSectionProps) {
   return (
     <div className="bg-secondary/5 px-3 py-4">
@@ -35,7 +41,13 @@ export function PostCommentsSection({
       {!areCommentsLoading && comments.length > 0 && (
         <ul className="space-y-2">
           {comments.map((comment) => (
-            <CommentListItem key={comment.id} comment={comment} />
+            <CommentListItem
+              key={comment.id}
+              comment={comment}
+              viewerId={viewerId}
+              postAuthorId={postAuthorId}
+              postId={postId}
+            />
           ))}
         </ul>
       )}
@@ -50,11 +62,14 @@ export function PostCommentsSection({
         </p>
       )}
 
-      {!hasMoreComments && (
-        <p className="mt-2 text-center text-xs text-muted-foreground">
-          No more comments
-        </p>
-      )}
+      {!hasMoreComments &&
+        !areCommentsLoading &&
+        !areCommentsError &&
+        !commentsEmpty && (
+          <p className="mt-2 text-center text-xs text-muted-foreground">
+            No more comments
+          </p>
+        )}
     </div>
   );
 }

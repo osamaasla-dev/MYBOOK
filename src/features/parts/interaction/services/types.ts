@@ -10,7 +10,8 @@ export type NegativeWeightKey =
   | "hidePost"
   | "report"
   | "notInterested"
-  | "unreact";
+  | "unreact"
+  | "deleteComment";
 
 export type InteractionWeightKey =
   | InteractionType

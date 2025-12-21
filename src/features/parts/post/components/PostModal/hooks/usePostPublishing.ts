@@ -1,4 +1,3 @@
-import { runTextModeration } from "@/features/parts/moderation/utils";
 import {
   type PublishArgs,
   type UsePostPublishingOptions,
@@ -19,12 +18,8 @@ export function usePostPublishing({
   visibilityPreference,
   resetDraft,
 }: UsePostPublishingOptions) {
-  const {
-    moderationMutation,
-    mediaUploadMutation,
-    createPostMutation,
-    isPublishing,
-  } = usePublishingMutations();
+  const { mediaUploadMutation, createPostMutation, isPublishing } =
+    usePublishingMutations();
   const { progress, updateProgress, resetProgress } = usePublishingProgress();
   const publishPost = async ({ canPublish }: PublishArgs) => {
     if (isPublishing) return;
@@ -40,19 +35,6 @@ export function usePostPublishing({
     setStatusMessage(null);
 
     try {
-      if (trimmedContent.length > 0) {
-        updateProgress(25, "Running text checks");
-        const decision = await runTextModeration({
-          content: trimmedContent,
-          mutateAsync: moderationMutation.mutateAsync,
-        });
-        if (decision.status === "reject") {
-          resetProgress();
-          setStatusMessage(postMessages.PUBLISHING_MESSAGES.textRejected);
-          return;
-        }
-      }
-
       const hasMedia = mediaPreviews.length > 0;
       updateProgress(
         hasMedia ? 45 : 55,
@@ -81,11 +63,11 @@ export function usePostPublishing({
       setTimeout(() => {
         resetProgress();
       }, 400);
-    } catch (error) {
+    } catch {
       const message =
-        error instanceof Error
-          ? error.message
-          : postMessages.PUBLISHING_MESSAGES.genericFailure;
+        createPostMutation.error?.message ??
+        mediaUploadMutation.error?.message ??
+        postMessages.PUBLISHING_MESSAGES.genericFailure;
       setStatusMessage(message);
       resetProgress();
     }

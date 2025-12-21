@@ -1,8 +1,10 @@
 const moderationMessages = {
   success: "Content cleared moderation successfully.",
   blocked: "Content violates moderation guidelines.",
+  textBlocked: "Your text violates moderation guidelines.",
+  mediaBlocked: "Your media files violates moderation guidelines.",
   invalidPayload: "Invalid payload for moderation check.",
-  missingKey: "OpenAI API key is not configured on the server.",
+  missingKey: "Moderation provider API key is not configured on the server.",
   rateLimited: "Moderation service rate limit reached, please retry shortly.",
   failed: "Unable to complete moderation at this time.",
   validation: {
@@ -10,5 +12,4 @@ const moderationMessages = {
     contentTooLong: "Content is too long.",
   },
 };
-
 export default moderationMessages;

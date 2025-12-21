@@ -11,6 +11,7 @@ import type { PostCommentsSectionProps } from "./PostCommentsSection";
 
 export type PostDetailsContentProps = {
   post: FeedPost | null;
+  postId: string;
   isLoading: boolean;
   isError: boolean;
   refetch: () => void;
@@ -25,10 +26,13 @@ export type PostDetailsContentProps = {
   | "sentinelRef"
   | "isFetchingNextPage"
   | "hasMoreComments"
+  | "viewerId"
+  | "postAuthorId"
 >;
 
 export function PostDetailsContent({
   post,
+  postId,
   isLoading,
   isError,
   refetch,
@@ -41,6 +45,8 @@ export function PostDetailsContent({
   sentinelRef,
   isFetchingNextPage,
   hasMoreComments,
+  viewerId,
+  postAuthorId,
 }: PostDetailsContentProps) {
   const hasPost = Boolean(post);
   const cardProps = post ? buildPostCardPropsFromFeedPost(post) : null;
@@ -67,6 +73,9 @@ export function PostDetailsContent({
           sentinelRef={sentinelRef}
           isFetchingNextPage={isFetchingNextPage}
           hasMoreComments={hasMoreComments}
+          viewerId={viewerId}
+          postAuthorId={postAuthorId}
+          postId={postId}
         />
       )}
 
