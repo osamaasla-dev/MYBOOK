@@ -7,8 +7,6 @@ import type { PostReactionResponse } from "../types";
 import type { FeedPost } from "@/features/pages/home/utils/posts/feed-response";
 import {
   cancelRelatedQueries,
-  invalidateHomeFeed,
-  invalidatePostDetails,
   optimisticUpdateFeed,
   optimisticUpdatePostDetails,
   type ReactionMutationContext,
@@ -61,12 +59,7 @@ export function useRemovePostReaction() {
 
       return { previousHomeFeed, previousPostDetails };
     },
-    onSuccess: async (_data, variables) => {
-      await Promise.all([
-        invalidateHomeFeed(queryClient),
-        invalidatePostDetails(queryClient, variables.postId),
-      ]);
-    },
+
     onError: async (_error, variables, context) => {
       if (context?.previousHomeFeed) {
         queryClient.setQueryData(HOME_FEED_QUERY_KEY, context.previousHomeFeed);

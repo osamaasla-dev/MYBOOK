@@ -1,6 +1,7 @@
 const commentMessages = {
   created: "Comment added successfully.",
   deleted: "Comment deleted successfully.",
+  updated: "Comment updated successfully.",
   fetched: "Comments fetched successfully.",
   unauthorized: "You must be signed in before adding a comment.",
   invalidPayload: "Invalid payload for comment operation.",
@@ -13,6 +14,7 @@ const commentMessages = {
     "The comment you are replying to does not belong to this post.",
   forbidden: "You are not allowed to perform this action on the comment.",
   moderationRejected: "Your comment violates our guidelines. Please revise it.",
+  reactionAlreadyExists: "You have already reacted to this comment.",
   validation: {
     contentRequired: "Comment cannot be empty.",
     contentTooLong: "Comment is too long.",

@@ -15,7 +15,7 @@ import {
   buildPostDetailChannel,
 } from "../../utils/realtime/channels";
 
-import { applyCacheUpdates } from "./metaCache";
+import { applyCacheUpdates } from "./postMetaCache";
 import type {
   PostDetailMetaEventPayload,
   ReactionSummaryUpdatePayload,

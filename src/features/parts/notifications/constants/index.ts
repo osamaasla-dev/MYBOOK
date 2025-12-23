@@ -18,4 +18,5 @@ export const NOTIFICATION_EVENTS = [
   "post:created",
   "post:reaction",
   "post:comment",
+  "post:comment:reaction",
 ] as const;

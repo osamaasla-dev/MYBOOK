@@ -3,6 +3,7 @@
 import { apiGetR } from "@/lib/api";
 
 import type { ReactionSummary } from "@/features/parts/post/utils/reaction";
+import type { PostReactionType } from "@/features/parts/post/constants/reactions";
 
 export type CommentAuthorSummary = {
   id: string;
@@ -18,9 +19,12 @@ export type PostCommentListItem = {
   authorId: string;
   content: string;
   reactionSummary: ReactionSummary | null;
+  reactionsCount: number;
+  viewerReaction: PostReactionType | null;
   replyCount: number;
   createdAt: string;
   updatedAt: string;
+  isEdited: boolean;
   author: CommentAuthorSummary;
 };
 

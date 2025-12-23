@@ -1,5 +1,5 @@
 import { redis } from "@/lib/redis";
-
+import { ReactionState } from "@prisma/client";
 import { postReactionSchema } from "../../schemas/reactionSchema";
 import {
   POST_REACTION_MAX_ACTIONS,
@@ -14,7 +14,7 @@ type ReactionAggregate = {
   count: number;
 };
 
-export type ReactionOperation = "added" | "updated" | "removed" | "noop";
+export type ReactionOperation = ReactionState | "NOOP";
 
 export function buildReactionSummary(aggregates: ReactionAggregate[]): {
   reactionsCount: number;
@@ -51,13 +51,22 @@ type RateLimitOptions = {
   maxActions?: number;
 };
 
-export async function isReactionRateLimited({
+type ReactionTargetRateLimitOptions = {
+  userId: string;
+  targetId: string;
+  namespace?: string;
+  windowMs?: number;
+  maxActions?: number;
+};
+
+export async function isReactionRateLimitedForTarget({
   userId,
-  postId,
+  targetId,
+  namespace = POST_REACTION_RATE_NAMESPACE,
   windowMs = POST_REACTION_WINDOW_MS,
   maxActions = POST_REACTION_MAX_ACTIONS,
-}: RateLimitOptions): Promise<boolean> {
-  const key = `${POST_REACTION_RATE_NAMESPACE}:${postId}:${userId}`;
+}: ReactionTargetRateLimitOptions): Promise<boolean> {
+  const key = `${namespace}:${targetId}:${userId}`;
   const ttlSeconds = Math.ceil(windowMs / 1000);
 
   const count = await redis.incr(key);
@@ -66,6 +75,21 @@ export async function isReactionRateLimited({
   }
 
   return count > maxActions;
+}
+
+export async function isReactionRateLimited({
+  userId,
+  postId,
+  windowMs = POST_REACTION_WINDOW_MS,
+  maxActions = POST_REACTION_MAX_ACTIONS,
+}: RateLimitOptions): Promise<boolean> {
+  return isReactionRateLimitedForTarget({
+    userId,
+    targetId: postId,
+    namespace: POST_REACTION_RATE_NAMESPACE,
+    windowMs,
+    maxActions,
+  });
 }
 
 export function parseReactionPayload(json: unknown) {

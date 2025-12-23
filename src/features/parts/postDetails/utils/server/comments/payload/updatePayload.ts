@@ -1,0 +1,43 @@
+import type { Logger } from "pino";
+
+import { commentMessages } from "@/lib/messages";
+import { isJsonRequest } from "@/schemas/http";
+import {
+  updateCommentSchema,
+  type UpdateCommentInput,
+} from "@/features/parts/postDetails/schemas";
+
+import { CommentRouteError } from "../errors";
+
+export async function parseUpdateCommentPayload(
+  request: Request,
+  log: Logger
+): Promise<UpdateCommentInput> {
+  if (!isJsonRequest(request)) {
+    log.warn("Unsupported content-type for update comment payload");
+    throw new CommentRouteError(commentMessages.invalidPayload, 415);
+  }
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch (error) {
+    log.warn({ error }, "Failed to parse update comment payload");
+    throw new CommentRouteError(commentMessages.invalidPayload, 400);
+  }
+
+  const parsed = updateCommentSchema.safeParse(body);
+  if (!parsed.success) {
+    const firstIssue = parsed.error.issues?.[0];
+    log.warn(
+      { issues: parsed.error.issues },
+      "Invalid update comment payload received"
+    );
+    throw new CommentRouteError(
+      firstIssue?.message ?? commentMessages.invalidPayload,
+      400
+    );
+  }
+
+  return parsed.data;
+}

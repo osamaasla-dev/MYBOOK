@@ -3,6 +3,7 @@
 import { apiPostR } from "@/lib/api";
 
 import type { ReactionSummary } from "@/features/parts/post/utils/reaction";
+import type { PostReactionType } from "@/features/parts/post/constants/reactions";
 import type { CreateCommentInput } from "@/features/parts/postDetails/schemas";
 
 type CommentAuthor = {
@@ -19,6 +20,8 @@ export type PostComment = {
   content: string;
   parentId: string | null;
   reactionSummary: ReactionSummary | null;
+  reactionsCount: number;
+  viewerReaction: PostReactionType | null;
   createdAt: string | null;
   updatedAt: string | null;
   author: CommentAuthor;
@@ -37,5 +40,9 @@ export async function createPostCommentRequest(
 ): Promise<PostComment> {
   const endpoint = buildAddCommentEndpoint(postId);
   const { data } = await apiPostR<CreateCommentResponse>(endpoint, input);
-  return data.comment;
+  return {
+    ...data.comment,
+    reactionsCount: 0,
+    viewerReaction: null,
+  };
 }

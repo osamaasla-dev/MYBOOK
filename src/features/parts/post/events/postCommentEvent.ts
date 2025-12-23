@@ -1,4 +1,4 @@
-export const POST_COMMENT_EVENT = "post:comment" as const;
+export const POST_COMMENT_EVENT = "post:comment:create" as const;
 
 export type PostCommentEventPayload = {
   postId: string;

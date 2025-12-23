@@ -6,6 +6,7 @@ import {
   type FeedPost,
 } from "@/features/pages/home/utils/posts/feed-response";
 import { buildFeedPost } from "@/features/parts/post/utils";
+import { ReactionState } from "@prisma/client";
 
 type FetchFeedPostsParams = {
   viewerId: string;
@@ -37,8 +38,13 @@ export async function fetchFeedPostsForViewer({
       sharesCount: true,
       viewCount: true,
       reactionSummary: true,
+      visibility: true,
+      visibilityPreference: true,
       reactions: {
-        where: { userId: viewerId },
+        where: {
+          userId: viewerId,
+          state: { not: ReactionState.CANCEL }, // Exclude canceled reactions
+        },
         select: { emoji: true },
         take: 1,
       },

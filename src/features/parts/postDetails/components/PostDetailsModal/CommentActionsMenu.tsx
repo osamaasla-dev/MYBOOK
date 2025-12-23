@@ -22,6 +22,7 @@ type CommentActionsMenuProps = {
   commentAuthorId: string;
   postAuthorId: string | null;
   triggerClassName?: string;
+  onEdit?: () => void;
 };
 
 export function CommentActionsMenu({
@@ -32,6 +33,7 @@ export function CommentActionsMenu({
   commentAuthorId,
   postAuthorId,
   triggerClassName = "",
+  onEdit,
 }: CommentActionsMenuProps) {
   const isCommentOwner = viewerId === commentAuthorId;
   const canManage =
@@ -87,8 +89,16 @@ export function CommentActionsMenu({
           className="min-w-[140px] border-none bg-white shadow-md "
         >
           {isCommentOwner && (
-            <DropdownMenuItem disabled className="cursor-default">
-              Edit (coming soon)
+            <DropdownMenuItem
+              className="cursor-pointer focus:bg-secondary"
+              data-variant="none"
+              onSelect={(event) => {
+                event.preventDefault();
+                setIsMenuOpen(false);
+                onEdit?.();
+              }}
+            >
+              Edit
             </DropdownMenuItem>
           )}
           <DropdownMenuItem

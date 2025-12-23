@@ -4,3 +4,6 @@ export * from "./usePrefetchPostDetails";
 export * from "./useCreatePostComment";
 export * from "./usePostComments";
 export * from "./useDeletePostComment";
+export * from "./useReactToComment";
+export * from "./useRemoveCommentReaction";
+export * from "./useCommentReactions";

@@ -73,7 +73,5 @@ export function usePostComments({
     placeholderData: keepPreviousData,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
-    staleTime: 60_000,
-    gcTime: 60_000,
   });
 }

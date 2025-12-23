@@ -30,12 +30,32 @@ export type PostDetailCommentEventPayload = {
   replyToId?: string | null;
   createdAt?: string;
   updatedAt?: string;
+  isEdited?: boolean;
 };
 
 export type PostDetailCommentDeletedEventPayload = {
   postId: string;
   commentId: string;
   parentId?: string | null;
+};
+
+export type PostDetailCommentUpdatedEventPayload = {
+  postId: string;
+  commentId: string;
+  parentId?: string | null;
+  content?: string;
+  updatedAt?: string;
+  isEdited?: boolean;
+};
+
+export type CommentMetaEventPayload = {
+  postId: string | null;
+  commentId: string | null;
+  parentId?: string | null;
+  reactionsCount: number;
+  reactionSummary: ReactionSummary;
+  repliesCount?: number;
+  updatedAt: string;
 };
 
 export type UseRealtimeSummaryOptions = {

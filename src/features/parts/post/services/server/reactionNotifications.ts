@@ -65,7 +65,7 @@ function buildMetadata(
   return entries as Prisma.JsonObject;
 }
 
-export async function upsertPostReactionNotification({
+export async function createPostReactionNotification({
   postId,
   postAuthorId,
   reactorId,
@@ -98,39 +98,7 @@ export async function upsertPostReactionNotification({
       canceledAt: null,
     });
 
-    const existing = await client.notification.findFirst({
-      where: {
-        userId: postAuthorId,
-        actorId: reactorId,
-        postId,
-        type: NOTIFICATION_TYPE,
-      },
-      orderBy: { createdAt: "desc" },
-      select: { id: true, metadata: true },
-    });
-
-    if (existing) {
-      const previousMeta = toJsonObject(existing.metadata);
-      const nextMeta = {
-        ...previousMeta,
-        ...metadata,
-      };
-
-      await client.notification.update({
-        where: { id: existing.id },
-        data: {
-          metadata: nextMeta as Prisma.JsonObject,
-          isRead: false,
-          createdAt: new Date(),
-        },
-      });
-
-      log.debug(
-        { notificationId: existing.id },
-        "Updated post reaction notification"
-      );
-      return existing.id;
-    }
+    // Always create a new notification instead of updating existing ones
 
     const created = await client.notification.create({
       data: {

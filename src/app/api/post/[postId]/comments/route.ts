@@ -51,6 +51,7 @@ export async function GET(request: Request, routeContext: RouteParams) {
       parentId,
       cursor,
       limit,
+      viewerId,
     });
 
     log.info("Fetching comments completed");

@@ -444,19 +444,23 @@ model Comment {
   @@index([deletedById])
 }
 
+
+
 model CommentReaction {
-  id         String   @id @default(cuid())
+  id         String       @id @default(cuid())
+  state      ReactionState @default(ADD)
 
   commentId  String
-  comment    Comment  @relation(fields: [commentId], references: [id], onDelete: Restrict)
+  comment    Comment      @relation(fields: [commentId], references: [id], onDelete: Restrict)
 
   userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  user       User         @relation(fields: [userId], references: [id], onDelete: Restrict)
 
   emoji      String
-  createdAt  DateTime @default(now())
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
 
-  @@unique([commentId, userId, emoji])
+  @@unique([commentId, userId])
   @@index([commentId, emoji])
   @@index([commentId, createdAt])
   @@index([userId, createdAt])
@@ -717,19 +721,21 @@ model Media {
 }
 
 model PostReaction {
-  id        String   @id @default(cuid())
+  id        String       @id @default(cuid())
+  state     ReactionState @default(ADD)
 
   postId    String
-  post      Post     @relation(fields: [postId], references: [id])
+  post      Post         @relation(fields: [postId], references: [id])
 
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  user      User         @relation(fields: [userId], references: [id])
 
-  emoji     String   // store unicode emoji or shortcode
+  emoji     String       // store unicode emoji or shortcode
 
-  createdAt DateTime @default(now())
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
 
-  @@unique([postId, userId, emoji])
+  @@unique([postId, userId])  // Removed emoji from unique constraint
   @@index([postId, emoji])
   @@index([postId, createdAt])
   @@index([userId, createdAt])
@@ -978,6 +984,12 @@ enum PostType {
   ORIGINAL
   REPLY
   REPOST
+}
+
+enum ReactionState {
+  ADD
+  UPDATE
+  CANCEL
 }
 
 enum CommentReportReason {

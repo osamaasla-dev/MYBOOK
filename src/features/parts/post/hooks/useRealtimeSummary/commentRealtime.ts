@@ -8,15 +8,21 @@ import { usePusherChannel } from "@/hooks/usePusherChannel";
 import {
   POST_DETAIL_COMMENT_DELETED_EVENT,
   POST_DETAIL_COMMENT_EVENT,
+  POST_DETAIL_COMMENT_UPDATED_EVENT,
+  POST_DETAIL_COMMENT_META_EVENT,
 } from "../../utils/realtime/channels";
 
 import {
   applyPostDetailCommentDeletedUpdate,
   applyPostDetailCommentUpdate,
+  applyPostDetailCommentEditedUpdate,
+  applyCommentMetaUpdate,
 } from "./commentCache";
 import type {
+  CommentMetaEventPayload,
   PostDetailCommentDeletedEventPayload,
   PostDetailCommentEventPayload,
+  PostDetailCommentUpdatedEventPayload,
 } from "./types";
 
 type CommentRealtimeOptions = {
@@ -61,5 +67,33 @@ export function usePostDetailCommentRealtime({
     enabled: isChannelActive,
     event: POST_DETAIL_COMMENT_DELETED_EVENT,
     onEvent: handleCommentDeletedEvent,
+  });
+
+  const handleCommentUpdatedEvent = useCallback(
+    (payload: PostDetailCommentUpdatedEventPayload) => {
+      applyPostDetailCommentEditedUpdate(queryClient, payload);
+    },
+    [queryClient]
+  );
+
+  usePusherChannel<PostDetailCommentUpdatedEventPayload>({
+    channelName: detailChannelName ?? "",
+    enabled: isChannelActive,
+    event: POST_DETAIL_COMMENT_UPDATED_EVENT,
+    onEvent: handleCommentUpdatedEvent,
+  });
+
+  const handleCommentMetaEvent = useCallback(
+    (payload: CommentMetaEventPayload) => {
+      applyCommentMetaUpdate(queryClient, payload);
+    },
+    [queryClient]
+  );
+
+  usePusherChannel<CommentMetaEventPayload>({
+    channelName: detailChannelName ?? "",
+    enabled: isChannelActive,
+    event: POST_DETAIL_COMMENT_META_EVENT,
+    onEvent: handleCommentMetaEvent,
   });
 }

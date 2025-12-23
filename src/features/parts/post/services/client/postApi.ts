@@ -13,8 +13,11 @@ const CREATE_POST_ENDPOINT = "/post/create";
 const buildPostViewEndpoint = (postId: string) =>
   `/post/${encodeURIComponent(postId)}/view`;
 
-const buildPostReactionEndpoint = (postId: string) =>
-  `/post/${encodeURIComponent(postId)}/react`;
+const buildPostReactionCreateEndpoint = (postId: string) =>
+  `/post/${encodeURIComponent(postId)}/reactions/create`;
+
+const buildPostReactionDeleteEndpoint = (postId: string) =>
+  `/post/${encodeURIComponent(postId)}/reactions/delete`;
 
 export async function submitCreatePost(
   input: CreatePostInput
@@ -31,7 +34,7 @@ export async function reactToPostApi(
   reaction: PostReactionType
 ): Promise<PostReactionResponse> {
   const { data } = await apiPostR<PostReactionResponse>(
-    buildPostReactionEndpoint(postId),
+    buildPostReactionCreateEndpoint(postId),
     { reaction }
   );
   return data;
@@ -41,7 +44,7 @@ export async function removePostReactionApi(
   postId: string
 ): Promise<PostReactionResponse> {
   const { data } = await apiDeleteR<PostReactionResponse>(
-    buildPostReactionEndpoint(postId)
+    buildPostReactionDeleteEndpoint(postId)
   );
   return data;
 }

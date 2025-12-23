@@ -1,13 +1,10 @@
 import { prisma } from "@/lib/prisma";
-
+import { ReactionState } from "@prisma/client";
 import { buildReactionSummary } from "../../../utils/reaction";
 import {
   broadcastPostDetailMetaEvent,
   broadcastPostMetaEvent,
-  broadcastPostReactionEvent,
 } from "../../../utils/realtime";
-import type { PostReactionType } from "../../../constants/reactions";
-import { cancelPostReactionNotification } from "../reactionNotifications";
 import { applyNegativeSignal } from "@/features/parts/interaction/services";
 
 import type { RemovePostReactionParams, PostReactionResult } from "./types";
@@ -18,20 +15,38 @@ export async function removePostReaction({
 }: RemovePostReactionParams): Promise<PostReactionResult> {
   const { result, removedReaction, postAuthorId } = await prisma.$transaction(
     async (tx) => {
+      // 1. Find existing active reaction
       const existing = await tx.postReaction.findFirst({
-        where: { postId, userId },
+        where: {
+          postId,
+          userId,
+          state: { not: ReactionState.CANCEL }, // Only find non-canceled reactions
+        },
       });
 
-      let removedReaction: PostReactionType | null = null;
+      let removedReaction: string | null = null;
+      let operation: "CANCEL" | "NOOP" = "NOOP";
 
       if (existing) {
-        removedReaction = existing.emoji as PostReactionType;
-        await tx.postReaction.delete({ where: { id: existing.id } });
+        // 2. Instead of deleting, mark as CANCEL
+        await tx.postReaction.update({
+          where: { id: existing.id },
+          data: {
+            state: ReactionState.CANCEL,
+            updatedAt: new Date(),
+          },
+        });
+        removedReaction = existing.emoji;
+        operation = "CANCEL";
       }
 
+      // 3. Get updated reaction summary (only active reactions)
       const aggregates = await tx.postReaction.groupBy({
         by: ["emoji"],
-        where: { postId },
+        where: {
+          postId,
+          state: { not: ReactionState.CANCEL }, // Only count non-canceled reactions
+        },
         _count: { _all: true },
       });
 
@@ -42,6 +57,7 @@ export async function removePostReaction({
         }))
       );
 
+      // 4. Update post with new reaction data
       const post = await tx.post.update({
         where: { id: postId },
         data: {
@@ -55,46 +71,23 @@ export async function removePostReaction({
         },
       });
 
-      const postAuthorId = post?.authorId ?? null;
-      if (postAuthorId && postAuthorId !== userId && removedReaction) {
-        await cancelPostReactionNotification({
-          postId,
-          postAuthorId,
-          reactorId: userId,
-          tx,
-        });
-      }
-
       return {
         result: {
           reaction: null,
-          operation: "removed",
+          operation,
           ...summary,
-          commentsCount: post?.commentsCount ?? undefined,
-          sharesCount: post?.sharesCount ?? undefined,
+          commentsCount: post.commentsCount ?? undefined,
+          sharesCount: post.sharesCount ?? undefined,
         } satisfies PostReactionResult,
         removedReaction,
-        postAuthorId,
+        postAuthorId: post.authorId,
       };
     }
   );
 
+  // 5. Handle side effects after transaction
   if (removedReaction && postAuthorId && postAuthorId !== userId) {
-    const reactor = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { name: true },
-    });
-
-    await broadcastPostReactionEvent({
-      postId,
-      reaction: removedReaction,
-      reactorId: userId,
-      reactorName: reactor?.name ?? "Someone",
-      postAuthorId,
-      operation: "removed",
-    });
-
-    void applyNegativeSignal({
+    await applyNegativeSignal({
       actorId: userId,
       targetUserId: postAuthorId,
       type: "unreact",
@@ -105,24 +98,27 @@ export async function removePostReaction({
         targetUserId: postAuthorId,
       });
     });
+
+    // Broadcast events
+    await Promise.allSettled([
+      broadcastPostDetailMetaEvent({
+        postId,
+        reactionsCount: result.reactionsCount,
+        reactionSummary: result.reactionSummary,
+        commentsCount: result.commentsCount,
+        sharesCount: result.sharesCount,
+      }),
+      broadcastPostMetaEvent({
+        postId,
+        postAuthorId,
+        initiatorId: userId,
+        reactionsCount: result.reactionsCount,
+        reactionSummary: result.reactionSummary,
+        commentsCount: result.commentsCount,
+        sharesCount: result.sharesCount,
+      }),
+    ]);
   }
 
-  await broadcastPostDetailMetaEvent({
-    postId,
-    reactionsCount: result.reactionsCount,
-    reactionSummary: result.reactionSummary ?? null,
-    commentsCount: result.commentsCount,
-    sharesCount: result.sharesCount,
-  });
-
-  await broadcastPostMetaEvent({
-    postAuthorId,
-    initiatorId: userId,
-    postId,
-    reactionsCount: result.reactionsCount,
-    reactionSummary: result.reactionSummary ?? null,
-    commentsCount: result.commentsCount,
-    sharesCount: result.sharesCount,
-  });
   return result;
 }

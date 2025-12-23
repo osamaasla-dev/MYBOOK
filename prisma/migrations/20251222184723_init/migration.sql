@@ -300,10 +300,12 @@ CREATE TABLE "Comment" (
 -- CreateTable
 CREATE TABLE "CommentReaction" (
     "id" TEXT NOT NULL PRIMARY KEY,
+    "state" TEXT NOT NULL DEFAULT 'ADD',
     "commentId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "emoji" TEXT NOT NULL,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
     CONSTRAINT "CommentReaction_commentId_fkey" FOREIGN KEY ("commentId") REFERENCES "Comment" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "CommentReaction_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
@@ -437,10 +439,12 @@ CREATE TABLE "Media" (
 -- CreateTable
 CREATE TABLE "PostReaction" (
     "id" TEXT NOT NULL PRIMARY KEY,
+    "state" TEXT NOT NULL DEFAULT 'ADD',
     "postId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "emoji" TEXT NOT NULL,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
     CONSTRAINT "PostReaction_postId_fkey" FOREIGN KEY ("postId") REFERENCES "Post" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "PostReaction_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
@@ -789,7 +793,7 @@ CREATE INDEX "CommentReaction_commentId_createdAt_idx" ON "CommentReaction"("com
 CREATE INDEX "CommentReaction_userId_createdAt_idx" ON "CommentReaction"("userId", "createdAt");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "CommentReaction_commentId_userId_emoji_key" ON "CommentReaction"("commentId", "userId", "emoji");
+CREATE UNIQUE INDEX "CommentReaction_commentId_userId_key" ON "CommentReaction"("commentId", "userId");
 
 -- CreateIndex
 CREATE INDEX "PostShare_postId_createdAt_idx" ON "PostShare"("postId", "createdAt");
@@ -879,7 +883,7 @@ CREATE INDEX "PostReaction_postId_createdAt_idx" ON "PostReaction"("postId", "cr
 CREATE INDEX "PostReaction_userId_createdAt_idx" ON "PostReaction"("userId", "createdAt");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "PostReaction_postId_userId_emoji_key" ON "PostReaction"("postId", "userId", "emoji");
+CREATE UNIQUE INDEX "PostReaction_postId_userId_key" ON "PostReaction"("postId", "userId");
 
 -- CreateIndex
 CREATE INDEX "Bookmark_userId_createdAt_idx" ON "Bookmark"("userId", "createdAt");

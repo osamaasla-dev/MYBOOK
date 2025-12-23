@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import type { PostReactionType } from "@/features/parts/post/constants/reactions";
 import { postDetailsLogger } from "../../utils/logger";
+import { ReactionState } from "@prisma/client";
 
 type FetchViewerPostReactionInput = {
   postId: string;
@@ -22,7 +23,7 @@ export async function fetchViewerPostReaction({
   });
 
   const reactionRecord = await prisma.postReaction.findFirst({
-    where: { postId, userId: viewerId },
+    where: { postId, userId: viewerId, state: { not: ReactionState.CANCEL } },
     select: { emoji: true },
   });
 

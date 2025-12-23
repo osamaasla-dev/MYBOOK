@@ -15,11 +15,20 @@ function getGroupingKey(notification: NotificationListItem) {
   if (!GROUPABLE_NOTIFICATION_TYPES.has(notification.type)) {
     return null;
   }
+
+  if (
+    notification.type === NotificationType.REACTION &&
+    notification.related.commentId
+  ) {
+    return `${notification.type}:comment:${notification.related.commentId}`;
+  }
+
   const postId = notification.related.postId;
   if (!postId) {
     return null;
   }
-  return `${notification.type}:${postId}`;
+
+  return `${notification.type}:post:${postId}`;
 }
 
 function buildGroupingSummary(

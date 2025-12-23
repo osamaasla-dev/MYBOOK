@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-
+import { ReactionState } from "@prisma/client";
 import {
   buildReactionSummary,
   type ReactionOperation,
@@ -10,7 +10,7 @@ import {
   broadcastPostMetaEvent,
   broadcastPostReactionEvent,
 } from "../../../utils/realtime";
-import { upsertPostReactionNotification } from "../reactionNotifications";
+import { createPostReactionNotification } from "../reactionNotifications";
 import { recordInteraction } from "@/features/parts/interaction/services";
 
 import type { PersistPostReactionParams, PostReactionResult } from "./types";
@@ -20,57 +20,71 @@ export async function persistPostReaction({
   userId,
   reaction,
 }: PersistPostReactionParams): Promise<PostReactionResult> {
-  let postAuthorId: string | null = null;
-
   const result = await prisma.$transaction(async (tx) => {
-    const existing = await tx.postReaction.findFirst({
+    // 1. Get post and existing reaction
+    const post = await tx.post.findUnique({
+      where: { id: postId },
+      select: {
+        id: true,
+        authorId: true,
+        reactionsCount: true,
+        reactionSummary: true,
+        commentsCount: true,
+        sharesCount: true,
+      },
+    });
+
+    if (!post) {
+      throw new Error("Post not found");
+    }
+
+    const existingReaction = await tx.postReaction.findFirst({
       where: { postId, userId },
     });
 
-    const currentReaction: PostReactionResult["reaction"] = reaction;
-    let operation: ReactionOperation = "added";
-
-    if (existing?.emoji === reaction) {
-      operation = "noop";
-      const post = await tx.post.findUnique({
-        where: { id: postId },
-        select: {
-          authorId: true,
-          reactionsCount: true,
-          reactionSummary: true,
-        },
-      });
-      postAuthorId = post?.authorId ?? null;
-
+    // 2. If same emoji, return early
+    if (
+      existingReaction?.emoji === reaction &&
+      existingReaction.state !== ReactionState.CANCEL
+    ) {
       return {
-        reaction: existing.emoji as PostReactionResult["reaction"],
-        operation,
-        reactionsCount: post?.reactionsCount ?? 0,
-        reactionSummary:
-          (post?.reactionSummary as ReactionSummary | null) ?? {},
+        reaction: existingReaction.emoji as PostReactionResult["reaction"],
+        operation: "NOOP",
+        reactionsCount: post.reactionsCount ?? 0,
+        reactionSummary: (post.reactionSummary as ReactionSummary) ?? {},
+        commentsCount: post.commentsCount ?? undefined,
+        sharesCount: post.sharesCount ?? undefined,
       } satisfies PostReactionResult;
-    } else {
-      if (existing) {
-        await tx.postReaction.deleteMany({
-          where: { postId, userId },
-        });
-        operation = "updated";
-      } else {
-        operation = "added";
-      }
-
-      await tx.postReaction.create({
-        data: {
-          postId,
-          userId,
-          emoji: reaction,
-        },
-      });
     }
 
+    // 3. Determine operation type
+    const operation: ReactionOperation = existingReaction ? "UPDATE" : "ADD";
+
+    // 4. Upsert the reaction
+    await tx.postReaction.upsert({
+      where: {
+        postId_userId: { postId, userId },
+      },
+      create: {
+        postId,
+        userId,
+        emoji: reaction,
+        state: ReactionState.ADD,
+      },
+      update: {
+        emoji: reaction,
+        state: ReactionState.UPDATE,
+        updatedAt: new Date(),
+      },
+    });
+
+    // 5. Get updated reaction summary
     const aggregates = await tx.postReaction.groupBy({
       by: ["emoji"],
-      where: { postId },
+      where: {
+        postId,
+        state: { not: ReactionState.CANCEL },
+      },
       _count: { _all: true },
     });
 
@@ -81,7 +95,8 @@ export async function persistPostReaction({
       }))
     );
 
-    const post = await tx.post.update({
+    // 6. Update post with new reaction data
+    const updatedPost = await tx.post.update({
       where: { id: postId },
       data: {
         reactionsCount: summary.reactionsCount,
@@ -93,22 +108,23 @@ export async function persistPostReaction({
         sharesCount: true,
       },
     });
-    postAuthorId = post?.authorId ?? null;
 
-    if (postAuthorId && postAuthorId !== userId) {
+    // 7. Create notification if needed
+    if (
+      updatedPost.authorId &&
+      updatedPost.authorId !== userId &&
+      operation === "ADD"
+    ) {
       const reactor = await tx.user.findUnique({
         where: { id: userId },
-        select: {
-          name: true,
-          username: true,
-        },
+        select: { name: true, username: true },
       });
 
-      await upsertPostReactionNotification({
+      await createPostReactionNotification({
         postId,
-        postAuthorId,
+        postAuthorId: updatedPost.authorId,
         reactorId: userId,
-        reaction: currentReaction,
+        reaction,
         reactorName: reactor?.name,
         reactorUsername: reactor?.username,
         tx,
@@ -116,71 +132,66 @@ export async function persistPostReaction({
     }
 
     return {
-      reaction: currentReaction,
+      reaction,
       operation,
       ...summary,
-      commentsCount: post?.commentsCount ?? undefined,
-      sharesCount: post?.sharesCount ?? undefined,
+      commentsCount: updatedPost.commentsCount ?? undefined,
+      sharesCount: updatedPost.sharesCount ?? undefined,
     } satisfies PostReactionResult;
   });
 
+  // 8. Handle side effects after transaction
   if (
-    (result.operation === "added" || result.operation === "updated") &&
-    postAuthorId &&
-    postAuthorId !== userId
-  ) {
-    void recordInteraction({
-      actorId: userId,
-      targetUserId: postAuthorId,
-      type: "react",
-    }).catch((error) => {
-      console.warn("Failed to record reaction interaction", {
-        error,
-        actorId: userId,
-        targetUserId: postAuthorId,
-      });
-    });
-  }
-
-  if (
-    result.operation !== "noop" &&
+    (result.operation === "ADD" || result.operation === "UPDATE") &&
     result.reaction &&
-    postAuthorId &&
-    postAuthorId !== userId
+    result.reactionsCount > 0
   ) {
-    const reactor = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { name: true },
+    const postAuthor = await prisma.post.findUnique({
+      where: { id: postId },
+      select: { authorId: true },
     });
 
-    await broadcastPostReactionEvent({
-      postId,
-      reaction: result.reaction,
-      reactorId: userId,
-      reactorName: reactor?.name ?? "Someone",
-      postAuthorId,
-      operation: result.operation,
-    });
-  }
+    if (postAuthor?.authorId && postAuthor.authorId !== userId) {
+      const reactor = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { name: true },
+      });
 
-  if (result.operation !== "noop") {
-    const metaPayload = {
-      postId,
-      reactionsCount: result.reactionsCount,
-      reactionSummary: result.reactionSummary ?? null,
-      commentsCount: result.commentsCount ?? undefined,
-      sharesCount: result.sharesCount ?? undefined,
-    };
-    await Promise.allSettled([
-      broadcastPostDetailMetaEvent(metaPayload),
-      postAuthorId && postAuthorId !== userId
-        ? broadcastPostMetaEvent({
-            postAuthorId,
-            initiatorId: userId,
-            ...metaPayload,
-          })
-        : null,
-    ]);
+      if (result.operation === "ADD") {
+        await recordInteraction({
+          actorId: userId,
+          targetUserId: postAuthor.authorId,
+          type: "react",
+        }).catch(console.error);
+        void broadcastPostReactionEvent({
+          postId,
+          reaction: result.reaction,
+          reactorId: userId,
+          reactorName: reactor?.name ?? "Someone",
+          postAuthorId: postAuthor.authorId,
+          operation: "ADD",
+        });
+      }
+      // Broadcast events
+      await Promise.allSettled([
+        broadcastPostDetailMetaEvent({
+          postId,
+          reactionsCount: result.reactionsCount,
+          reactionSummary: result.reactionSummary,
+          commentsCount: result.commentsCount,
+          sharesCount: result.sharesCount,
+        }),
+        broadcastPostMetaEvent({
+          postId,
+          postAuthorId: postAuthor.authorId,
+          initiatorId: userId,
+          reactionsCount: result.reactionsCount,
+          reactionSummary: result.reactionSummary,
+          commentsCount: result.commentsCount,
+          sharesCount: result.sharesCount,
+        }),
+      ]);
+    }
   }
 
   return result;

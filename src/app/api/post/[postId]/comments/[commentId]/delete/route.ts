@@ -1,3 +1,5 @@
+"use server";
+
 import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
 import { getRequestLog } from "@/lib/request-log";
@@ -5,35 +7,36 @@ import { commentMessages, userMessages } from "@/lib/messages";
 import { ServerSession } from "@/utils/session";
 import { validateCuid } from "@/schemas/ids";
 
-import { ensureCommentDeleteAccess } from "@/features/parts/postDetails/services/server/comment/commentAccess";
 import {
-  isCommentRouteError,
-  parseDeleteCommentPayload,
-} from "@/features/parts/postDetails/utils/server/comments";
-import { deleteComment } from "@/features/parts/postDetails/services/server/comment";
+  ensureCommentDeleteAccess,
+  deleteComment,
+} from "@/features/parts/postDetails/services/server/comment";
 import { applyNegativeSignal } from "@/features/parts/interaction/services/negativeSignal";
-import { broadcastDeleteCommentEvents } from "@/features/parts/postDetails/utils/server/comments";
+import {
+  broadcastDeleteCommentEvents,
+  isCommentRouteError,
+} from "@/features/parts/postDetails/utils/server/comments";
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
-
-const ROUTE = "/api/post/[postId]/comments/delete";
+const ROUTE = "/api/post/[postId]/comments/[commentId]/delete";
 
 type RouteParams = {
-  params: Promise<{ postId?: string }>;
+  params: Promise<{ postId?: string; commentId?: string }>;
 };
 
-export async function POST(request: Request, routeContext: RouteParams) {
+export async function DELETE(request: Request, routeContext: RouteParams) {
   const { requestId, log } = await getRequestLog({ route: ROUTE });
 
   try {
-    const { postId } = await routeContext.params;
+    const { postId, commentId } = await routeContext.params;
     const validatedPostId = validateCuid(postId);
-    if (!validatedPostId.success) {
-      log.warn({ postId }, "Invalid postId parameter for comment delete");
+    const validatedCommentId = validateCuid(commentId);
+    if (!validatedPostId.success || !validatedCommentId.success) {
+      log.warn(
+        { postId, commentId },
+        "Invalid route params for comment delete"
+      );
       return apiResponse(false, {}, userMessages.invalidParams, 400, requestId);
     }
-    const normalizedPostId = validatedPostId.data;
 
     const session = await ServerSession();
     if (!session?.user?.id) {
@@ -47,17 +50,15 @@ export async function POST(request: Request, routeContext: RouteParams) {
       );
     }
 
-    const payload = await parseDeleteCommentPayload(request, log);
-
     const access = await ensureCommentDeleteAccess({
-      commentId: payload.commentId,
-      postId: normalizedPostId,
+      commentId: validatedCommentId.data,
+      postId: validatedPostId.data,
       actorId: session.user.id,
     });
 
     const result = await deleteComment({
       commentId: access.comment.id,
-      postId: normalizedPostId,
+      postId: validatedPostId.data,
       parentId: access.comment.parentId,
       postAuthorId: access.post.authorId,
       deletedById: session.user.id,
@@ -84,7 +85,7 @@ export async function POST(request: Request, routeContext: RouteParams) {
     }
 
     void broadcastDeleteCommentEvents({
-      postId: normalizedPostId,
+      postId: validatedPostId.data,
       postAuthorId: access.post.authorId,
       commentId: access.comment.id,
       parentId: access.comment.parentId ?? null,
@@ -96,7 +97,7 @@ export async function POST(request: Request, routeContext: RouteParams) {
     });
 
     log.info(
-      { commentId: result.id, postId: normalizedPostId },
+      { commentId: result.id, postId: validatedPostId.data },
       "Comment deleted successfully"
     );
 

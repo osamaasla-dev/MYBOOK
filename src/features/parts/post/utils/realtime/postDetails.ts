@@ -3,10 +3,12 @@ import { pusherServer } from "@/lib/pusher/server";
 import {
   POST_DETAIL_COMMENT_EVENT,
   POST_DETAIL_COMMENT_DELETED_EVENT,
+  POST_DETAIL_COMMENT_UPDATED_EVENT,
   POST_DETAIL_META_EVENT,
   POST_DETAIL_REPLY_EVENT,
   POST_DETAIL_SHARE_EVENT,
   buildPostDetailChannel,
+  POST_DETAIL_COMMENT_META_EVENT,
 } from "./channels";
 import type { ReactionSummary } from "../reaction";
 import { postRealtimeLogger } from "./logger";
@@ -47,6 +49,41 @@ export async function broadcastPostDetailCommentEvent(
     log.debug("Broadcasted post detail comment");
   } catch (error) {
     log.error({ error }, "Failed to broadcast post detail comment");
+  }
+}
+
+type BroadcastPostDetailCommentUpdatedInput = {
+  postId: string;
+  commentId: string;
+  parentId?: string | null;
+  content: string;
+  updatedAt: string;
+  isEdited: boolean;
+};
+
+export async function broadcastPostDetailCommentUpdatedEvent(
+  input: BroadcastPostDetailCommentUpdatedInput
+) {
+  const log = postRealtimeLogger.child({
+    func: "broadcastPostDetailCommentUpdatedEvent",
+    postId: input.postId,
+    commentId: input.commentId,
+  });
+
+  if (!input.postId || !input.commentId) {
+    log.warn("Skipping detail comment update broadcast due to invalid inputs");
+    return;
+  }
+
+  try {
+    await pusherServer.trigger(
+      buildPostDetailChannel(input.postId),
+      POST_DETAIL_COMMENT_UPDATED_EVENT,
+      input
+    );
+    log.debug("Broadcasted post detail comment update");
+  } catch (error) {
+    log.error({ error }, "Failed to broadcast post detail comment update");
   }
 }
 
@@ -145,4 +182,34 @@ export async function broadcastPostDetailCommentDeletedEvent(
   } catch (error) {
     log.error({ error }, "Failed to broadcast post detail comment deletion");
   }
+}
+
+type BroadcastCommentMetaInput = {
+  postId: string | null;
+  commentId: string | null;
+  parentId?: string | null;
+  reactionsCount: number;
+  reactionSummary: ReactionSummary;
+  repliesCount?: number;
+};
+
+export async function broadcastCommentMetaEvent(
+  input: BroadcastCommentMetaInput
+) {
+  const log = postRealtimeLogger.child({
+    func: "broadcastCommentMetaEvent",
+    postId: input.postId,
+    commentId: input.commentId,
+  });
+
+  if (!input.postId || !input.commentId) {
+    log.warn("Skipping comment meta broadcast due to invalid inputs");
+    return;
+  }
+
+  await pusherServer.trigger(
+    buildPostDetailChannel(input.postId),
+    POST_DETAIL_COMMENT_META_EVENT,
+    input
+  );
 }

@@ -1,10 +1,12 @@
 import { prisma } from "@/lib/prisma";
 
 import type { ReactionSummary } from "@/features/parts/post/utils/reaction";
+import type { PostReactionType } from "@/features/parts/post/constants/reactions";
 import {
   DEFAULT_LIMIT,
   MAX_LIMIT,
 } from "@/features/parts/postDetails/constants";
+import { ReactionState } from "@prisma/client";
 
 type CommentAuthorSummary = {
   id: string;
@@ -20,9 +22,12 @@ export type PostCommentListItem = {
   authorId: string;
   content: string;
   reactionSummary: ReactionSummary | null;
+  reactionsCount: number;
+  viewerReaction: PostReactionType | null;
   replyCount: number;
   createdAt: string;
   updatedAt: string;
+  isEdited: boolean;
   author: CommentAuthorSummary;
 };
 
@@ -31,6 +36,7 @@ export type FetchPostCommentsInput = {
   parentId?: string | null;
   cursor?: string | null;
   limit?: number;
+  viewerId?: string | null;
 };
 
 export type FetchPostCommentsResult = {
@@ -43,6 +49,7 @@ export async function fetchPostComments({
   parentId = null,
   cursor = null,
   limit = DEFAULT_LIMIT,
+  viewerId = null,
 }: FetchPostCommentsInput): Promise<FetchPostCommentsResult> {
   const take = Math.min(Math.max(limit, 1), MAX_LIMIT);
 
@@ -62,10 +69,21 @@ export async function fetchPostComments({
       parentId: true,
       authorId: true,
       content: true,
+      isEdited: true,
       reactionSummary: true,
+      reactionsCount: true,
       replyCount: true,
       createdAt: true,
       updatedAt: true,
+      reactions: viewerId
+        ? {
+            where: { userId: viewerId, state: { not: ReactionState.CANCEL } },
+            select: {
+              emoji: true,
+            },
+            take: 1,
+          }
+        : false,
       author: {
         select: {
           id: true,
@@ -83,24 +101,36 @@ export async function fetchPostComments({
     nextCursor = nextItem?.id ?? null;
   }
 
-  const items: PostCommentListItem[] = comments.map((comment) => ({
-    id: comment.id,
-    postId: comment.postId,
-    parentId: comment.parentId,
-    authorId: comment.authorId,
-    content: comment.content,
-    reactionSummary:
-      (comment.reactionSummary as ReactionSummary | null) ?? null,
-    replyCount: comment.replyCount,
-    createdAt: comment.createdAt.toISOString(),
-    updatedAt: comment.updatedAt.toISOString(),
-    author: {
-      id: comment.author.id,
-      name: comment.author.name,
-      username: comment.author.username,
-      avatarUrl: comment.author.avatarUrl,
-    },
-  }));
+  const items: PostCommentListItem[] = comments.map((comment) => {
+    const viewerReactionRecord =
+      viewerId && Array.isArray(comment.reactions)
+        ? comment.reactions[0]
+        : null;
+
+    return {
+      id: comment.id,
+      postId: comment.postId,
+      parentId: comment.parentId,
+      authorId: comment.authorId,
+      content: comment.content,
+      reactionSummary:
+        (comment.reactionSummary as ReactionSummary | null) ?? null,
+      reactionsCount: comment.reactionsCount ?? 0,
+      viewerReaction: viewerReactionRecord
+        ? (viewerReactionRecord.emoji as PostReactionType)
+        : null,
+      replyCount: comment.replyCount,
+      createdAt: comment.createdAt.toISOString(),
+      updatedAt: comment.updatedAt.toISOString(),
+      isEdited: comment.isEdited,
+      author: {
+        id: comment.author.id,
+        name: comment.author.name,
+        username: comment.author.username,
+        avatarUrl: comment.author.avatarUrl,
+      },
+    };
+  });
 
   return {
     comments: items,

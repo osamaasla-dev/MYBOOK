@@ -14,7 +14,7 @@ import { useNotificationsRealtime } from "../hooks/useNotificationsRealtime";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import type { NotificationListItem } from "../types";
 import { useMarkNotificationRead } from "../hooks/useMarkNotificationRead";
-import { useRealtimeNotificationToasts } from "../hooks/toasts/useRealtimeNotificationToasts";
+// import { useRealtimeNotificationToasts } from "../hooks/toasts/useRealtimeNotificationToasts";
 import type { NotificationTab } from "../constants";
 import { NOTIFICATION_PAGE_SIZE } from "../constants";
 import { notificationsQueryKey } from "../hooks/useNotifications";
@@ -72,15 +72,18 @@ export function Notifications() {
     invalidateNotifications
   );
 
-  useRealtimeNotificationToasts();
+  // useRealtimeNotificationToasts();
 
   useInfiniteScroll({
     sentinelRef,
+    rootRef: listRef,
     hasNextPage: Boolean(hasNextPage),
     isFetching: isFetchingNextPage,
     onLoadMore: fetchNextPage,
     rootMargin: "0px 0px 300px 0px",
+    enabled: isDropdownOpen,
   });
+
   const handleNotificationSelect = useCallback(
     (notification: NotificationListItem) => {
       setIsDropdownOpen(false);

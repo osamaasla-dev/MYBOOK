@@ -4,3 +4,4 @@ export * from "./postComments";
 export * from "./postShares";
 export * from "./postDetails";
 export * from "./postMeta";
+export * from "./commentReactions";
