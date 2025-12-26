@@ -2,7 +2,6 @@ export const POST_CREATED_EVENT = "post:created";
 
 export const POST_DETAIL_REACTION_EVENT = "post:reaction";
 export const POST_DETAIL_COMMENT_EVENT = "comment:create";
-export const POST_DETAIL_REPLY_EVENT = "reply:create";
 export const POST_DETAIL_COMMENT_UPDATED_EVENT = "comment:updated";
 export const POST_DETAIL_SHARE_EVENT = "share:create";
 export const POST_DETAIL_META_EVENT = "post:meta";

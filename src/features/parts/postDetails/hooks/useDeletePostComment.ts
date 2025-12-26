@@ -14,7 +14,10 @@ import {
   type PostCommentsQueryData,
 } from "./usePostComments";
 import { postDetailsQueryKey } from "./usePostDetails";
-import { removeCommentFromCache } from "./utils";
+import {
+  changePostDetailsCommentsCount,
+  removeCommentFromCache,
+} from "./utils";
 
 export const DELETE_COMMENT_MUTATION_KEY = [
   "postDetails",
@@ -40,6 +43,7 @@ export function useDeletePostComment({
 }: UseDeletePostCommentOptions) {
   const queryClient = useQueryClient();
   const cacheKey = postCommentsQueryKey(postId, parentId);
+  const postDetailsKey = postDetailsQueryKey(postId);
 
   return useMutation<void, Error, DeleteCommentPayload, DeleteCommentContext>({
     mutationKey: [...DELETE_COMMENT_MUTATION_KEY, postId, parentId],
@@ -56,9 +60,15 @@ export function useDeletePostComment({
       await queryClient.cancelQueries({ queryKey: cacheKey });
       const previousData =
         queryClient.getQueryData<PostCommentsQueryData>(cacheKey);
-      const postDetailsKey = postDetailsQueryKey(postId);
       const previousPostDetails =
         queryClient.getQueryData<FeedPost>(postDetailsKey);
+
+      // Find the comment to be deleted to count its replies
+      const commentToDelete = previousData?.items.find(
+        (item) => item.id === variables.commentId
+      );
+      const replyCount = commentToDelete?.replyCount ?? 0;
+      const totalCommentsToDelete = 1 + replyCount; // comment itself + its replies
 
       queryClient.setQueryData<PostCommentsQueryData | undefined>(
         cacheKey,
@@ -66,16 +76,10 @@ export function useDeletePostComment({
           removeCommentFromCache(currentData, variables.commentId)
       );
 
-      queryClient.setQueryData<FeedPost | undefined>(
+      changePostDetailsCommentsCount(
+        queryClient,
         postDetailsKey,
-        (currentDetails) => {
-          if (!currentDetails) return currentDetails;
-
-          return {
-            ...currentDetails,
-            commentsCount: Math.max((currentDetails.commentsCount ?? 0) - 1, 0),
-          };
-        }
+        -totalCommentsToDelete
       );
 
       return { cacheKey, previousData, postDetailsKey, previousPostDetails };

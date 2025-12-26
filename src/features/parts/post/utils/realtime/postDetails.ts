@@ -5,7 +5,6 @@ import {
   POST_DETAIL_COMMENT_DELETED_EVENT,
   POST_DETAIL_COMMENT_UPDATED_EVENT,
   POST_DETAIL_META_EVENT,
-  POST_DETAIL_REPLY_EVENT,
   POST_DETAIL_SHARE_EVENT,
   buildPostDetailChannel,
   POST_DETAIL_COMMENT_META_EVENT,
@@ -13,7 +12,7 @@ import {
 import type { ReactionSummary } from "../reaction";
 import { postRealtimeLogger } from "./logger";
 
-type BroadcastPostDetailCommentInput = {
+export type BroadcastPostDetailCommentInput = {
   postId: string;
   commentId: string;
   authorId: string;
@@ -43,7 +42,7 @@ export async function broadcastPostDetailCommentEvent(
   try {
     await pusherServer.trigger(
       buildPostDetailChannel(input.postId),
-      input.replyToId ? POST_DETAIL_REPLY_EVENT : POST_DETAIL_COMMENT_EVENT,
+      POST_DETAIL_COMMENT_EVENT,
       input
     );
     log.debug("Broadcasted post detail comment");
@@ -52,9 +51,10 @@ export async function broadcastPostDetailCommentEvent(
   }
 }
 
-type BroadcastPostDetailCommentUpdatedInput = {
+export type BroadcastPostDetailCommentUpdatedInput = {
   postId: string;
   commentId: string;
+  authorId: string;
   parentId?: string | null;
   content: string;
   updatedAt: string;
@@ -87,7 +87,7 @@ export async function broadcastPostDetailCommentUpdatedEvent(
   }
 }
 
-type BroadcastPostDetailShareInput = {
+export type BroadcastPostDetailShareInput = {
   postId: string;
   shareId: string;
   sharedById: string;
@@ -123,9 +123,10 @@ export async function broadcastPostDetailShareEvent(
   }
 }
 
-type BroadcastPostDetailMetaInput = {
+export type BroadcastPostDetailMetaInput = {
   postId: string;
   commentsCount?: number;
+  initiatorId: string;
   reactionsCount?: number;
   sharesCount?: number;
   latestActivityAt?: string;
@@ -152,8 +153,9 @@ export async function broadcastPostDetailMetaEvent(
   );
 }
 
-type BroadcastPostDetailCommentDeletedInput = {
+export type BroadcastPostDetailCommentDeletedInput = {
   postId: string;
+  initiatorId: string;
   commentId: string;
   parentId?: string | null;
 };
@@ -184,13 +186,14 @@ export async function broadcastPostDetailCommentDeletedEvent(
   }
 }
 
-type BroadcastCommentMetaInput = {
+export type BroadcastCommentMetaInput = {
   postId: string | null;
   commentId: string | null;
+  initiatorId: string;
   parentId?: string | null;
   reactionsCount: number;
   reactionSummary: ReactionSummary;
-  repliesCount?: number;
+  replyCount?: number;
 };
 
 export async function broadcastCommentMetaEvent(

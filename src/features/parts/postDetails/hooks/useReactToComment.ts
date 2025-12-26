@@ -2,21 +2,13 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import commentMessages from "@/lib/messages/comments";
 import type { PostReactionResponse } from "@/features/parts/post/types";
 import type { PostReactionType } from "@/features/parts/post/constants/reactions";
-import {
-  calculateReactionsCount,
-  updateReactionSummary,
-} from "@/features/parts/post/hooks/utils/reactionSummary";
 
-import {
-  reactToCommentApi,
-  type ReactToCommentInput,
-} from "../services/client/commentReactionsApi";
+import { reactToCommentApi } from "../services/client/commentReactionsApi";
 import { postCommentsQueryKey } from "./usePostComments";
 import type { PostCommentsQueryData } from "./usePostComments";
-import { updateCommentInCache } from "./utils/commentReactionsCache";
+import { updateCommentReactionInCache } from "./utils/commentReactionsCache";
 
 export const REACT_TO_COMMENT_MUTATION_KEY = [
   "postDetails",
@@ -44,7 +36,7 @@ export function useReactToComment({
   parentId = null,
 }: UseReactToCommentOptions) {
   const queryClient = useQueryClient();
-  const cacheKey = postCommentsQueryKey(postId, parentId);
+  const cacheKey = postCommentsQueryKey(postId);
 
   return useMutation<
     PostReactionResponse,
@@ -53,54 +45,22 @@ export function useReactToComment({
     ReactToCommentContext
   >({
     mutationKey: [...REACT_TO_COMMENT_MUTATION_KEY, postId, parentId],
-    mutationFn: async ({ commentId, reaction }) => {
-      if (!commentId) {
-        throw new Error(commentMessages.commentNotFound);
-      }
-      if (!reaction) {
-        throw new Error("Reaction type is required.");
-      }
-
-      return reactToCommentApi({
+    mutationFn: async ({ commentId, reaction }) =>
+      reactToCommentApi({
         postId,
         commentId,
         reaction,
-      } satisfies ReactToCommentInput);
-    },
+      }),
     onMutate: async (variables) => {
       await queryClient.cancelQueries({ queryKey: cacheKey });
 
       const { commentId, reaction } = variables;
-      if (!reaction) {
-        throw new Error("Reaction type is required.");
-      }
+      const previousData =
+        queryClient.getQueryData<PostCommentsQueryData>(cacheKey);
 
-      const { didUpdate, previousData } = updateCommentInCache(
-        queryClient,
-        postId,
-        parentId,
-        commentId,
-        (comment) => {
-          if (comment.viewerReaction === reaction) {
-            return comment;
-          }
+      updateCommentReactionInCache(queryClient, cacheKey, commentId, reaction);
 
-          const nextSummary = updateReactionSummary(
-            comment.reactionSummary ?? {},
-            reaction,
-            comment.viewerReaction
-          );
-
-          return {
-            ...comment,
-            reactionSummary: nextSummary,
-            reactionsCount: calculateReactionsCount(nextSummary),
-            viewerReaction: reaction,
-          };
-        }
-      );
-
-      return { previousData: didUpdate ? previousData : undefined };
+      return { previousData };
     },
     onError: (_error, _variables, context) => {
       if (context?.previousData) {

@@ -29,23 +29,31 @@ type CommentRealtimeOptions = {
   queryClient: QueryClient;
   detailChannelName: string | null;
   enabled: boolean;
+  currentUserId?: string;
 };
 
 export function usePostDetailCommentRealtime({
   queryClient,
   detailChannelName,
   enabled,
+  currentUserId,
 }: CommentRealtimeOptions) {
   const isChannelActive = useMemo(
     () => Boolean(detailChannelName) && enabled,
     [detailChannelName, enabled]
   );
 
+  // Prevent duplicate handlers in strict mode
   const handleCommentEvent = useCallback(
     (payload: PostDetailCommentEventPayload) => {
-      applyPostDetailCommentUpdate(queryClient, payload);
+      if (!payload.postId || !payload.commentId) {
+        return;
+      }
+
+      console.log("Comment event received:", payload.commentId);
+      applyPostDetailCommentUpdate(queryClient, payload, currentUserId);
     },
-    [queryClient]
+    [queryClient, currentUserId]
   );
 
   usePusherChannel<PostDetailCommentEventPayload>({
@@ -57,7 +65,8 @@ export function usePostDetailCommentRealtime({
 
   const handleCommentDeletedEvent = useCallback(
     (payload: PostDetailCommentDeletedEventPayload) => {
-      applyPostDetailCommentDeletedUpdate(queryClient, payload);
+      console.log("Comment deleted event received:", payload.commentId);
+      applyPostDetailCommentDeletedUpdate(queryClient, payload, currentUserId);
     },
     [queryClient]
   );
@@ -71,7 +80,8 @@ export function usePostDetailCommentRealtime({
 
   const handleCommentUpdatedEvent = useCallback(
     (payload: PostDetailCommentUpdatedEventPayload) => {
-      applyPostDetailCommentEditedUpdate(queryClient, payload);
+      console.log("Comment updated event received:", payload.commentId);
+      applyPostDetailCommentEditedUpdate(queryClient, payload, currentUserId);
     },
     [queryClient]
   );
@@ -85,7 +95,8 @@ export function usePostDetailCommentRealtime({
 
   const handleCommentMetaEvent = useCallback(
     (payload: CommentMetaEventPayload) => {
-      applyCommentMetaUpdate(queryClient, payload);
+      console.log("Comment meta event received:", payload.commentId);
+      applyCommentMetaUpdate(queryClient, payload, currentUserId);
     },
     [queryClient]
   );

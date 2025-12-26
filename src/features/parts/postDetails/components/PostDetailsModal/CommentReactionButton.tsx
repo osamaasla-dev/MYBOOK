@@ -10,6 +10,8 @@ import {
 } from "@/features/parts/post/constants/reactions";
 import { useReactToComment } from "../../hooks/useReactToComment";
 import { useRemoveCommentReaction } from "../../hooks/useRemoveCommentReaction";
+import { useReactToReply } from "../../hooks/useReactToReply";
+import { useRemoveReplyReaction } from "../../hooks/useRemoveReplyReaction";
 
 type CommentReactionButtonProps = {
   postId: string;
@@ -26,8 +28,24 @@ export function CommentReactionButton({
   viewerReaction,
   disabled = false,
 }: CommentReactionButtonProps) {
-  const reactMutation = useReactToComment({ postId, parentId });
-  const removeMutation = useRemoveCommentReaction({ postId, parentId });
+  const reactCommentMutation = useReactToComment({ postId, parentId });
+  const reactToReplyMutation = useReactToReply({
+    postId,
+    parentId: parentId ?? "",
+  });
+  const removeCommentMutation = useRemoveCommentReaction({ postId, parentId });
+  const removeReplyMutation = useRemoveReplyReaction({
+    postId,
+    parentId: parentId ?? "",
+  });
+  // Choose the appropriate mutation based on whether this is a reply
+  const activeReactMutation = parentId
+    ? reactToReplyMutation
+    : reactCommentMutation;
+
+  const activeRemoveMutation = parentId
+    ? removeReplyMutation
+    : removeCommentMutation;
 
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const pickerRef = useRef<HTMLDivElement | null>(null);
@@ -54,12 +72,12 @@ export function CommentReactionButton({
   };
 
   const handleSelect = (reactionId: PostReactionType) => {
-    reactMutation.mutate({ commentId, reaction: reactionId });
+    activeReactMutation.mutate({ commentId, reaction: reactionId });
     setIsPickerOpen(false);
   };
 
   const handleClear = () => {
-    removeMutation.mutate({ commentId });
+    activeRemoveMutation.mutate({ commentId });
     setIsPickerOpen(false);
   };
 

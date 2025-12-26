@@ -3,6 +3,7 @@
 import { apiPatchR } from "@/lib/api";
 
 import type { UpdateCommentInput } from "@/features/parts/postDetails/schemas";
+import { commentMessages } from "@/lib/messages";
 
 type UpdateCommentResponse = {
   comment: {
@@ -22,6 +23,12 @@ export async function updatePostCommentRequest(
   postId: string,
   payload: UpdateCommentPayload
 ) {
+  if (!postId) {
+    throw new Error(commentMessages.postNotFound);
+  }
+  if (!payload.commentId) {
+    throw new Error(commentMessages.commentNotFound);
+  }
   const endpoint = `/post/${encodeURIComponent(
     postId
   )}/comments/${encodeURIComponent(payload.commentId)}/edit`;

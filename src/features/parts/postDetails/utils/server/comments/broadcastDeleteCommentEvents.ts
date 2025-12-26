@@ -34,6 +34,7 @@ export async function broadcastDeleteCommentEvents({
       phase: "details:comment:deleted",
       promise: broadcastPostDetailCommentDeletedEvent({
         postId,
+        initiatorId,
         commentId,
         parentId,
       }),
@@ -42,6 +43,7 @@ export async function broadcastDeleteCommentEvents({
       phase: "details:meta",
       promise: broadcastPostDetailMetaEvent({
         postId,
+        initiatorId,
         commentsCount,
         sharesCount,
         reactionSummary,

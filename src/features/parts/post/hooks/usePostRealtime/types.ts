@@ -4,6 +4,7 @@ import type { ReactionSummary } from "../../utils/reaction";
 
 export type ReactionSummaryUpdatePayload = {
   postId: string;
+  initiatorId: string;
   reactionSummary?: ReactionSummary | null;
   reactionsCount?: number;
   commentsCount?: number;
@@ -12,6 +13,7 @@ export type ReactionSummaryUpdatePayload = {
 
 export type PostDetailMetaEventPayload = {
   postId: string;
+  initiatorId: string;
   reactionsCount?: number;
   reactionSummary?: ReactionSummary | null;
   commentsCount?: number;
@@ -35,6 +37,7 @@ export type PostDetailCommentEventPayload = {
 
 export type PostDetailCommentDeletedEventPayload = {
   postId: string;
+  initiatorId: string;
   commentId: string;
   parentId?: string | null;
 };
@@ -42,6 +45,8 @@ export type PostDetailCommentDeletedEventPayload = {
 export type PostDetailCommentUpdatedEventPayload = {
   postId: string;
   commentId: string;
+  authorId: string;
+
   parentId?: string | null;
   content?: string;
   updatedAt?: string;
@@ -50,15 +55,16 @@ export type PostDetailCommentUpdatedEventPayload = {
 
 export type CommentMetaEventPayload = {
   postId: string | null;
+  initiatorId: string;
   commentId: string | null;
   parentId?: string | null;
   reactionsCount: number;
   reactionSummary: ReactionSummary;
-  repliesCount?: number;
+  replyCount?: number;
   updatedAt: string;
 };
 
-export type UseRealtimeSummaryOptions = {
+export type usePostRealtimeOptions = {
   /**
    * Post being observed (needed for the detail/meta channel).
    */

@@ -61,7 +61,6 @@ export async function fetchPostComments({
     },
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     cursor: cursor ? { id: cursor } : undefined,
-    skip: cursor ? 1 : 0,
     take: take + 1,
     select: {
       id: true,

@@ -54,6 +54,7 @@ export function PostDetailsModal({
     isError: areCommentsError,
     isFetchingNextPage,
     fetchNextPage,
+    hasNextPage,
     refetch: refetchComments,
   } = usePostComments({
     postId,
@@ -61,21 +62,21 @@ export function PostDetailsModal({
   });
 
   const comments = commentsData?.items ?? [];
-  const hasMoreComments = commentsData?.hasMore ?? false;
+
   const commentsEmpty =
     !areCommentsLoading && !areCommentsError && comments.length === 0;
 
   const loadMoreComments = useCallback(() => {
-    if (!hasMoreComments || isFetchingNextPage) {
+    if (!hasNextPage || isFetchingNextPage) {
       return;
     }
     void fetchNextPage();
-  }, [fetchNextPage, hasMoreComments, isFetchingNextPage]);
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   useInfiniteScroll({
     sentinelRef,
     rootRef: scrollContainerRef,
-    hasNextPage: hasMoreComments,
+    hasNextPage,
     isFetching: isFetchingNextPage,
     onLoadMore: loadMoreComments,
     enabled: open && hasPost,
@@ -103,7 +104,7 @@ export function PostDetailsModal({
             onRetry={refetchComments}
             sentinelRef={sentinelRef}
             isFetchingNextPage={isFetchingNextPage}
-            hasMoreComments={hasMoreComments}
+            hasMoreComments={hasNextPage}
             viewerId={viewerId}
             postAuthorId={postAuthorId}
           />

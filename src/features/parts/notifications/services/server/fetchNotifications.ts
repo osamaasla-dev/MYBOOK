@@ -54,7 +54,7 @@ export async function fetchUserNotifications({
     where,
     orderBy: { createdAt: "desc" },
     take: take + 1,
-    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    ...(cursor ? { cursor: { id: cursor } } : {}),
     select: {
       id: true,
       type: true,

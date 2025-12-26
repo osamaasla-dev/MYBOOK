@@ -9,6 +9,7 @@ type PostCommentTextareaProps = {
   disabled: boolean;
   hasError: boolean;
   contentValue: string;
+  placeholder?: string;
 };
 
 export function PostCommentTextarea({
@@ -16,6 +17,7 @@ export function PostCommentTextarea({
   disabled,
   hasError,
   contentValue,
+  placeholder,
 }: PostCommentTextareaProps) {
   const autosizeRef = useLimitedAutosizeTextarea({
     value: contentValue,
@@ -30,11 +32,11 @@ export function PostCommentTextarea({
     },
     [autosizeRef, contentFieldRegister]
   );
-
+  const placeholderText = placeholder ?? "Write something thoughtful…";
   return (
     <Textarea
       dir="auto"
-      placeholder="Write something thoughtful…"
+      placeholder={placeholderText}
       className="min-h-6 resize-none border-none bg-transparent px-0 py-0  shadow-none outline-none focus-visible:ring-0 focus-visible:border-none placeholder:text-muted-foreground/80 text-base"
       {...contentFieldRegister}
       ref={mergedRef}

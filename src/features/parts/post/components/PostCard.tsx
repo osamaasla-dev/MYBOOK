@@ -4,7 +4,7 @@ import { useCallback } from "react";
 
 import { cn } from "@/lib/utils";
 
-import { usePostViewObserver, useRealtimeSummary } from "../hooks";
+import { usePostViewObserver } from "../hooks";
 import type { PostCardProps } from "./PostCard/types";
 import { PostCardHeader } from "./PostCard/PostCardHeader";
 import { PostCardBody } from "./PostCard/PostCardBody";
@@ -32,16 +32,6 @@ export function PostCard({
   }, [openPostDetails, postId]);
 
   const isDetailsOpen = currentPostId === postId;
-  const isViewerPostAuthor = Boolean(author?.isSelf);
-
-  const enableUserChannel = isViewerPostAuthor && !isDetailsOpen;
-  const enablePostDetailChannel = isDetailsOpen;
-
-  useRealtimeSummary({
-    postId,
-    enableUserChannel,
-    enablePostDetailChannel,
-  });
 
   return (
     <article

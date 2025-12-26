@@ -24,6 +24,7 @@ type CommentReactionResult = {
   reactionSummary: ReactionSummary;
   operation: ReactionOperation;
   commentAuthorId: string;
+  parentId: string | null;
 };
 
 export async function persistCommentReaction({
@@ -38,6 +39,7 @@ export async function persistCommentReaction({
       where: { id: commentId, postId, isDeleted: false },
       select: {
         id: true,
+        parentId: true,
         reactionSummary: true,
         reactionsCount: true,
         authorId: true,
@@ -58,6 +60,7 @@ export async function persistCommentReaction({
     ) {
       return {
         reaction: existingReaction.emoji,
+        parentId: comment.parentId,
         operation: "NOOP",
         reactionsCount: comment.reactionsCount,
         reactionSummary: comment.reactionSummary as ReactionSummary,
@@ -116,6 +119,7 @@ export async function persistCommentReaction({
       reaction,
       operation,
       ...summary,
+      parentId: comment.parentId,
       commentAuthorId: comment.authorId,
     } satisfies CommentReactionResult;
   });

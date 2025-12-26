@@ -18,6 +18,8 @@ const commentMessages = {
   validation: {
     contentRequired: "Comment cannot be empty.",
     contentTooLong: "Comment is too long.",
+    replyToReply:
+      "Nested replies are not allowed. You can only reply to main comments.",
   },
 };
 

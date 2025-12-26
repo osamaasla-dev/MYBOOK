@@ -4,10 +4,9 @@ import { apiDeleteR, apiGetR, apiPostR } from "@/lib/api";
 
 import type { PostReactionResponse } from "@/features/parts/post/types";
 import type { PostReactionType } from "@/features/parts/post/constants/reactions";
-import type {
-  CommentReactionsResponse,
-  CommentReactionTab,
-} from "@/features/parts/postDetails/services/server/comment/reactions/types";
+import type { CommentReactionsResponse } from "@/features/parts/postDetails/services/server/comment/reactions/types";
+import { commentMessages } from "@/lib/messages";
+import { CommentReactionTab } from "../server/comment/reactions/schema";
 
 const buildCommentReactionEndpoint = (
   postId: string,
@@ -29,6 +28,12 @@ export async function reactToCommentApi({
   commentId,
   reaction,
 }: ReactToCommentInput): Promise<PostReactionResponse> {
+  if (!commentId) {
+    throw new Error(commentMessages.commentNotFound);
+  }
+  if (!reaction) {
+    throw new Error("Reaction type is required.");
+  }
   const endpoint = buildCommentReactionEndpoint(postId, commentId, "create");
 
   const { data } = await apiPostR<PostReactionResponse>(endpoint, { reaction });
@@ -44,6 +49,9 @@ export async function removeCommentReactionApi({
   postId,
   commentId,
 }: RemoveCommentReactionInput): Promise<PostReactionResponse> {
+  if (!commentId || !postId) {
+    throw new Error(commentMessages.commentNotFound);
+  }
   const endpoint = buildCommentReactionEndpoint(postId, commentId, "delete");
 
   const { data } = await apiDeleteR<PostReactionResponse>(endpoint);

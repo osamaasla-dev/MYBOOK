@@ -20,6 +20,7 @@ type RemoveCommentReactionParams = {
 type CommentReactionResult = {
   reaction: PostReactionType | null;
   reactionsCount: number;
+  parentId: string | null;
   reactionSummary: ReactionSummary;
   operation: ReactionOperation;
   commentAuthorId: string;
@@ -36,6 +37,7 @@ export async function removeCommentReaction({
       where: { id: commentId, postId, isDeleted: false },
       select: {
         id: true,
+        parentId: true,
         authorId: true,
         reactionSummary: true,
         reactionsCount: true,
@@ -95,6 +97,7 @@ export async function removeCommentReaction({
       reaction: null,
       operation,
       ...summary,
+      parentId: comment.parentId,
       commentAuthorId: comment.authorId,
     } satisfies CommentReactionResult;
   });

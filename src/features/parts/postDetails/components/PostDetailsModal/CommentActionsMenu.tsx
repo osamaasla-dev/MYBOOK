@@ -13,10 +13,11 @@ import {
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { cn } from "@/lib/utils";
 import { useDeletePostComment } from "../../hooks/useDeletePostComment";
-
+import { useDeleteCommentReply } from "../../hooks/useDeleteReply";
 type CommentActionsMenuProps = {
   commentId: string;
   parentId: string | null;
+
   postId: string;
   viewerId: string | null;
   commentAuthorId: string;
@@ -28,6 +29,7 @@ type CommentActionsMenuProps = {
 export function CommentActionsMenu({
   commentId,
   parentId,
+
   postId,
   viewerId,
   commentAuthorId,
@@ -45,14 +47,22 @@ export function CommentActionsMenu({
     postId,
     parentId,
   });
+  const deleteReplyMutation = useDeleteCommentReply({
+    postId,
+    parentId: parentId ?? "",
+  });
+  const isReply = Boolean(parentId);
+
+  // Choose the appropriate mutation based on whether this is a reply
+  const activeMutation = isReply ? deleteReplyMutation : deleteMutation;
 
   const handleDelete = useCallback(async () => {
     try {
-      await deleteMutation.mutateAsync({ commentId });
+      await activeMutation.mutateAsync({ commentId });
     } catch {
       // handled by hook toast
     }
-  }, [commentId, deleteMutation]);
+  }, [commentId, activeMutation]);
 
   const handleConfirmOpenChange = useCallback(
     (open: boolean) => {

@@ -16,6 +16,8 @@ export type BroadcastCommentReactionInput = {
   viewerId: string;
   viewerName: string;
   reaction: PostReactionType;
+  parentId: string | null;
+  reactorName: string;
   operation: ReactionOperation;
 };
 
@@ -47,6 +49,7 @@ export async function broadcastCommentReactionEvent(
     reactorId: input.viewerId,
     reactorName: input.viewerName,
     operation: input.operation,
+    parentId: input.parentId,
   };
 
   await pusherServer.trigger(

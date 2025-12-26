@@ -6,6 +6,7 @@ export type CommentReactionEventPayload = {
   postId: string;
   commentId: string;
   reaction: PostReactionType;
+  parentId: string | null;
   reactorId: string;
   reactorName: string;
   operation: ReactionOperation;

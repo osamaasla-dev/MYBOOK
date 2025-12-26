@@ -2,15 +2,22 @@
 
 import { useState, useCallback } from "react";
 import Link from "next/link";
+import { MessageSquare } from "lucide-react";
 
 import { AvatarBubble } from "@/features/parts/post/components/PostCard/AvatarBubble";
 import type { PostCommentListItem } from "../../services/client/fetchPostCommentsApi";
 import { CommentActionsMenu } from "./CommentActionsMenu";
 import { CommentEditForm } from "./CommentEditForm";
+import { ReplyForm } from "./ReplyForm";
 import { useUpdatePostComment } from "../../hooks/useUpdatePostComment";
+import { useCreateReply } from "../../hooks/useCreateReply";
+import { useCommentReplies } from "../../hooks/useReplies";
 import { CommentReactionButton } from "./CommentReactionButton";
 import { CommentReactionSummary } from "./CommentReactionSummary";
 import { CommentReactionsModal } from "./CommentReactionsModal/CommentReactionsModal";
+import { Button } from "@/components/ui/button";
+import { useCurrentUser } from "@/features/hooks";
+import { useUpdateReply } from "../../hooks/useUpdateReply";
 
 function getRelativeTimestampLabel(isoDate: string) {
   const date = new Date(isoDate);
@@ -19,14 +26,14 @@ function getRelativeTimestampLabel(isoDate: string) {
   }
 
   const now = Date.now();
-  const diffMs = date.getTime() - now;
+  const diffMs = now - date.getTime();
   const diffSeconds = Math.round(diffMs / 1000);
 
-  if (Math.abs(diffSeconds) < 60) {
+  if (diffSeconds < 60) {
     return "just now";
   }
 
-  const divisions: Array<{ amount: number; unit: string }> = [
+  const divisions = [
     { amount: 60, unit: "s" },
     { amount: 60, unit: "m" },
     { amount: 24, unit: "h" },
@@ -34,7 +41,7 @@ function getRelativeTimestampLabel(isoDate: string) {
     { amount: 4.34524, unit: "w" },
     { amount: 12, unit: "M" },
     { amount: Number.POSITIVE_INFINITY, unit: "y" },
-  ];
+  ] as const;
 
   let duration = diffSeconds;
   for (const division of divisions) {
@@ -62,11 +69,45 @@ export function CommentListItem({
   postId,
 }: CommentListItemProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [isReplying, setIsReplying] = useState(false);
+  const [isViewingReplies, setIsViewingReplies] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+  const [replyError, setReplyError] = useState<string | null>(null);
   const [isReactionsModalOpen, setIsReactionsModalOpen] = useState(false);
-  const updateMutation = useUpdatePostComment({
+  const { data: currentUser } = useCurrentUser();
+  const updateCommentMutation = useUpdatePostComment({
     postId,
-    parentId: comment.parentId ?? null,
+    parentId: null,
+  });
+
+  const updateReplyMutation = useUpdateReply({
+    postId,
+    parentId: comment.parentId ?? "",
+  });
+
+  // Choose the appropriate mutation based on whether this is a reply
+  const activeUpdateMutation = comment.parentId
+    ? updateReplyMutation
+    : updateCommentMutation;
+
+  const createReply = useCreateReply({
+    postId,
+    parentId: comment.id,
+    parentIdOfParent: comment.parentId,
+    viewer: currentUser,
+  });
+
+  // Fetch replies for this comment
+  const {
+    data: repliesData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useCommentReplies({
+    postId,
+    parentId: comment.id ?? "",
+    limit: 1, // Load 3 replies per page
+    enabled: comment.replyCount > 0, // Only fetch if there are replies
   });
 
   const displayName =
@@ -90,7 +131,7 @@ export function CommentListItem({
     async (content: string) => {
       try {
         setEditError(null);
-        await updateMutation.mutateAsync({
+        await activeUpdateMutation.mutateAsync({
           commentId: comment.id,
           content,
         });
@@ -99,15 +140,40 @@ export function CommentListItem({
         const message =
           error instanceof Error
             ? error.message
-            : updateMutation.error?.message ?? "Failed to update comment.";
+            : activeUpdateMutation.error?.message ??
+              "Failed to update comment.";
         setEditError(message);
       }
     },
-    [comment.id, updateMutation]
+    [comment.id, activeUpdateMutation]
+  );
+
+  const handleReply = useCallback(() => {
+    setReplyError(null);
+    setIsReplying(true);
+  }, []);
+
+  const handleCancelReply = useCallback(() => {
+    setReplyError(null);
+    setIsReplying(false);
+  }, []);
+
+  const handleSubmitReply = useCallback(
+    async (content: string) => {
+      try {
+        setReplyError(null);
+        await createReply.mutateAsync({ content });
+        setIsReplying(false);
+      } catch {
+        const message = createReply.error?.message ?? "Failed to post reply.";
+        setReplyError(message);
+      }
+    },
+    [createReply]
   );
 
   return (
-    <li className="group/comment flex items-start gap-1">
+    <li className="relative group/comment flex items-start gap-1">
       {profileHref ? (
         <Link
           href={profileHref}
@@ -134,7 +200,7 @@ export function CommentListItem({
           <div className="w-full">
             <CommentEditForm
               initialContent={comment.content}
-              isSubmitting={updateMutation.isPending}
+              isSubmitting={activeUpdateMutation.isPending}
               submitError={editError}
               onCancel={handleCancel}
               onSave={handleSave}
@@ -146,7 +212,7 @@ export function CommentListItem({
               <div className="flex-1 rounded-xl bg-secondary px-2 py-1">
                 <div className="flex items-start gap-2">
                   {profileHref ? (
-                    <Link href={profileHref} className="text-sm font-semibold ">
+                    <Link href={profileHref} className="text-sm font-semibold">
                       {displayName}
                     </Link>
                   ) : (
@@ -168,9 +234,9 @@ export function CommentListItem({
                 onEdit={handleEdit}
               />
             </div>
-            <div className="flex flex-wrap justify-between px-2  text-muted-foreground">
+            <div className="flex flex-wrap justify-between px-2 text-muted-foreground">
               <div className="flex items-center gap-1">
-                <time className="font-semibold text-sm">{timestamp}</time>
+                <time className="text-sm font-semibold">{timestamp}</time>
                 {comment.isEdited && (
                   <span className="group/edited relative cursor-default text-xs font-medium text-muted-foreground/80">
                     (Edited)
@@ -179,6 +245,20 @@ export function CommentListItem({
                     </span>
                   </span>
                 )}
+
+                {!comment.parentId && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 gap-1 px-1.5 text-xs text-muted-foreground hover:bg-transparent hover:text-foreground"
+                    onClick={handleReply}
+                    disabled={!viewerId}
+                  >
+                    <MessageSquare className="h-3.5 w-3.5" />
+                    <span>Reply</span>
+                  </Button>
+                )}
+
                 <CommentReactionButton
                   postId={postId}
                   commentId={comment.id}
@@ -194,6 +274,61 @@ export function CommentListItem({
                 onClick={() => setIsReactionsModalOpen(true)}
               />
             </div>
+            {comment.replyCount > 0 && (
+              <div className=" pl-4 w-full">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mr-auto h-fit w-fit gap-1 px-1.5 text-xs font-semibold text-muted-foreground hover:bg-transparent hover:text-foreground"
+                  onClick={() => setIsViewingReplies(!isViewingReplies)}
+                >
+                  {isViewingReplies ? "Hide" : "View"} replies (
+                  {comment.replyCount})
+                </Button>
+              </div>
+            )}
+            {isViewingReplies && (
+              <div className=" pl-4 mt-2">
+                <ul className="space-y-2">
+                  {repliesData?.items.map((reply) => (
+                    <CommentListItem
+                      key={reply.id}
+                      comment={reply}
+                      viewerId={viewerId}
+                      postAuthorId={postAuthorId}
+                      postId={postId}
+                    />
+                  ))}
+
+                  {hasNextPage && (
+                    <li>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-muted-foreground hover:bg-transparent hover:text-foreground ml-auto"
+                        onClick={() => fetchNextPage()}
+                        disabled={isFetchingNextPage}
+                      >
+                        {isFetchingNextPage
+                          ? "Loading..."
+                          : "Load more replies"}
+                      </Button>
+                    </li>
+                  )}
+                </ul>
+              </div>
+            )}
+            {isReplying && (
+              <div className="mt-2 pl-8">
+                <ReplyForm
+                  isSubmitting={createReply.isPending}
+                  submitError={replyError}
+                  onCancel={handleCancelReply}
+                  onSubmit={handleSubmitReply}
+                />
+              </div>
+            )}
+
             <CommentReactionsModal
               postId={postId}
               commentId={comment.id}

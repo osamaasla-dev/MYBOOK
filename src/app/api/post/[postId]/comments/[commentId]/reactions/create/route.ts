@@ -15,7 +15,7 @@ import {
 import {
   COMMENT_REACTION_MAX_ACTIONS,
   COMMENT_REACTION_RATE_NAMESPACE,
-  COMMENT_REACTION_WINDOW_MS,
+  COMMENT_REACTION_WINDOW_S,
 } from "@/features/parts/postDetails/constants";
 import {
   persistCommentReaction,
@@ -104,7 +104,7 @@ export async function POST(request: Request, context: RouteParams) {
 
     const rateLimited = await isReactionRateLimitedForTarget({
       namespace: COMMENT_REACTION_RATE_NAMESPACE,
-      windowMs: COMMENT_REACTION_WINDOW_MS,
+      windowMs: COMMENT_REACTION_WINDOW_S,
       maxActions: COMMENT_REACTION_MAX_ACTIONS,
       targetId: validatedCommentId.data,
       userId: session.user.id,
@@ -131,8 +131,10 @@ export async function POST(request: Request, context: RouteParams) {
         postId: validatedPostId.data,
         commentId: validatedCommentId.data,
         commentAuthorId: result.commentAuthorId,
+        parentId: result.parentId,
         viewerId: session.user.id,
         viewerName,
+        reactorName: viewerName,
         reaction: (result.reaction ?? body.reaction)!,
         operation: result.operation,
       });
@@ -153,6 +155,9 @@ export async function POST(request: Request, context: RouteParams) {
     // Broadcast comment metadata update
     void broadcastCommentMetaEvent({
       postId: validatedPostId.data,
+      initiatorId: session.user.id,
+
+      parentId: result.parentId,
       commentId: validatedCommentId.data,
       reactionsCount: result.reactionsCount,
       reactionSummary: result.reactionSummary,

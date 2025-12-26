@@ -10,10 +10,7 @@ import { ServerSession } from "@/utils/session";
 import { validateCuid } from "@/schemas/ids";
 import { recordInteraction } from "@/features/parts/interaction/services";
 
-import {
-  createPostCommentNotification,
-  resolveCommentContext,
-} from "@/features/parts/postDetails/services/server";
+import { createPostCommentNotification } from "@/features/parts/postDetails/services/server";
 import {
   broadcastCreateCommentEvents,
   isCommentRouteError,
@@ -23,10 +20,14 @@ import { consumeRateLimit } from "@/features/utils/rateLimit";
 import { extractClientIp } from "@/features/parts/follow/utils/request";
 import {
   COMMENT_RATE_NAMESPACE,
-  MAX_REQUESTS,
-  WINDOW_SECONDS,
+  COMMENT_MAX_ACTIONS,
+  COMMENT_WINDOW_S,
 } from "@/features/parts/postDetails/constants";
-import { createComment } from "@/features/parts/postDetails/services/server/comment";
+import {
+  createComment,
+  resolveCommentContext,
+} from "@/features/parts/postDetails/services/server/comment";
+import { validateReplyCreation } from "@/features/parts/postDetails/services/server/comment/validateReply";
 import {
   MissingModerationAPIKeyError,
   ModerationProviderError,
@@ -121,16 +122,24 @@ export async function POST(request: Request, routeContext: RouteParams) {
         { key: "user", value: session.user.id },
         { key: "ip", value: clientIp },
       ],
-      windowSeconds: WINDOW_SECONDS,
-      maxRequests: MAX_REQUESTS,
+      windowSeconds: COMMENT_WINDOW_S,
+      maxRequests: COMMENT_MAX_ACTIONS,
     });
-    if (limited) {
-      log.warn(
-        { userId: session.user.id, postId: normalizedPostId },
-        "Comment rate limited"
-      );
-      return apiResponse(false, null, userMessages.rateLimited, 429, requestId);
-    }
+    // if (limited) {
+    //   log.warn(
+    //     { userId: session.user.id, postId: normalizedPostId },
+    //     "Comment rate limited"
+    //   );
+    //   return apiResponse(false, null, userMessages.rateLimited, 429, requestId);
+    // }
+
+    // Protection: Prevent creating replies to replies (only allow replies to main comments)
+    const validationError = await validateReplyCreation(
+      payload,
+      log,
+      requestId
+    );
+    if (validationError?.error) return validationError;
 
     const comment = await createComment({
       authorId: session.user.id,

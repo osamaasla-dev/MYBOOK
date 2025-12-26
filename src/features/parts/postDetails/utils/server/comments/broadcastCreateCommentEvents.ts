@@ -81,6 +81,7 @@ export async function broadcastCreateCommentEvents({
       phase: "details:meta",
       promise: broadcastPostDetailMetaEvent({
         postId: comment.postId,
+        initiatorId: comment.authorId,
         commentsCount,
         sharesCount,
         reactionSummary,

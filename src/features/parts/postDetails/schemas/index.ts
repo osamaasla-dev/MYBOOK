@@ -6,3 +6,6 @@ export type { DeleteCommentInput } from "./deleteCommentSchema";
 
 export { updateCommentSchema } from "./updateCommentSchema";
 export type { UpdateCommentInput } from "./updateCommentSchema";
+
+export { createReplySchema } from "./createReplySchema";
+export type { CreateReplyInput } from "./createReplySchema";

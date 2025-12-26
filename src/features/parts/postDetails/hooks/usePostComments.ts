@@ -1,6 +1,6 @@
 "use client";
 
-import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 
 import {
   fetchPostCommentsRequest,
@@ -12,8 +12,6 @@ export type PostCommentsQueryData = {
   pages: FetchPostCommentsResponse[];
   pageParams: Array<string | undefined>;
   items: PostCommentListItem[];
-  hasMore: boolean;
-  nextCursor: string | null;
 };
 
 export const postCommentsQueryKey = (
@@ -57,21 +55,11 @@ export function usePostComments({
         cursor: pageParam ?? undefined,
       }),
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
-    select: (data) => {
-      const pages = data.pages;
-      const lastPage = pages.at(-1);
-      const items = pages.flatMap((page) => page.comments);
-
-      return {
-        pages,
-        pageParams: data.pageParams as Array<string | undefined>,
-        items,
-        hasMore: Boolean(lastPage?.nextCursor),
-        nextCursor: lastPage?.nextCursor ?? null,
-      };
-    },
-    placeholderData: keepPreviousData,
-    refetchOnWindowFocus: true,
+    select: (data) => ({
+      pages: data.pages,
+      pageParams: data.pageParams as Array<string | undefined>,
+      items: data.pages.flatMap((page) => page.comments),
+    }),
     refetchOnReconnect: true,
   });
 }

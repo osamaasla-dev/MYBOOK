@@ -1,11 +1,18 @@
 "use client";
 
+import { QueryClient } from "@tanstack/react-query";
 import type { PostComment } from "../../services/client/createCommentApi";
 import type {
   FetchPostCommentsResponse,
   PostCommentListItem,
 } from "../../services/client/fetchPostCommentsApi";
-import type { PostCommentsQueryData } from "../usePostComments";
+import type {
+  PostCommentsQueryData,
+  postCommentsQueryKey,
+} from "../usePostComments";
+import { postDetailsQueryKey } from "../usePostDetails";
+import { commentRepliesQueryKey, CommentRepliesQueryData } from "../useReplies";
+import type { FeedPost } from "@/features/pages/home/utils/posts/feed-response";
 
 export type OptimisticViewer = {
   id: string;
@@ -91,8 +98,6 @@ export function insertCommentAtTop(
       pages: [],
       pageParams: [],
       items: [],
-      hasMore: false,
-      nextCursor: null,
     } satisfies PostCommentsQueryData);
 
   const hasPages = Array.isArray(baseData.pages) && baseData.pages.length > 0;
@@ -115,6 +120,7 @@ export function insertCommentAtTop(
   };
 
   const items = Array.isArray(baseData.items) ? baseData.items : [];
+
   const filteredItems = replaceId
     ? items.filter((item) => item.id !== replaceId)
     : items;
@@ -124,9 +130,54 @@ export function insertCommentAtTop(
     pageParams:
       baseData.pageParams.length > 0 ? [...baseData.pageParams] : [undefined],
     items: [comment, ...filteredItems],
-    hasMore: baseData.hasMore,
-    nextCursor: baseData.nextCursor,
   };
+}
+
+export function changeDirectParentReplyCount(
+  queryClient: QueryClient,
+  cacheKey:
+    | ReturnType<typeof commentRepliesQueryKey>
+    | ReturnType<typeof postCommentsQueryKey>,
+  parentId: string,
+  count?: number
+) {
+  const currentData = queryClient.getQueryData(cacheKey);
+  if (!currentData) return;
+  const updateComments = (
+    comments: PostCommentListItem[] = []
+  ): PostCommentListItem[] => {
+    return comments.map((comment) => {
+      if (comment.id === parentId) {
+        // Found the direct parent, increment replyCount
+        return {
+          ...comment,
+          replyCount: (comment.replyCount ?? 0) + (count ?? 0),
+        };
+      }
+      return comment;
+    });
+  };
+
+  queryClient.setQueryData(
+    cacheKey,
+    (data: PostCommentsQueryData | CommentRepliesQueryData) => {
+      if (!data) return data;
+
+      const newPages =
+        data.pages?.map((page) => ({
+          ...page,
+          comments: updateComments(page.comments),
+        })) ?? [];
+
+      const newItems = updateComments(data.items ?? []);
+
+      return {
+        ...data,
+        pages: newPages,
+        items: newItems,
+      };
+    }
+  );
 }
 
 export function removeCommentFromCache(
@@ -154,4 +205,74 @@ export function removeCommentFromCache(
     pages: nextPages,
     items: nextItems,
   };
+}
+
+export function changePostDetailsCommentsCount(
+  queryClient: QueryClient,
+  postDetailsKey: ReturnType<typeof postDetailsQueryKey>,
+  count?: number
+) {
+  queryClient.setQueryData<FeedPost | undefined>(
+    postDetailsKey,
+    (currentDetails) => {
+      if (!currentDetails) return currentDetails;
+
+      return {
+        ...currentDetails,
+        commentsCount: Math.max(
+          (currentDetails.commentsCount ?? 0) + (count ?? 0),
+          0
+        ),
+      };
+    }
+  );
+}
+
+export function updateCommentInCache(
+  queryClient: QueryClient,
+  cacheKey:
+    | ReturnType<typeof commentRepliesQueryKey>
+    | ReturnType<typeof postCommentsQueryKey>,
+  updatedComment: { id: string; content: string; updatedAt: string | null }
+) {
+  queryClient.setQueryData<
+    PostCommentsQueryData | CommentRepliesQueryData | undefined
+  >(cacheKey, (currentData) => {
+    if (!currentData) return currentData;
+    if (!Array.isArray(currentData.pages) || currentData.pages.length === 0) {
+      return currentData;
+    }
+
+    const nextUpdatedAt = updatedComment.updatedAt ?? new Date().toISOString();
+
+    const mapComment = <T extends { id: string }>(comment: T) =>
+      comment.id === updatedComment.id
+        ? {
+            ...comment,
+            content: updatedComment.content,
+            updatedAt: nextUpdatedAt,
+            isEdited: true,
+          }
+        : comment;
+
+    const newPages = currentData.pages.map((page) => {
+      if (!Array.isArray(page?.comments)) {
+        return page;
+      }
+      return {
+        ...page,
+        comments: page.comments.map(mapComment),
+      };
+    });
+
+    const newItems = Array.isArray(currentData.items)
+      ? currentData.items.map(mapComment)
+      : currentData.items;
+
+    return {
+      ...currentData,
+      pages: newPages,
+      items: newItems,
+    };
+  });
 }

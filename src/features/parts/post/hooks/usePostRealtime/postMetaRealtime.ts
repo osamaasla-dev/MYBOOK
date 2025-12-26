@@ -67,6 +67,7 @@ export function usePostMetaRealtime({
         reactionsCount: payload.reactionsCount,
         commentsCount: payload.commentsCount,
         sharesCount: payload.sharesCount,
+        initiatorId: payload.initiatorId,
       });
     },
   });
@@ -90,6 +91,7 @@ export function usePostMetaRealtime({
         reactionsCount: payload.reactionsCount,
         commentsCount: payload.commentsCount,
         sharesCount: payload.sharesCount,
+        initiatorId: payload.initiatorId,
       });
     },
   });

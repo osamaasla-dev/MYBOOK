@@ -32,7 +32,7 @@ type CreateCommentResponse = {
 };
 
 const buildAddCommentEndpoint = (postId: string) =>
-  `/post/${encodeURIComponent(postId)}/comments/add`;
+  `/post/${encodeURIComponent(postId)}/comments/create`;
 
 export async function createPostCommentRequest(
   postId: string,

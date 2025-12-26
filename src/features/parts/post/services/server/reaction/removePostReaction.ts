@@ -85,9 +85,17 @@ export async function removePostReaction({
     }
   );
 
-  // 5. Handle side effects after transaction
+  void broadcastPostDetailMetaEvent({
+    postId,
+    initiatorId: userId,
+    reactionsCount: result.reactionsCount,
+    reactionSummary: result.reactionSummary,
+    commentsCount: result.commentsCount,
+    sharesCount: result.sharesCount,
+  });
+
   if (removedReaction && postAuthorId && postAuthorId !== userId) {
-    await applyNegativeSignal({
+    void applyNegativeSignal({
       actorId: userId,
       targetUserId: postAuthorId,
       type: "unreact",
@@ -99,25 +107,15 @@ export async function removePostReaction({
       });
     });
 
-    // Broadcast events
-    await Promise.allSettled([
-      broadcastPostDetailMetaEvent({
-        postId,
-        reactionsCount: result.reactionsCount,
-        reactionSummary: result.reactionSummary,
-        commentsCount: result.commentsCount,
-        sharesCount: result.sharesCount,
-      }),
-      broadcastPostMetaEvent({
-        postId,
-        postAuthorId,
-        initiatorId: userId,
-        reactionsCount: result.reactionsCount,
-        reactionSummary: result.reactionSummary,
-        commentsCount: result.commentsCount,
-        sharesCount: result.sharesCount,
-      }),
-    ]);
+    void broadcastPostMetaEvent({
+      postId,
+      postAuthorId,
+      initiatorId: userId,
+      reactionsCount: result.reactionsCount,
+      reactionSummary: result.reactionSummary,
+      commentsCount: result.commentsCount,
+      sharesCount: result.sharesCount,
+    });
   }
 
   return result;

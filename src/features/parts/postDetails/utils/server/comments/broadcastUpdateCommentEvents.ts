@@ -7,6 +7,7 @@ import { broadcastPostDetailCommentUpdatedEvent } from "@/features/parts/post/ut
 type BroadcastUpdateCommentEventsInput = {
   comment: {
     id: string;
+    authorId: string;
     postId: string;
     parentId: string | null;
     content: string;
@@ -22,6 +23,7 @@ export async function broadcastUpdateCommentEvents({
 }: BroadcastUpdateCommentEventsInput) {
   const payload = {
     postId: comment.postId,
+    authorId: comment.authorId,
     commentId: comment.id,
     parentId: comment.parentId ?? null,
     content: comment.content,

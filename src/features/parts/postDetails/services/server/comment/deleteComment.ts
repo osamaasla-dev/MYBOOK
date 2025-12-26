@@ -31,6 +31,28 @@ export async function deleteComment({
   const deletedAt = new Date();
 
   const result = await prisma.$transaction(async (tx) => {
+    // Get the comment to be deleted to count its replies
+    const commentToDelete = await tx.comment.findUnique({
+      where: { id: commentId },
+      select: { replyCount: true },
+    });
+
+    const replyCount = commentToDelete?.replyCount ?? 0;
+    const totalCommentsToDelete = 1 + replyCount; // comment itself + its replies
+
+    // If the comment has replies, delete them first (cascade delete)
+    if (replyCount > 0) {
+      await tx.comment.updateMany({
+        where: { parentId: commentId },
+        data: {
+          isDeleted: true,
+          deletedAt,
+          deletedById,
+        },
+      });
+    }
+
+    // Delete the main comment
     await tx.comment.update({
       where: { id: commentId },
       data: {
@@ -44,7 +66,7 @@ export async function deleteComment({
       where: { id: postId },
       data: {
         commentsCount: {
-          decrement: 1,
+          decrement: totalCommentsToDelete,
         },
       },
       select: {

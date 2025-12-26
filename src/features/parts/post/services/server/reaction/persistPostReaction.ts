@@ -151,6 +151,15 @@ export async function persistPostReaction({
       select: { authorId: true },
     });
 
+    void broadcastPostDetailMetaEvent({
+      postId,
+      initiatorId: userId,
+      reactionsCount: result.reactionsCount,
+      reactionSummary: result.reactionSummary,
+      commentsCount: result.commentsCount,
+      sharesCount: result.sharesCount,
+    });
+
     if (postAuthor?.authorId && postAuthor.authorId !== userId) {
       const reactor = await prisma.user.findUnique({
         where: { id: userId },
@@ -158,7 +167,7 @@ export async function persistPostReaction({
       });
 
       if (result.operation === "ADD") {
-        await recordInteraction({
+        void recordInteraction({
           actorId: userId,
           targetUserId: postAuthor.authorId,
           type: "react",
@@ -172,25 +181,16 @@ export async function persistPostReaction({
           operation: "ADD",
         });
       }
-      // Broadcast events
-      await Promise.allSettled([
-        broadcastPostDetailMetaEvent({
-          postId,
-          reactionsCount: result.reactionsCount,
-          reactionSummary: result.reactionSummary,
-          commentsCount: result.commentsCount,
-          sharesCount: result.sharesCount,
-        }),
-        broadcastPostMetaEvent({
-          postId,
-          postAuthorId: postAuthor.authorId,
-          initiatorId: userId,
-          reactionsCount: result.reactionsCount,
-          reactionSummary: result.reactionSummary,
-          commentsCount: result.commentsCount,
-          sharesCount: result.sharesCount,
-        }),
-      ]);
+
+      void broadcastPostMetaEvent({
+        postId,
+        postAuthorId: postAuthor.authorId,
+        initiatorId: userId,
+        reactionsCount: result.reactionsCount,
+        reactionSummary: result.reactionSummary,
+        commentsCount: result.commentsCount,
+        sharesCount: result.sharesCount,
+      });
     }
   }
 

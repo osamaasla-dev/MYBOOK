@@ -3,69 +3,68 @@
 import type { QueryClient } from "@tanstack/react-query";
 
 import type { PostCommentListItem } from "../../services/client/fetchPostCommentsApi";
-import type { PostCommentsQueryData } from "../usePostComments";
-import { postCommentsQueryKey } from "../usePostComments";
+import type {
+  PostCommentsQueryData,
+  postCommentsQueryKey,
+} from "../usePostComments";
+import type {
+  CommentRepliesQueryData,
+  commentRepliesQueryKey,
+} from "../useReplies";
+import {
+  calculateReactionsCount,
+  updateReactionSummary,
+} from "@/features/parts/post/hooks/utils/reactionSummary";
+import type { PostReactionType } from "@/features/parts/post/constants/reactions";
 
-type CommentUpdater = (comment: PostCommentListItem) => PostCommentListItem;
-
-export function updateCommentInCache(
+export function updateCommentReactionInCache(
   queryClient: QueryClient,
-  postId: string,
-  parentId: string | null,
+  cacheKey:
+    | ReturnType<typeof commentRepliesQueryKey>
+    | ReturnType<typeof postCommentsQueryKey>,
   commentId: string,
-  updater: CommentUpdater
-): {
-  didUpdate: boolean;
-  previousData?: PostCommentsQueryData;
-} {
-  const cacheKey = postCommentsQueryKey(postId, parentId);
-  const previousData =
-    queryClient.getQueryData<PostCommentsQueryData>(cacheKey);
+  reaction: PostReactionType | null
+) {
+  queryClient.setQueryData<
+    PostCommentsQueryData | CommentRepliesQueryData | undefined
+  >(cacheKey, (data) => {
+    if (!data || !Array.isArray(data.pages)) {
+      return data;
+    }
 
-  let didUpdate = false;
-  let updatedComment: PostCommentListItem | null = null;
-
-  queryClient.setQueryData<PostCommentsQueryData | undefined>(
-    cacheKey,
-    (data) => {
-      if (!data || !Array.isArray(data.pages)) {
-        return data;
+    const updateComment = (comment: PostCommentListItem) => {
+      if (comment.id !== commentId) {
+        return comment;
       }
 
-      const applyUpdater = (comment: PostCommentListItem) => {
-        if (comment.id !== commentId) {
-          return comment;
-        }
+      if (comment.viewerReaction === reaction) {
+        return comment;
+      }
 
-        didUpdate = true;
-        if (!updatedComment) {
-          updatedComment = updater(comment);
-        }
-        return updatedComment;
-      };
-
-      const nextPages = data.pages.map((page) => {
-        const comments = Array.isArray(page.comments)
-          ? page.comments.map(applyUpdater)
-          : page.comments;
-
-        return {
-          ...page,
-          comments,
-        };
-      });
-
-      const nextItems = Array.isArray(data.items)
-        ? data.items.map(applyUpdater)
-        : data.items;
-
+      const nextSummary = updateReactionSummary(
+        comment.reactionSummary ?? {},
+        reaction,
+        comment.viewerReaction
+      );
       return {
-        ...data,
-        pages: nextPages,
-        items: nextItems,
+        ...comment,
+        reactionSummary: nextSummary,
+        reactionsCount: calculateReactionsCount(nextSummary),
+        viewerReaction: reaction,
       };
-    }
-  );
+    };
 
-  return { didUpdate, previousData };
+    const nextPages = data?.pages?.map((page) => ({
+      ...page,
+      comments: page?.comments?.map(updateComment),
+    }));
+
+    const nextItems = data?.items?.map(updateComment);
+
+    return {
+      ...data,
+      pages: nextPages,
+      items: nextItems,
+    };
+  });
 }
