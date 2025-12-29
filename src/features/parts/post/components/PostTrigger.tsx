@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import { useCurrentUser } from "@/features/hooks";
 
-import { PostModal } from "./PostModal";
+import { CreatePostModalLayer } from "./CreatePostModalLayer";
 
 export function PostTrigger() {
   const { data: user } = useCurrentUser();
@@ -57,7 +57,7 @@ export function PostTrigger() {
           </button>
         </div>
       </section>
-      <PostModal
+      <CreatePostModalLayer
         open={isModalOpen}
         onClose={closeModal}
         user={user}

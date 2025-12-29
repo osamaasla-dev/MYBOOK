@@ -168,6 +168,7 @@ export async function POST(request: Request, routeContext: RouteParams) {
       postAuthorId: commentContext.post.authorId,
       postId: comment.postId,
       commentId: comment.id,
+      parentId: comment.parentId,
       contentPreview: commentPreview,
       requestId,
       route: ROUTE,

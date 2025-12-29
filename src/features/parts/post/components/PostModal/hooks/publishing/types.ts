@@ -16,8 +16,3 @@ export type UsePostPublishingOptions = {
 export type PublishArgs = {
   canPublish: boolean;
 };
-
-export type PublishProgress = {
-  value: number;
-  label: string;
-};

@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 
-import type { ViewerRelations } from "../types";
+import type { ViewerRelations } from "../../types";
 
 export async function resolveViewerRelations(
   viewerId: string | null,

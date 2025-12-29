@@ -1,16 +1,20 @@
-import { MoreHorizontal } from "lucide-react";
-
-import type { PostAuthor } from "./types";
+import type { FeedPost } from "@/features/pages/home/utils/posts/feed-response";
 import { AvatarBubble } from "./AvatarBubble";
 import { formatRelativeTime } from "./utils";
+import { PostActionsMenu } from "./PostActionsMenu";
 import Link from "next/link";
 
 type PostCardHeaderProps = {
-  author: PostAuthor;
-  timestamp?: Date | string;
+  author: FeedPost["author"];
+  timestamp: string | Date;
+  post?: FeedPost;
 };
 
-export function PostCardHeader({ author, timestamp }: PostCardHeaderProps) {
+export function PostCardHeader({
+  author,
+  timestamp,
+  post,
+}: PostCardHeaderProps) {
   const formattedTime = timestamp ? formatRelativeTime(timestamp) : null;
   const profileHref = author.username
     ? `/user/profile/${author.username}`
@@ -18,6 +22,8 @@ export function PostCardHeader({ author, timestamp }: PostCardHeaderProps) {
   const showRelationshipBadges = author.isSelf !== true;
   const followLabel = author.isFollowing ? "Following" : "Not following";
   const friendLabel = author.isFriend ? "Friend" : "Not friend";
+
+  const isSelf = author.isSelf;
 
   return (
     <header className="flex items-start gap-3 px-4">
@@ -52,13 +58,9 @@ export function PostCardHeader({ author, timestamp }: PostCardHeaderProps) {
           <p className="text-xs text-muted-foreground">{formattedTime}</p>
         )}
       </div>
-      <button
-        type="button"
-        className="rounded-full p-2 text-muted-foreground transition hover:bg-secondary"
-        aria-label="more options"
-      >
-        <MoreHorizontal className="size-5" aria-hidden="true" />
-      </button>
+      {isSelf && post && (
+        <PostActionsMenu post={post} triggerClassName="ml-auto" />
+      )}
     </header>
   );
 }

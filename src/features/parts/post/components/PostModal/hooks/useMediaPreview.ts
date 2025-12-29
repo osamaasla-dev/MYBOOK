@@ -47,7 +47,9 @@ export function useMediaPreview({ isOpen }: UseMediaPreviewOptions) {
       if (target) {
         URL.revokeObjectURL(target.url);
       }
-      return prev.filter((item) => item.id !== id);
+      const filtered = prev.filter((item) => item.id !== id);
+
+      return filtered;
     });
   }, []);
 
@@ -74,6 +76,7 @@ export function useMediaPreview({ isOpen }: UseMediaPreviewOptions) {
 
   return {
     mediaPreviews,
+    setMediaPreviews,
     appendMedia,
     removeMedia,
     clearMedia,

@@ -5,6 +5,7 @@ import { useMemo, useRef } from "react";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { useHomeFeed } from "@/features/pages/home/hooks/useHomeFeed";
 import { PostTrigger } from "@/features/parts/post/components/PostTrigger";
+import { EditPostModalLayer } from "@/features/parts/post/components/EditPostModalLayer";
 import { QueryError, QueryLoading } from "@/components";
 import { EmptyState } from "@/components/EmptyState";
 import { FeedList } from "./FeedList";
@@ -44,21 +45,25 @@ export function HomePostsSection() {
   }
 
   return (
-    <section className="space-y-6 col-span-3">
-      <PostTrigger />
+    <>
+      <section className="space-y-6 col-span-5">
+        <PostTrigger />
 
-      <div className="flex flex-col gap-6">
-        {!posts.length ? (
-          <EmptyState title={"No posts found"} className="bg-white" />
-        ) : (
-          <FeedList
-            posts={posts}
-            isError={isError}
-            isFetchingNextPage={isFetchingNextPage}
-            sentinelRef={sentinelRef}
-          />
-        )}
-      </div>
-    </section>
+        <div className="flex flex-col gap-6">
+          {!posts.length ? (
+            <EmptyState title={"No posts found"} className="bg-white" />
+          ) : (
+            <FeedList
+              posts={posts}
+              isError={isError}
+              isFetchingNextPage={isFetchingNextPage}
+              sentinelRef={sentinelRef}
+            />
+          )}
+        </div>
+      </section>
+
+      <EditPostModalLayer />
+    </>
   );
 }

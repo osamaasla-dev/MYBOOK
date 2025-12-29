@@ -59,6 +59,7 @@ export const authOptions: NextAuthOptions = {
         return {
           id: user.id,
           name: user.name,
+          username: user.username,
           email: user.email,
           role: user.role,
         };
@@ -74,6 +75,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (session.user && token.sub) {
         session.user.id = token.sub;
+        session.user.username = token.username;
         session.user.role = token.role;
       }
       return session;
@@ -82,6 +84,7 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.sub = user.id as string;
+        token.username = user.username;
         // Prefer role from user when present (credentials flow), otherwise fetch from DB (OAuth flow)
         const maybeRole = (user as Partial<typeof user> & { role?: string })
           .role;

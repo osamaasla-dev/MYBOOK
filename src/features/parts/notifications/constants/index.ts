@@ -17,6 +17,6 @@ export const NOTIFICATION_EVENTS = [
   "friend:rejected",
   "post:created",
   "post:reaction",
-  "post:comment",
+  "post:comment:create",
   "post:comment:reaction",
 ] as const;

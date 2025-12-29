@@ -3,12 +3,10 @@
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 
-import type { PublishProgress } from "./hooks/publishing";
-
 type PostActionsProps = {
   canPublish: boolean;
   isPublishing: boolean;
-  progress: PublishProgress | null;
+
   onPublish: () => void;
   onResetDraft: () => void;
 };
@@ -16,28 +14,12 @@ type PostActionsProps = {
 export function PostActions({
   canPublish,
   isPublishing,
-  progress,
+
   onPublish,
   onResetDraft,
 }: PostActionsProps) {
   return (
     <div className="flex flex-col gap-3 p-4 pt-2">
-      {progress && (
-        <div className="flex w-full flex-col gap-1" aria-live="polite">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>{progress.label}</span>
-            <span>{progress.value}%</span>
-          </div>
-
-          <div className="h-1.5 w-full rounded-full bg-muted">
-            <div
-              className="h-full rounded-full bg-primary transition-all"
-              style={{ width: `${progress.value}%` }}
-            />
-          </div>
-        </div>
-      )}
-
       <div className="flex items-center justify-between gap-3">
         <ConfirmDialog
           title="Discard draft?"

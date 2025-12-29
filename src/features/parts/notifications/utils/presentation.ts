@@ -16,6 +16,7 @@ const builders: Partial<Record<NotificationType, Builder>> = {
   [NotificationType.POST]: postPresentationBuilder,
   [NotificationType.REACTION]: reactionPresentationBuilder,
   [NotificationType.COMMENT]: commentPresentationBuilder,
+  [NotificationType.REPLY]: commentPresentationBuilder,
 };
 
 export function getNotificationPresentation(

@@ -1,4 +1,5 @@
 import type { PostReactionType } from "@/features/parts/post/constants/reactions";
+import type { Visibility, PostVisibilityPreference } from "@prisma/client";
 
 export type FeedRelationshipSnapshot = {
   isSelf: boolean;
@@ -21,7 +22,11 @@ export type FeedPostAuthor = {
 export type FeedPostMedia = {
   id: string;
   url: string;
-  type: string;
+  type: "IMAGE" | "VIDEO" | "AUDIO" | "DOCUMENT";
+  posterUrl?: string | null;
+  width?: number | null;
+  height?: number | null;
+  duration?: number | null;
 };
 
 export type FeedPostContent = {
@@ -43,6 +48,8 @@ export type FeedPost = {
   author: FeedPostAuthor;
   publishedAt: Date;
   content: FeedPostContent;
+  visibility: Visibility;
+  visibilityPreference: PostVisibilityPreference;
   reactionsCount: number;
   commentsCount: number;
   sharesCount: number;

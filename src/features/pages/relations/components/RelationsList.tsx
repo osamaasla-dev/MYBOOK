@@ -36,7 +36,7 @@ export function RelationsList({
   return (
     <div
       ref={listRef}
-      className="min-h-[320px] overflow-y-auto rounded-xl border border-border/70 bg-card"
+      className="h-full overflow-y-auto rounded-xl border border-border/70 bg-card"
       role="region"
       aria-live="polite"
       aria-busy={isLoading || isFetchingNextPage}

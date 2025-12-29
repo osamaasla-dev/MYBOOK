@@ -1,4 +1,4 @@
-import { apiDeleteR, apiPostR } from "@/lib/api";
+import { apiDeleteR, apiPostR, apiPutR } from "@/lib/api";
 
 import type { CreatePostInput } from "../../schemas";
 import type {
@@ -18,6 +18,12 @@ const buildPostReactionCreateEndpoint = (postId: string) =>
 
 const buildPostReactionDeleteEndpoint = (postId: string) =>
   `/post/${encodeURIComponent(postId)}/reactions/delete`;
+
+const buildPostDeleteEndpoint = (postId: string) =>
+  `/post/${encodeURIComponent(postId)}/delete`;
+
+const buildPostUpdateEndpoint = (postId: string) =>
+  `/post/${encodeURIComponent(postId)}/update`;
 
 export async function submitCreatePost(
   input: CreatePostInput
@@ -55,6 +61,23 @@ export async function recordPostViewApi(
   const { data } = await apiPostR<RecordPostViewResponse>(
     buildPostViewEndpoint(postId),
     {}
+  );
+  return data;
+}
+
+export async function deletePostApi(postId: string): Promise<void> {
+  if (!postId) throw new Error("Post ID is required");
+  await apiDeleteR<void>(buildPostDeleteEndpoint(postId));
+}
+
+export async function submitUpdatePost(
+  postId: string,
+  input: CreatePostInput
+): Promise<CreatePostResponseData> {
+  if (!postId) throw new Error("Post ID is required");
+  const { data } = await apiPutR<CreatePostResponseData>(
+    buildPostUpdateEndpoint(postId),
+    input
   );
   return data;
 }

@@ -40,12 +40,12 @@ export function RelationsPage() {
   const items = useMemo(() => data?.items ?? [], [data?.items]);
 
   useInfiniteScroll({
-    containerRef: listRef,
+    rootRef: listRef,
     sentinelRef,
     hasNextPage: Boolean(hasNextPage),
     isFetching: isFetchingNextPage,
     onLoadMore: () => fetchNextPage(),
-    rootMargin: "0px 0px 400px 0px",
+    rootMargin: "0px 0px 300px 0px",
     enabled: Boolean(hasNextPage),
   });
 
@@ -65,7 +65,7 @@ export function RelationsPage() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className=" bg-white px-4 pt-4 lg:px-8">
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold text-primary">Relations</h1>
         <p className="text-sm text-muted-foreground">
@@ -73,7 +73,7 @@ export function RelationsPage() {
         </p>
       </header>
 
-      <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start lg:gap-6">
+      <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start lg:gap-6 h-[calc(100vh-8rem)]">
         <RelationsSidebarNav
           value={currentTab}
           onChange={handleTabChange}

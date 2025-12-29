@@ -18,7 +18,8 @@ export async function POST(req: Request) {
   try {
     log.info("Media upload started");
     const session = await ServerSession();
-    const result = await handleMediaUpload({ req, session, log });
+    const result = await handleMediaUpload({ req, session, log, requestId });
+    if (result.error) return result.error;
     return apiResponse(true, result, uploadMessages.success, 200, requestId);
   } catch (error: unknown) {
     if (isMediaUploadError(error)) {

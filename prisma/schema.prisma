@@ -460,6 +460,8 @@ model CommentReaction {
   createdAt  DateTime     @default(now())
   updatedAt  DateTime     @updatedAt
 
+ isDeleted   Boolean @default(false)
+  deletedAt   DateTime?
   @@unique([commentId, userId])
   @@index([commentId, emoji])
   @@index([commentId, createdAt])
@@ -631,7 +633,8 @@ model Notification {
   isRead      Boolean  @default(false)
 
   createdAt   DateTime @default(now())
-
+   isDeleted   Boolean @default(false)
+  deletedAt   DateTime?
   @@index([userId, isRead, createdAt])
   @@index([actorId, createdAt])
   @@index([postId, createdAt])
@@ -716,7 +719,8 @@ model Media {
   duration  Int?
 
   createdAt DateTime  @default(now())
-
+ isDeleted   Boolean @default(false)
+  deletedAt   DateTime?
   @@index([postId, createdAt])
 }
 
@@ -734,7 +738,8 @@ model PostReaction {
 
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
-
+ isDeleted   Boolean @default(false)
+  deletedAt   DateTime?
   @@unique([postId, userId])  // Removed emoji from unique constraint
   @@index([postId, emoji])
   @@index([postId, createdAt])

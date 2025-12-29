@@ -59,6 +59,9 @@ export async function fetchFeedPostsForViewer({
         },
       },
       media: {
+        where: {
+          isDeleted: false,
+        },
         select: {
           id: true,
           url: true,

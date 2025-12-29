@@ -1,11 +1,6 @@
 import type { Logger } from "pino";
 
-import { MediaUploadError } from "./errors";
-import type {
-  MediaAssetPayload,
-  SessionLike,
-  UploadMediaResponse,
-} from "../types/media";
+import type { MediaAssetPayload, SessionLike } from "../types/media";
 import { parseUploadInputs } from "./parseUploadInputs";
 import { getFileBuffer } from "./getFileBuffer";
 import { uploadToCloudinary } from "./uploadToCloudinary";
@@ -13,22 +8,32 @@ import { buildMetadata } from "./buildMetadata";
 import { evaluateModeration } from "./evaluateModeration";
 import { promoteMedia, removePendingAsset } from "./assetLifecycle";
 import moderationMessages from "@/lib/messages/moderation";
+import { apiResponse } from "@/lib/apiResponse";
 
 type HandleMediaUploadParams = {
   req: Request;
   session: SessionLike;
   log: Logger;
+  requestId: string;
 };
 
 export async function handleMediaUpload({
   req,
   session,
   log,
-}: HandleMediaUploadParams): Promise<UploadMediaResponse> {
+  requestId,
+}: HandleMediaUploadParams) {
   const userId = session?.user?.id;
-  if (!userId) {
-    throw new MediaUploadError("unauthorized", 401);
-  }
+  if (!userId)
+    return {
+      error: apiResponse(
+        false,
+        null,
+        moderationMessages.mediaBlocked,
+        422,
+        requestId
+      ),
+    };
 
   const formData = await req.formData();
   const inputs = parseUploadInputs(formData, userId);
@@ -60,10 +65,15 @@ export async function handleMediaUpload({
       { metadata, decision },
       "Media rejected during moderation; asset removed"
     );
-    throw new MediaUploadError("rejected", 422, {
-      message: moderationMessages.mediaBlocked,
-      details: { metadata, decision },
-    });
+    return {
+      error: apiResponse(
+        false,
+        null,
+        moderationMessages.mediaBlocked,
+        422,
+        requestId
+      ),
+    };
   }
 
   const promoted = await promoteMedia(metadata.publicId);

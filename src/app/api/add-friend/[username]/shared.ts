@@ -13,9 +13,9 @@ import { fetchViewerUsername } from "@/features/parts/follow/utils";
 import { extractClientIp } from "@/features/parts/follow/utils/request";
 import { consumeRateLimit } from "@/features/utils/rateLimit";
 import {
-  PROFILE_RATE_MAX,
-  PROFILE_RATE_NAMESPACE,
-  PROFILE_RATE_WINDOW_SECONDS,
+  PROFILE_VIEW_RATE_MAX,
+  PROFILE_VIEW_RATE_NAMESPACE,
+  PROFILE_VIEW_RATE_WINDOW_SECONDS,
 } from "@/features/pages/profile/constants";
 
 export type FriendRouteParams = { username?: string };
@@ -50,13 +50,13 @@ export async function prepareFriendAction(
     const params = await paramsPromise;
 
     const limited = await consumeRateLimit({
-      namespace: PROFILE_RATE_NAMESPACE,
+      namespace: PROFILE_VIEW_RATE_NAMESPACE,
       identifiers: [
         { key: "user", value: viewerId },
         { key: "ip", value: clientIp },
       ],
-      windowSeconds: PROFILE_RATE_WINDOW_SECONDS,
-      maxRequests: PROFILE_RATE_MAX,
+      windowSeconds: PROFILE_VIEW_RATE_WINDOW_SECONDS,
+      maxRequests: PROFILE_VIEW_RATE_MAX,
     });
 
     // if (limited) {

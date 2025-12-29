@@ -12,6 +12,7 @@ export type CreatePostCommentNotificationInput = {
   postAuthorId: string;
   postId: string;
   commentId: string;
+  parentId: string | null;
   contentPreview: string;
   requestId: string;
   route: string;
@@ -27,6 +28,7 @@ export async function createPostCommentNotification(
     postAuthorId,
     postId,
     commentId,
+    parentId,
     contentPreview,
     requestId,
     route,
@@ -54,8 +56,11 @@ export async function createPostCommentNotification(
   }
 
   try {
+    const kind = parentId ? "reply_comment" : "post_comment";
+    const type = parentId ? NotificationType.REPLY : NotificationType.COMMENT;
+
     const metadata = {
-      kind: "post_comment" as const,
+      kind,
       actorName: actorName ?? null,
       actorUsername: actorUsername ?? null,
       contentPreview,
@@ -66,7 +71,7 @@ export async function createPostCommentNotification(
       data: {
         userId: postAuthorId,
         actorId,
-        type: NotificationType.COMMENT,
+        type,
         postId,
         commentId,
         metadata,

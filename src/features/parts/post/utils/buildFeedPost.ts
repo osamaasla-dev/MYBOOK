@@ -112,6 +112,8 @@ export function buildFeedPost({
     author: buildAuthor(post, relationship),
     publishedAt: post.publishedAt,
     content: buildContent(post),
+    visibility: post.visibility,
+    visibilityPreference: post.visibilityPreference,
     reactionsCount: post.reactionsCount,
     commentsCount: post.commentsCount,
     sharesCount: post.sharesCount,

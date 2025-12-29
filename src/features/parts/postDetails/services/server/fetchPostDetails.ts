@@ -57,6 +57,9 @@ export async function fetchPostDetails({
           height: true,
           duration: true,
         },
+        where: {
+          isDeleted: false,
+        },
       },
     },
   });

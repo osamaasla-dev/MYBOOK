@@ -14,14 +14,15 @@ import {
   getViewerSession,
   fetchProfileUserByUsername,
 } from "@/features/pages/profile/utils";
-import { resolveViewerRelations } from "@/features/pages/profile/services";
+import { resolveViewerRelations } from "@/features/pages/profile/services/server";
 import { recordInteraction } from "@/features/parts/interaction/services";
 import {
-  PROFILE_RATE_NAMESPACE,
-  PROFILE_RATE_WINDOW_SECONDS,
-  PROFILE_RATE_MAX,
+  PROFILE_VIEW_RATE_MAX,
+  PROFILE_VIEW_RATE_NAMESPACE,
+  PROFILE_VIEW_RATE_WINDOW_SECONDS,
 } from "@/features/pages/profile/constants";
 import { consumeRateLimit } from "@/features/utils/rateLimit";
+import { extractClientIp } from "@/features/parts/follow/utils/request";
 
 const ROUTE = "/api/users/profile";
 
@@ -52,18 +53,16 @@ export async function GET(request: Request, { params }: ProfileRouteContext) {
 
     const { viewerId, isAuthenticated } = await getViewerSession();
 
-    const clientIp =
-      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-      request.headers.get("x-real-ip") ??
-      "anonymous";
+    const clientIp = extractClientIp(request);
+
     const limited = await consumeRateLimit({
-      namespace: PROFILE_RATE_NAMESPACE,
+      namespace: PROFILE_VIEW_RATE_NAMESPACE,
       identifiers: [
         { key: "user", value: viewerId },
         { key: "ip", value: clientIp },
       ],
-      windowSeconds: PROFILE_RATE_WINDOW_SECONDS,
-      maxRequests: PROFILE_RATE_MAX,
+      windowSeconds: PROFILE_VIEW_RATE_WINDOW_SECONDS,
+      maxRequests: PROFILE_VIEW_RATE_MAX,
     });
 
     // if (limited) {

@@ -11,7 +11,7 @@ type ProfileSummaryProps = {
 export function ProfileSummary({ profile, restrictions }: ProfileSummaryProps) {
   return (
     <section
-      className="space-y-3"
+      className="space-y-3 px-5"
       aria-label="Profile summary"
       data-testid="profile-summary"
     >

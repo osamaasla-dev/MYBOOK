@@ -1,4 +1,11 @@
-export const MODERATION_CONTEXTS = ["post", "comment", "message"] as const;
+export const MODERATION_CONTEXTS = [
+  "post",
+  "comment",
+  "message",
+  "avatar",
+  "cover",
+  "bio",
+] as const;
 export type ModerationContext = (typeof MODERATION_CONTEXTS)[number];
 
 export type ModerationEvaluation = {

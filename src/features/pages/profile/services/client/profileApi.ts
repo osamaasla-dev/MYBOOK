@@ -1,5 +1,5 @@
 import { apiGetR } from "@/lib/api";
-import type { ProfileRouteData } from "../types";
+import type { ProfileRouteData } from "../../types";
 
 export async function getProfileByUsername(username: string) {
   const encoded = encodeURIComponent(username);

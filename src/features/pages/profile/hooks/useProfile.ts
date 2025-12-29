@@ -2,10 +2,10 @@
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
-import { getProfileByUsername } from "../services";
+import { getProfileByUsername } from "../services/client";
 import type { ProfileRouteData } from "../types";
 
-export const profileQueryKey = (username: string | null) =>
+export const profileQueryKey = (username: string) =>
   ["profile", username] as const;
 
 export function useProfile(username: string, enabled = true) {

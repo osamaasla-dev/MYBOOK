@@ -2,6 +2,7 @@ import type { PostReactionType } from "../../constants/reactions";
 import type { ReactionSummary } from "../../utils/reaction";
 
 export type PostAuthor = {
+  id: string;
   name: string;
   username?: string;
   avatarUrl?: string;
@@ -30,17 +31,7 @@ export type PostCardMedia = {
 };
 
 export type PostCardContent = {
-  text: string;
+  text: string | null;
   backgroundColor?: string;
   media?: PostCardMedia[];
-};
-
-export type PostCardProps = {
-  postId: string;
-  author: PostAuthor;
-  timestamp?: Date | string;
-  content: PostCardContent;
-  stats?: PostStats;
-  className?: string;
-  detailMetaEnabled?: boolean;
 };

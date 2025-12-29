@@ -3,6 +3,19 @@ const postMessages = {
   unauthorized: "You must be signed in before creating a post.",
   invalidPayload: "Invalid payload for creating a post.",
   unexpectedError: "An unexpected error occurred while creating the post.",
+  notFound: "Post not found",
+  delete: {
+    success: "Post deleted successfully",
+    invalidParams: "Invalid postId parameter",
+    notAuthorized: "User is not authorized to delete this post",
+    failed: "Failed to delete post",
+  },
+  update: {
+    success: "Post updated successfully",
+    invalidParams: "Invalid postId parameter",
+    notAuthorized: "User is not authorized to update this post",
+    failed: "Failed to update post",
+  },
   validation: {
     contentRequired: "Post content cannot be empty.",
     contentTooLong: "Post content is too long.",

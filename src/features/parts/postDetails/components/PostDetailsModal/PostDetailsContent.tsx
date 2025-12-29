@@ -4,13 +4,13 @@ import { type RefObject } from "react";
 
 import { QueryError, QueryLoading } from "@/components";
 import { PostCard } from "@/features/parts/post/components/PostCard";
-import { buildPostCardPropsFromFeedPost } from "@/features/parts/post/components/PostCard/buildPost";
+// import { buildPostCardPropsFromFeedPost } from "@/features/parts/post/components/PostCard/buildPost";
 import type { FeedPost } from "@/features/pages/home/utils/posts/feed-response";
 import { PostCommentsSection } from "./PostCommentsSection";
 import type { PostCommentsSectionProps } from "./PostCommentsSection";
 
 export type PostDetailsContentProps = {
-  post: FeedPost | null;
+  post: FeedPost;
   postId: string;
   isLoading: boolean;
   isError: boolean;
@@ -49,7 +49,6 @@ export function PostDetailsContent({
   postAuthorId,
 }: PostDetailsContentProps) {
   const hasPost = Boolean(post);
-  const cardProps = post ? buildPostCardPropsFromFeedPost(post) : null;
 
   return (
     <section
@@ -59,9 +58,7 @@ export function PostDetailsContent({
       {isLoading && <QueryLoading />}
       {isError && <QueryError onRetry={refetch} />}
 
-      {hasPost && cardProps && (
-        <PostCard {...cardProps} className="rounded-none shadow-none" />
-      )}
+      {hasPost && <PostCard post={post} className="rounded-none shadow-none" />}
 
       {hasPost && (
         <PostCommentsSection

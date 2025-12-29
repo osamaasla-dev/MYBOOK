@@ -18,7 +18,7 @@ type PostModalProps = {
   placeholder: string;
 };
 
-export function PostModal({
+export function CreatePostModalLayer({
   open,
   onClose,
   user,
@@ -51,7 +51,7 @@ export function PostModal({
     setStatusMessage(null);
   };
 
-  const { isPublishing, publishPost, progress } = usePostPublishing({
+  const { isPublishing, publishPost } = usePostPublishing({
     trimmedContent,
     mediaPreviews,
     clearMedia,
@@ -85,7 +85,6 @@ export function PostModal({
       <PostActions
         canPublish={canPublish}
         isPublishing={isPublishing}
-        progress={progress}
         onPublish={() => publishPost({ canPublish })}
         onResetDraft={handleResetDraft}
       />

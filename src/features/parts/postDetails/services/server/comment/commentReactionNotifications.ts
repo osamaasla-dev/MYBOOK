@@ -13,6 +13,7 @@ export type CreateCommentReactionNotificationInput = {
   commentAuthorId: string;
   postId: string;
   commentId: string;
+  parentId: string | null;
   reaction: PostReactionType;
   requestId: string;
   route: string;
@@ -28,6 +29,7 @@ export async function createCommentReactionNotification(
     commentAuthorId,
     postId,
     commentId,
+    parentId,
     reaction,
     requestId,
     route,
@@ -55,8 +57,9 @@ export async function createCommentReactionNotification(
   }
 
   try {
+    const kind = parentId ? "reply_reaction" : "comment_reaction";
     const metadata = {
-      kind: "comment_reaction" as const,
+      kind,
       actorName: actorName ?? null,
       actorUsername: actorUsername ?? null,
       reaction,

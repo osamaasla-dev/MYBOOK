@@ -23,7 +23,7 @@ export function ProfileActions({
   }
   return (
     <section
-      className="flex flex-wrap gap-3"
+      className="flex flex-wrap gap-3 px-5"
       aria-label="Profile actions"
       data-testid="profile-actions"
     >
