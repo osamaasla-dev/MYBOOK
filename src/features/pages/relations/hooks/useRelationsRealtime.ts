@@ -3,7 +3,6 @@
 import { useCallback, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { useCurrentUser } from "@/features/hooks";
 import { usePusherChannel } from "@/hooks/usePusherChannel";
 import type { FollowRealtimePayload } from "@/features/parts/follow/utils";
 import type { FriendRealtimePayload } from "@/features/parts/addFriend/utils/realtime";
@@ -15,9 +14,11 @@ import {
   type RelationEventBinding,
 } from "./realtime/relationsRealtime.constants";
 import { invalidateRelationTabs } from "./realtime/relationsRealtime.helpers";
+import { ClientSession } from "@/utils/session";
 
 export function useRelationsRealtime() {
-  const { data: currentUser } = useCurrentUser();
+  const { data: session } = ClientSession();
+  const userId = session?.user?.id || "";
   const queryClient = useQueryClient();
 
   const invalidateTabs = useCallback(
@@ -36,9 +37,7 @@ export function useRelationsRealtime() {
     [invalidateTabs]
   );
 
-  const channelName = currentUser?.id
-    ? `${USER_CHANNEL_PREFIX}${currentUser.id}`
-    : "";
+  const channelName = userId ? `${USER_CHANNEL_PREFIX}${userId}` : "";
 
   const followBindings = useMemo(
     () => buildBindings(FOLLOW_EVENT_CONFIG),

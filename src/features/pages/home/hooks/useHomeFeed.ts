@@ -1,6 +1,6 @@
 "use client";
 
-import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 
 import type {
   FeedPost,
@@ -17,7 +17,6 @@ export type HomeFeedQueryData = {
   pages: FeedPostsPage[];
   pageParams: Array<number | undefined>;
   posts: FeedPost[];
-  hasMore: boolean;
 };
 
 export const HOME_FEED_QUERY_KEY = ["home-feed"] as const;
@@ -45,19 +44,15 @@ export function useHomeFeed({
     select: (data) => {
       const pages = data.pages;
       const flattenedPosts = pages.flatMap((page) => page.posts);
-      const lastPage = pages[pages.length - 1];
 
       return {
         pages,
         pageParams: data.pageParams as Array<number | undefined>,
         posts: flattenedPosts,
-        hasMore: pages.length ? Boolean(lastPage?.nextCursor) : false,
       };
     },
-    refetchOnWindowFocus: true,
     refetchOnReconnect: true,
-    placeholderData: keepPreviousData,
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: 60_000,
+    gcTime: 60_000,
   });
 }

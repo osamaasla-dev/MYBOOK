@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { useCurrentUser } from "@/features/hooks";
+import { ClientSession } from "@/utils/session";
 import { usePusherChannel } from "@/hooks/usePusherChannel";
 import type { FollowRealtimePayload } from "../utils/realtime";
 import { profileQueryKey } from "@/features/pages/profile/hooks/useProfile";
@@ -19,7 +19,8 @@ import {
 const USER_CHANNEL_PREFIX = "private-user-";
 
 export function useFollowRealtime(profileUsername?: string) {
-  const { data: currentUser } = useCurrentUser();
+  const { data: session } = ClientSession();
+  const userId = session?.user?.id || "";
   const queryClient = useQueryClient();
 
   const profileKey = useMemo(() => {
@@ -51,10 +52,8 @@ export function useFollowRealtime(profileUsername?: string) {
   }, [handlers]);
 
   usePusherChannel<FollowRealtimePayload>({
-    channelName: currentUser?.id
-      ? `${USER_CHANNEL_PREFIX}${currentUser.id}`
-      : "",
+    channelName: userId ? `${USER_CHANNEL_PREFIX}${userId}` : "",
     bindings,
-    enabled: Boolean(currentUser?.id && profileUsername && bindings.length > 0),
+    enabled: Boolean(userId && profileUsername && bindings.length > 0),
   });
 }

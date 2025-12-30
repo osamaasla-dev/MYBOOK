@@ -3,19 +3,22 @@
 import { useState } from "react";
 import { QueryError, QueryLoading } from "@/components";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 import { useProfile } from "../hooks/useProfile";
 import { useUpdateProfile } from "../hooks/useUpdateProfile";
-import { useCurrentUser } from "@/features/hooks/useCurrentUser";
 import {
   ProfileHero,
   ProfileSummary,
   ProfileActions,
   ProfileStats,
-  ProfileAbout,
   ProfileActionsMenu,
   ImageUploadModal,
 } from "../components";
+import { ProfileBioTab } from "../components/ProfileBioTab";
+import { ProfilePostsTab } from "../components/ProfilePostsTab";
+import { ProfilePicturesTab } from "../components/ProfilePicturesTab";
+import { ClientSession } from "@/utils/session";
 
 type ProfilePageProps = {
   username: string;
@@ -27,9 +30,10 @@ export function ProfilePage({ username }: ProfilePageProps) {
     Boolean(username)
   );
 
-  const { data: currentUser } = useCurrentUser();
+  const { data: session } = ClientSession();
+  const userId = session?.user?.id || "";
 
-  const updateProfile = useUpdateProfile(currentUser?.id || "", username);
+  const updateProfile = useUpdateProfile(userId, username);
 
   // Modal states
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
@@ -81,41 +85,76 @@ export function ProfilePage({ username }: ProfilePageProps) {
   const { profile, viewer, restrictions } = data;
 
   return (
-    <div className="space-y-6 bg-white">
-      <div className="relative">
-        <ProfileHero
-          coverUrl={profile.coverUrl}
-          avatarUrl={profile.avatarUrl}
-          name={profile.name}
-        />
-        {viewer.isSelf && (
-          <div className="absolute bottom-4 right-4">
-            <ProfileActionsMenu
-              onAvatarChange={() => setIsAvatarModalOpen(true)}
-              onCoverChange={() => setIsCoverModalOpen(true)}
-              onAvatarRemove={handleAvatarRemove}
-              onCoverRemove={handleCoverRemove}
-              hasAvatar={!!profile.avatarUrl}
-              hasCover={!!profile.coverUrl}
-            />
-          </div>
-        )}
-      </div>
+    <div className=" ">
+      <div className="space-y-6 bg-white pb-5 px-4 lg:px-8">
+        <div className="relative">
+          <ProfileHero
+            coverUrl={profile.coverUrl}
+            avatarUrl={profile.avatarUrl}
+            name={profile.name}
+          />
+          {viewer.isSelf && (
+            <div className="absolute bottom-4 right-4">
+              <ProfileActionsMenu
+                onAvatarChange={() => setIsAvatarModalOpen(true)}
+                onCoverChange={() => setIsCoverModalOpen(true)}
+                onAvatarRemove={handleAvatarRemove}
+                onCoverRemove={handleCoverRemove}
+                hasAvatar={!!profile.avatarUrl}
+                hasCover={!!profile.coverUrl}
+              />
+            </div>
+          )}
+        </div>
 
-      <div className="space-y-5">
-        <ProfileSummary profile={profile} restrictions={restrictions} />
-        <ProfileActions
-          viewer={viewer}
-          restrictions={restrictions}
-          profileUsername={profile.username}
-        />
-        <ProfileStats profile={profile} viewer={viewer} />
-        <ProfileAbout
-          profile={profile}
-          canViewFullProfile={viewer.canViewFullProfile}
-        />
+        <div className="space-y-5">
+          <ProfileSummary profile={profile} restrictions={restrictions} />
+          <ProfileActions
+            viewer={viewer}
+            restrictions={restrictions}
+            profileUsername={profile.username}
+          />
+          <ProfileStats profile={profile} viewer={viewer} />
+        </div>
       </div>
+      {/* Tabs */}
+      <Tabs defaultValue="bio" className="w-full ">
+        <TabsList className="grid w-full grid-cols-3 bg-white rounded-none py-0 h-fit relative before:content-[''] before:absolute before:top-0 before:left-1/2 before:transform before:-translate-x-1/2 before:w-3/4 before:h-0.5 before:bg-gray-300 shadow-md">
+          <TabsTrigger value="bio" className="py-4">
+            Bio
+          </TabsTrigger>
+          <TabsTrigger value="posts" className="py-4">
+            Posts
+          </TabsTrigger>
+          <TabsTrigger value="pictures" className="py-4">
+            Pictures
+          </TabsTrigger>
+        </TabsList>
 
+        <TabsContent
+          value="bio"
+          className="mt-2 mx-30  bg-white  rounded-xl p-4"
+        >
+          <ProfileBioTab
+            profile={profile}
+            canViewFullProfile={viewer.canViewFullProfile}
+          />
+        </TabsContent>
+
+        <TabsContent value="posts" className="mt-2 mx-30">
+          <ProfilePostsTab
+            username={profile.username}
+            profileUserId={profile.id}
+          />
+        </TabsContent>
+
+        <TabsContent
+          value="pictures"
+          className="mt-2 mx-30 bg-white  rounded-xl p-4"
+        >
+          <ProfilePicturesTab />
+        </TabsContent>
+      </Tabs>
       {/* Image Upload Modals */}
       <ImageUploadModal
         isOpen={isAvatarModalOpen}

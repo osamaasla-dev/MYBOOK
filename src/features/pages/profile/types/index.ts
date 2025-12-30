@@ -44,6 +44,7 @@ export type ProfileUserRecord = {
 
 export type ProfileSummary = Pick<
   ProfileUserRecord,
+  | "id"
   | "name"
   | "username"
   | "avatarUrl"

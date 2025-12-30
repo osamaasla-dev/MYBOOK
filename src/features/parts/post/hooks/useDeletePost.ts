@@ -7,6 +7,8 @@ import { deletePostApi } from "../services/client/postApi";
 import { postMessages } from "@/lib/messages";
 import { HOME_FEED_QUERY_KEY } from "@/features/pages/home/hooks/useHomeFeed";
 import { postDetailsQueryKey } from "@/features/parts/postDetails/hooks";
+import { PROFILE_POSTS_QUERY_KEY } from "@/features/pages/profile/hooks/useProfilePosts";
+import { ClientSession } from "@/utils/session";
 
 export const DELETE_POST_MUTATION_KEY = ["post", "delete"] as const;
 
@@ -16,7 +18,9 @@ type DeletePostVariables = {
 
 export function useDeletePost() {
   const queryClient = useQueryClient();
-
+  const { data: session } = ClientSession();
+  const username = session?.user?.username || "";
+  const profilePostsKey = PROFILE_POSTS_QUERY_KEY(username);
   return useMutation<void, Error, DeletePostVariables>({
     mutationKey: DELETE_POST_MUTATION_KEY,
     mutationFn: ({ postId }) => {
@@ -38,6 +42,9 @@ export function useDeletePost() {
       // Remove specific post from cache
       queryClient.removeQueries({
         queryKey: postDetailsQueryKey(variables.postId),
+      });
+      await queryClient.invalidateQueries({
+        queryKey: profilePostsKey,
       });
     },
     onError: (error) => {

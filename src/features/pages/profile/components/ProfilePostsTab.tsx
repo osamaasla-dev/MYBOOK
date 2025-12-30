@@ -3,15 +3,24 @@
 import { useMemo, useRef } from "react";
 
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
-import { useHomeFeed } from "@/features/pages/home/hooks/useHomeFeed";
-import { PostTrigger } from "@/features/parts/post/components/PostTrigger";
+import { useProfilePosts } from "@/features/pages/profile/hooks/useProfilePosts";
 import { EditPostModalLayer } from "@/features/parts/post/components/EditPostModalLayer";
 import { QueryError, QueryLoading } from "@/components";
 import { EmptyState } from "@/components/EmptyState";
-import { FeedList } from "./FeedList";
-import { INITIAL_PAGE_SIZE } from "../../constants";
+import { FeedList } from "@/features/pages/home/components/posts/FeedList";
+import { INITIAL_PAGE_SIZE } from "@/features/pages/home/constants";
+import { PostTrigger } from "@/features/parts/post/components/PostTrigger";
+import { ClientSession } from "@/utils/session";
 
-export function HomePostsSection() {
+interface ProfilePostsTabProps {
+  username: string;
+  profileUserId: string;
+}
+
+export function ProfilePostsTab({
+  username,
+  profileUserId,
+}: ProfilePostsTabProps) {
   const {
     data,
     isLoading,
@@ -20,8 +29,12 @@ export function HomePostsSection() {
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
-  } = useHomeFeed({ initialPageSize: INITIAL_PAGE_SIZE });
-
+  } = useProfilePosts({
+    username,
+    initialPageSize: INITIAL_PAGE_SIZE,
+  });
+  const { data: session } = ClientSession();
+  const currentUser = session?.user;
   const posts = useMemo(() => data?.posts ?? [], [data]);
   const isInitialLoading = isLoading && !data;
 
@@ -47,7 +60,7 @@ export function HomePostsSection() {
   return (
     <>
       <section className="space-y-6 col-span-5">
-        <PostTrigger />
+        {currentUser?.id === profileUserId && <PostTrigger />}
 
         <div className="flex flex-col gap-6">
           {!posts.length ? (

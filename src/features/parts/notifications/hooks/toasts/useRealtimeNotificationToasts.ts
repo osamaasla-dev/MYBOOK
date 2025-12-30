@@ -2,7 +2,6 @@
 
 import { useMemo } from "react";
 
-import { useCurrentUser } from "@/features/hooks";
 import { buildUserChannel } from "@/features/utils/realtime";
 import {
   usePusherChannel,
@@ -15,9 +14,11 @@ import { buildPostToastBindings } from "./postToastBindings";
 import { buildReactionToastBindings } from "./reactionToastBindings";
 import { buildCommentToastBindings } from "./commentToastBindings";
 import { usePostDetailsModalNavigation } from "@/features/parts/postDetails/hooks";
+import { ClientSession } from "@/utils/session";
 
 export function useRealtimeNotificationToasts() {
-  const { data: currentUser } = useCurrentUser();
+  const { data: session } = ClientSession();
+  const userId = session?.user?.id || "";
   const { currentPostId, isPostDetailsOpen } = usePostDetailsModalNavigation();
 
   const postModalContext = useMemo(
@@ -63,7 +64,7 @@ export function useRealtimeNotificationToasts() {
     return [...staticBindings, ...reactionBindings, ...commentBindings];
   }, [commentBindings, reactionBindings, staticBindings]);
 
-  const channelName = currentUser?.id ? buildUserChannel(currentUser.id) : "";
+  const channelName = userId ? buildUserChannel(userId) : "";
 
   usePusherChannel({
     channelName,

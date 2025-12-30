@@ -71,7 +71,7 @@ function buildContent(post: FeedPostRecord): FeedPostContent {
   const media: FeedPostMedia[] = post.media.map((item) => ({
     id: item.id,
     url: item.url,
-    type: item.type,
+    type: item.type as FeedPostMedia["type"],
   }));
 
   return {

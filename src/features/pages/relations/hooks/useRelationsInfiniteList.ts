@@ -20,7 +20,6 @@ export type RelationsQueryData = {
   pages: RelationsListResult[];
   pageParams: Array<string | undefined>;
   items: RelationListItem[];
-  hasMore: boolean;
 };
 
 export const relationsQueryKey = (tab: RelationTab) =>
@@ -53,11 +52,9 @@ export function useRelationsInfiniteList({
       pages: data.pages,
       pageParams: data.pageParams as Array<string | undefined>,
       items: data.pages.flatMap((page) => page.items),
-      hasMore:
-        data.pages.length > 0
-          ? data.pages[data.pages.length - 1].hasNextPage
-          : false,
     }),
-    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    staleTime: 60_000,
+    gcTime: 60_000,
   });
 }

@@ -60,6 +60,7 @@ export function buildProfileSummary(
   const isPublic = privacy.visibility === "public";
 
   return {
+    id: user.id,
     name: user.name,
     username: user.username,
     avatarUrl: user.avatarUrl,

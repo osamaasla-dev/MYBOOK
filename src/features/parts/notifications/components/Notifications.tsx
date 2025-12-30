@@ -8,7 +8,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui";
-import { useCurrentUser } from "@/features/hooks";
+import { ClientSession } from "@/utils/session";
 import { useNotifications } from "../hooks/useNotifications";
 import { useNotificationsRealtime } from "../hooks/useNotificationsRealtime";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
@@ -27,7 +27,8 @@ import {
 
 export function Notifications() {
   const queryClient = useQueryClient();
-  const { data: currentUser } = useCurrentUser();
+  const { data: session } = ClientSession();
+  const userId = session?.user?.id || "";
   const [currentTab, setCurrentTab] = useState<NotificationTab>("all");
   const {
     data,
@@ -54,9 +55,7 @@ export function Notifications() {
     [items]
   );
 
-  const subscriptionChannel = currentUser?.id
-    ? `private-user-${currentUser.id}`
-    : "";
+  const subscriptionChannel = userId ? `private-user-${userId}` : "";
 
   const markNotificationMutation = useMarkNotificationRead();
 

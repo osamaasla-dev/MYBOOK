@@ -25,7 +25,7 @@ export function ProfileHero({ coverUrl, avatarUrl, name }: ProfileHeroProps) {
             priority
           />
         ) : (
-          <div className="text-5xl flex items-center justify-center h-80 w-full rounded-xl text-white bg-accent ">
+          <div className="text-5xl flex items-center justify-center h-80 w-full rounded-xl text-white bg-secondary/80 ">
             No cover image
           </div>
         )}

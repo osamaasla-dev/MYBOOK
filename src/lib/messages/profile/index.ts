@@ -4,6 +4,8 @@ const profileMessages = {
   PENDING_FOLLOW_MESSAGE:
     "Your follow request is pending approval. You'll gain access once it is accepted.",
   BLOCKED_PROFILE_MESSAGE: "This profile isn't available.",
+
+  notFound: "Profile not found",
   update: {
     success: "Profile updated successfully",
     failed: "Failed to update profile",

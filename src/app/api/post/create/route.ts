@@ -40,6 +40,17 @@ export async function POST(request: Request) {
       );
     }
 
+    // Validate that user exists in database
+    // const userExists = await prisma.user.findUnique({
+    //   where: { id: session.user.id },
+    //   select: { id: true },
+    // });
+
+    // if (!userExists) {
+    //   log.warn({ userId: session.user.id }, "User not found in database");
+    //   return apiResponse(false, null, "User not found", 404, requestId);
+    // }
+
     const body = await request.json();
     const parsed = createPostSchema.safeParse(body);
     if (!parsed.success) {

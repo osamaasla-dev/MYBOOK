@@ -81,3 +81,11 @@
   scrollbar-width: thin;
   scrollbar-color: var(--color-primary) var(--color-primary-light);
 }
+
+mark[data-highlight="true"] {
+  background-color: var(--color-accent-light);
+  color: var(--color-foreground);
+  border-radius: 0.25rem;
+  padding: 0 0.15em;
+  font-weight: 600;
+}
