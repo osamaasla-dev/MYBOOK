@@ -1,53 +1,73 @@
+import { USER_SEARCH_SUGGESTION_LIMIT } from "@/features/parts/search/constants";
+import { fetchSearchableUsers } from "@/features/parts/search/services/server/searchUsersService";
 import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
+import { userMessages } from "@/lib/messages";
 import { getRequestLog } from "@/lib/request-log";
-import { algoliaClient } from "@/lib/algolia.search/algolia.server";
-import { ALGOLIA_INDEX_USERS } from "@/lib/algolia.search/constants";
-import { saveObjectsInChunks } from "@/lib/algolia.search/saveObjectsInChunks";
-import { fetchUsersForIndex } from "@/features/search/users/server/fetchUsersForIndex";
-import { mapUsersToAlgoliaObjects } from "@/features/search/users/server/mapUsersToAlgoliaObjects";
+import { ServerSession } from "@/utils/session";
 
 const ROUTE = "/api/search/users";
-const CHUNK_SIZE = 1000;
 
-export async function POST() {
+export async function GET(request: Request) {
   const { requestId, log } = await getRequestLog({ route: ROUTE });
 
   try {
-    log.info("User search indexing started");
+    const session = await ServerSession();
+    const viewerId = session?.user?.id ?? null;
 
-    const users = await fetchUsersForIndex();
-    const objects = mapUsersToAlgoliaObjects(users);
-
-    if (objects.length === 0) {
-      log.warn("No users eligible for search indexing");
-      return apiResponse(true, null, "No users to index", 200, requestId);
+    if (!viewerId) {
+      log.warn("Unauthorized user search suggestions request");
+      return apiResponse(
+        false,
+        { hits: [] },
+        userMessages.unauthorized,
+        401,
+        requestId
+      );
     }
 
-    await saveObjectsInChunks(
-      algoliaClient,
-      ALGOLIA_INDEX_USERS,
-      objects,
-      CHUNK_SIZE
+    const { searchParams } = new URL(request.url);
+    const rawQuery = searchParams.get("query") ?? "";
+    const query = rawQuery.trim();
+
+    if (!query) {
+      log.info("Empty search query received, returning empty result set");
+      return apiResponse(
+        true,
+        { hits: [] },
+        userMessages.success,
+        200,
+        requestId
+      );
+    }
+
+    const { items } = await fetchSearchableUsers({
+      viewerId,
+      query,
+      limit: USER_SEARCH_SUGGESTION_LIMIT,
+    });
+
+    log.info(
+      { query, resultCount: items.length, viewerId },
+      "User search suggestions completed"
     );
 
-    log.info({ count: objects.length }, "User search indexing finished");
     return apiResponse(
       true,
-      { indexed: objects.length },
-      "User search index updated",
+      { hits: items },
+      userMessages.success,
       200,
       requestId
     );
-  } catch (error) {
-    const err = normalizeError(error);
-    log.error({ error: err }, "User search indexing failed");
+  } catch (err) {
+    const error = normalizeError(err);
+    log.error({ err: error, status: error.status }, "User search failed");
 
     return apiResponse(
       false,
-      null,
-      err.message ?? "Failed to index users",
-      err.status ?? 500,
+      { hits: [] },
+      error.message ?? userMessages.failed,
+      error.status ?? 500,
       requestId
     );
   }

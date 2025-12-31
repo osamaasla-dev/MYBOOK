@@ -7,8 +7,9 @@ import { postMessages } from "@/lib/messages";
 const mediaTypes = ["image", "video"] as const;
 
 const postMediaSchema = z.object({
+  id: z.string().cuid().optional(),
   url: z.string().url(),
-  publicId: z.string().min(1),
+  publicId: z.union([z.string().min(1), z.null()]).optional(),
   folder: z.string().optional(),
   format: z.string().optional(),
   type: z.enum(mediaTypes).default("image"),
@@ -21,12 +22,7 @@ const postMediaSchema = z.object({
 
 export const createPostSchema = z
   .object({
-    content: z
-      .string()
-      .trim()
-      .min(1, postMessages.validation.contentRequired)
-      .max(5000, postMessages.validation.contentTooLong)
-      .optional(),
+    content: z.string().trim().optional(),
     visibility: z.nativeEnum(Visibility).default(Visibility.PUBLIC),
     visibilityPreference: z
       .nativeEnum(PostVisibilityPreference)

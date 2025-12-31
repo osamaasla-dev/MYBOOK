@@ -44,12 +44,30 @@ export function ProfilePage({ username }: ProfilePageProps) {
   const [isCoverConfirmOpen, setIsCoverConfirmOpen] = useState(false);
 
   // Success handlers
-  const handleAvatarChange = async (url: string) => {
-    await updateProfile.mutateAsync({ avatarUrl: url });
+  const handleAvatarChange = async ({
+    url,
+    publicId,
+  }: {
+    url: string;
+    publicId: string;
+  }) => {
+    await updateProfile.mutateAsync({
+      avatarUrl: url,
+      avatarPublicId: publicId,
+    });
   };
 
-  const handleCoverChange = async (url: string) => {
-    await updateProfile.mutateAsync({ coverUrl: url });
+  const handleCoverChange = async ({
+    url,
+    publicId,
+  }: {
+    url: string;
+    publicId: string;
+  }) => {
+    await updateProfile.mutateAsync({
+      coverUrl: url,
+      coverPublicId: publicId,
+    });
   };
 
   // Remove handlers
@@ -62,11 +80,11 @@ export function ProfilePage({ username }: ProfilePageProps) {
   };
 
   const confirmAvatarRemove = () => {
-    updateProfile.mutate({ avatarUrl: null });
+    updateProfile.mutate({ avatarUrl: null, avatarPublicId: null });
   };
 
   const confirmCoverRemove = () => {
-    updateProfile.mutate({ coverUrl: null });
+    updateProfile.mutate({ coverUrl: null, coverPublicId: null });
   };
 
   if (isLoading) {

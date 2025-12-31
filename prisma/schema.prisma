@@ -507,7 +507,9 @@ model User {
   bio               String?
   websiteUrl        String?
   avatarUrl         String?
+  avatarPublicId    String?
   coverUrl          String?
+  coverPublicId     String?
   gender            Gender
   birthDate         DateTime
 
@@ -713,6 +715,7 @@ model Media {
   post      Post      @relation(fields: [postId], references: [id])
 
   url       String
+  publicId  String?
   type      MediaType @default(IMAGE)
   width     Int?
   height    Int?

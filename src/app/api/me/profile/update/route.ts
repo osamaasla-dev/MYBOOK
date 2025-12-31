@@ -17,7 +17,13 @@ import {
   PROFILE_UPDATE_RATE_MAX,
 } from "@/features/pages/profile/constants";
 import { updateProfileSchema } from "@/features/pages/profile/schemas";
-import { updateUserProfile } from "@/features/pages/profile/services/server";
+import {
+  cleanupProfileMedia,
+  deleteUploadedProfileMedia,
+  extractUploadedProfileMedia,
+  getProfileMediaIdentifiers,
+  updateUserProfile,
+} from "@/features/pages/profile/services/server";
 import { userMessages } from "@/lib/messages";
 import { deleteProfileCache } from "@/features/pages/profile/utils";
 
@@ -25,6 +31,9 @@ const ROUTE = "/api/me/profile";
 
 export async function PUT(request: Request) {
   const { requestId, log } = await getRequestLog({ route: ROUTE });
+  let cleanupUploadedMedia: ((reason: string) => Promise<void>) | null = null;
+  let uploadedMediaCleanupHandled = false;
+  let uploadedPublicIds: string[] = [];
 
   try {
     log.info("profile update started");
@@ -70,10 +79,18 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
+    uploadedPublicIds = extractUploadedProfileMedia(body);
+    cleanupUploadedMedia = async (reason: string) => {
+      if (uploadedMediaCleanupHandled || !uploadedPublicIds.length) return;
+      uploadedMediaCleanupHandled = true;
+      await deleteUploadedProfileMedia(uploadedPublicIds, log, { reason });
+    };
+
     const parsed = updateProfileSchema.safeParse(body);
     if (!parsed.success) {
       const firstIssue = parsed.error.issues?.[0];
       log.warn({ issues: parsed.error.issues }, "Invalid profile payload");
+      await cleanupUploadedMedia("profile-invalid-payload");
       return apiResponse(
         false,
         null,
@@ -83,7 +100,10 @@ export async function PUT(request: Request) {
       );
     }
 
-    const { bio, avatarUrl, coverUrl } = parsed.data;
+    const { bio, avatarUrl, avatarPublicId, coverUrl, coverPublicId } =
+      parsed.data;
+
+    const currentMedia = await getProfileMediaIdentifiers(session.user.id);
 
     // Moderate content if provided
     try {
@@ -94,6 +114,7 @@ export async function PUT(request: Request) {
             { userId: session.user.id, bio },
             profileMessages.update.bioBlocked
           );
+          await cleanupUploadedMedia("profile-bio-moderation");
           return apiResponse(
             false,
             null,
@@ -111,6 +132,7 @@ export async function PUT(request: Request) {
             { userId: session.user.id, url: avatarUrl },
             profileMessages.update.avatarBlocked
           );
+          await cleanupUploadedMedia("profile-avatar-moderation");
           return apiResponse(
             false,
             null,
@@ -128,6 +150,7 @@ export async function PUT(request: Request) {
             { userId: session.user.id, url: coverUrl },
             profileMessages.update.coverBlocked
           );
+          await cleanupUploadedMedia("profile-cover-moderation");
           return apiResponse(
             false,
             null,
@@ -140,6 +163,7 @@ export async function PUT(request: Request) {
     } catch (error) {
       if (error instanceof MissingModerationAPIKeyError) {
         log.error("Moderation key missing, rejecting profile update");
+        await cleanupUploadedMedia("profile-missing-moderation-key");
         return apiResponse(
           false,
           null,
@@ -157,6 +181,7 @@ export async function PUT(request: Request) {
           error.status === 429
             ? "Too many requests. Please try again later."
             : "Content moderation service error";
+        await cleanupUploadedMedia("profile-moderation-provider-error");
         return apiResponse(
           false,
           null,
@@ -172,6 +197,15 @@ export async function PUT(request: Request) {
     await deleteProfileCache(session.user.username);
     const updatedUser = await updateUserProfile(session.user.id, parsed.data);
 
+    await cleanupProfileMedia({
+      currentMedia,
+      nextAvatarUrl: avatarUrl,
+      nextAvatarPublicId: avatarPublicId,
+      nextCoverUrl: coverUrl,
+      nextCoverPublicId: coverPublicId,
+      log,
+    });
+
     log.info({ userId: session.user.id }, profileMessages.update.success);
 
     return apiResponse(
@@ -182,6 +216,9 @@ export async function PUT(request: Request) {
       requestId
     );
   } catch (error: unknown) {
+    if (cleanupUploadedMedia) {
+      await cleanupUploadedMedia("profile-unexpected-error");
+    }
     const err = normalizeError(error);
     log.error(
       { err, status: err.status },

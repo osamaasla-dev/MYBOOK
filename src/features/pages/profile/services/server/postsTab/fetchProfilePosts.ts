@@ -61,6 +61,7 @@ export async function fetchProfilePosts({
         select: {
           id: true,
           url: true,
+          publicId: true,
           type: true,
           width: true,
           height: true,

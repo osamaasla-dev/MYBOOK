@@ -65,6 +65,7 @@ export async function fetchFeedPostsForViewer({
         select: {
           id: true,
           url: true,
+          publicId: true,
           type: true,
           width: true,
           height: true,

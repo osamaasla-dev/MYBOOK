@@ -23,6 +23,7 @@ export type PostStats = {
 export type PostCardMedia = {
   id: string;
   url: string;
+  publicId?: string | null;
   type: "IMAGE" | "VIDEO" | "AUDIO" | "DOCUMENT";
   posterUrl?: string | null;
   width?: number | null;

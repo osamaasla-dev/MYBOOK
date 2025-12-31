@@ -4,6 +4,7 @@ import { apiResponse } from "@/lib/apiResponse";
 import { postMessages } from "@/lib/messages";
 import { prisma } from "@/lib/prisma";
 import { Logger } from "pino";
+import { deletePostMediaAssets } from "./mediaCleanup";
 
 type DeletePostInput = {
   postId: string;
@@ -28,6 +29,14 @@ export async function deletePost({
       select: {
         id: true,
         authorId: true,
+        media: {
+          where: { isDeleted: false },
+          select: {
+            id: true,
+            publicId: true,
+            type: true,
+          },
+        },
       },
     });
 
@@ -51,28 +60,39 @@ export async function deletePost({
       };
     }
 
-    // Soft delete the post
-    await prisma.post.update({
-      where: { id: postId },
-      data: {
-        isDeleted: true,
-        deletedAt: new Date(),
-      },
+    const timestamp = new Date();
+
+    await prisma.$transaction(async (tx) => {
+      await tx.post.update({
+        where: { id: postId },
+        data: {
+          isDeleted: true,
+          deletedAt: timestamp,
+        },
+      });
+
+      await tx.media.updateMany({
+        where: { postId, isDeleted: false },
+        data: { isDeleted: true, deletedAt: timestamp },
+      });
+
+      await tx.comment.updateMany({
+        where: { postId, isDeleted: false },
+        data: { isDeleted: true, deletedAt: timestamp },
+      });
+
+      await tx.postReaction.updateMany({
+        where: { postId, isDeleted: false },
+        data: { isDeleted: true, deletedAt: timestamp },
+      });
     });
 
-    // Optionally: Soft delete related content
-    await Promise.allSettled([
-      // Soft delete comments
-      prisma.comment.updateMany({
-        where: { postId, isDeleted: false },
-        data: { isDeleted: true, deletedAt: new Date() },
-      }),
-      // Soft delete reactions
-      prisma.postReaction.updateMany({
-        where: { postId, isDeleted: false },
-        data: { isDeleted: true, deletedAt: new Date() },
-      }),
-    ]);
+    if (post.media.length) {
+      await deletePostMediaAssets(post.media, log, {
+        postId,
+        reason: "delete",
+      });
+    }
   } catch (error) {
     log.error({ error }, postMessages.delete.failed);
     return {

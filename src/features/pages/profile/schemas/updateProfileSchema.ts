@@ -11,7 +11,9 @@ export const updateProfileSchema = z.object({
   avatarUrl: z
     .union([z.string().url("Invalid avatar URL"), z.null()])
     .optional(),
+  avatarPublicId: z.union([z.string().min(1), z.null()]).optional(),
   coverUrl: z.union([z.string().url("Invalid cover URL"), z.null()]).optional(),
+  coverPublicId: z.union([z.string().min(1), z.null()]).optional(),
 });
 
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;

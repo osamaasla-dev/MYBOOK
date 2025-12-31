@@ -15,6 +15,7 @@ export function mapUploadMediaToCreateInput(
 ): Prisma.MediaCreateWithoutPostInput[] {
   return media.map((item) => ({
     url: item.url,
+    publicId: item.publicId,
     type: item.type === "video" ? MediaType.VIDEO : MediaType.IMAGE,
     width: typeof item.width === "number" ? item.width : null,
     height: typeof item.height === "number" ? item.height : null,

@@ -67,6 +67,8 @@ export function EditPostModalLayer() {
 
           return {
             id: `existing-${media.id}`,
+            originId: media.id,
+            publicId: media.publicId ?? null,
             url: media.url,
             type,
             name: type === "video" ? "Video" : "Image",
@@ -107,12 +109,8 @@ export function EditPostModalLayer() {
 
     try {
       // Separate existing media from new media
-      const existingMedia = mediaPreviews.filter((preview) =>
-        preview.id.startsWith("existing-")
-      );
-      const newMedia = mediaPreviews.filter(
-        (preview) => !preview.id.startsWith("existing-")
-      );
+      const existingMedia = mediaPreviews.filter((preview) => preview.originId);
+      const newMedia = mediaPreviews.filter((preview) => !preview.originId);
 
       // Upload only new media
       const uploadedMedia =
@@ -125,8 +123,9 @@ export function EditPostModalLayer() {
 
       // Convert existing media back to the expected format
       const existingMediaForUpdate = existingMedia.map((media) => ({
+        id: media.originId!,
         url: media.url,
-        publicId: media.id.replace("existing-", ""),
+        publicId: media.publicId ?? null,
         type: media.type as "image" | "video",
       }));
 
@@ -145,7 +144,6 @@ export function EditPostModalLayer() {
         },
         {
           onSuccess: () => {
-            console.log(allMedia);
             setMediaPreviews([]);
             setContentValue("");
             closeEditModal();

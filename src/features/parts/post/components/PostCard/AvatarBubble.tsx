@@ -19,7 +19,7 @@ export function AvatarBubble({
       <img
         src={avatarUrl}
         alt={name}
-        className={`${imageClassName} rounded-full object-cover`}
+        className={`${imageClassName} rounded-full object-cover bg-white`}
         referrerPolicy="no-referrer"
       />
     );

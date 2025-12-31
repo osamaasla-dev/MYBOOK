@@ -30,9 +30,11 @@ export type ProfileUserRecord = {
   name: string;
   username: string;
   avatarUrl: string | null;
+  avatarPublicId: string | null;
   bio: string | null;
   websiteUrl: string | null;
   coverUrl: string | null;
+  coverPublicId: string | null;
   isPrivate: boolean;
   isVerified: boolean;
   followersCount: number;

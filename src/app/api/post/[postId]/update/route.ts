@@ -20,6 +20,10 @@ import {
   POST_UPDATE_RATE_WINDOW_SECONDS,
   POST_UPDATE_RATE_MAX,
 } from "@/features/parts/post/constants";
+import {
+  deleteUploadedMediaInputs,
+  extractUploadedMediaCandidates,
+} from "@/features/parts/post/services/server/mediaCleanup";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -32,6 +36,11 @@ type RouteParams = {
 
 export async function PUT(request: Request, routeContext: RouteParams) {
   const { requestId, log } = await getRequestLog({ route: ROUTE });
+  let cleanupUploadedMedia: ((reason: string) => Promise<void>) | null = null;
+  let uploadedMediaCleanupHandled = false;
+  let uploadedMediaCandidates: ReturnType<
+    typeof extractUploadedMediaCandidates
+  > = [];
 
   try {
     log.info("post update started");
@@ -78,11 +87,22 @@ export async function PUT(request: Request, routeContext: RouteParams) {
 
     const { postId } = await routeContext.params;
     const body = await request.json();
+    uploadedMediaCandidates = extractUploadedMediaCandidates(body);
+    cleanupUploadedMedia = async (reason: string) => {
+      if (uploadedMediaCleanupHandled || !uploadedMediaCandidates.length)
+        return;
+      uploadedMediaCleanupHandled = true;
+      await deleteUploadedMediaInputs(uploadedMediaCandidates, log, {
+        postId,
+        reason,
+      });
+    };
 
     const parsed = createPostSchema.safeParse(body);
     if (!parsed.success) {
       const firstIssue = parsed.error.issues?.[0];
       log.warn({ issues: parsed.error.issues }, "Invalid post payload");
+      await cleanupUploadedMedia("update-invalid-payload");
       return apiResponse(
         false,
         null,
@@ -101,6 +121,7 @@ export async function PUT(request: Request, routeContext: RouteParams) {
         const decision = await moderateText(parsed.data.content ?? "", "post");
         if (decision.status === "reject") {
           log.warn({ userId: session.user.id }, "Post text blocked");
+          await cleanupUploadedMedia("update-text-moderation");
           return apiResponse(
             false,
             null,
@@ -129,6 +150,7 @@ export async function PUT(request: Request, routeContext: RouteParams) {
               },
               "Post media blocked"
             );
+            await cleanupUploadedMedia("update-media-moderation");
             return apiResponse(
               false,
               null,
@@ -142,6 +164,7 @@ export async function PUT(request: Request, routeContext: RouteParams) {
     } catch (error) {
       if (error instanceof MissingModerationAPIKeyError) {
         log.error("Moderation key missing, rejecting post update");
+        await cleanupUploadedMedia("update-missing-moderation-key");
         return apiResponse(
           false,
           null,
@@ -159,6 +182,7 @@ export async function PUT(request: Request, routeContext: RouteParams) {
           error.status === 429
             ? moderationMessages.rateLimited
             : moderationMessages.failed;
+        await cleanupUploadedMedia("update-moderation-provider-error");
         return apiResponse(
           false,
           null,
@@ -184,6 +208,9 @@ export async function PUT(request: Request, routeContext: RouteParams) {
 
     return apiResponse(true, post, postMessages.update.success, 200, requestId);
   } catch (error: unknown) {
+    if (cleanupUploadedMedia) {
+      await cleanupUploadedMedia("update-unexpected-error");
+    }
     const err = normalizeError(error);
     log.error({ err, status: err.status }, postMessages.update.failed);
     return apiResponse(

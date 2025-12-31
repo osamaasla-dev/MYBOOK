@@ -36,6 +36,7 @@ export type FeedPostRecord = {
   media: {
     id: string;
     url: string;
+    publicId?: string | null;
     type: string;
     width?: number | null;
     height?: number | null;
@@ -71,6 +72,7 @@ function buildContent(post: FeedPostRecord): FeedPostContent {
   const media: FeedPostMedia[] = post.media.map((item) => ({
     id: item.id,
     url: item.url,
+    publicId: item.publicId ?? null,
     type: item.type as FeedPostMedia["type"],
   }));
 

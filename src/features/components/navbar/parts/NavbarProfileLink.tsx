@@ -12,7 +12,7 @@ export function NavbarProfileLink() {
     <img
       src={user.avatarUrl}
       alt={user.username ?? "Profile"}
-      className="h-full w-full rounded-full object-cover"
+      className="h-full w-full rounded-full object-cover bg-white"
       referrerPolicy="no-referrer"
     />
   ) : (

@@ -33,7 +33,7 @@ export function ProfileHero({ coverUrl, avatarUrl, name }: ProfileHeroProps) {
 
       <div className="-mt-16 flex items-end gap-4 px-5">
         <div
-          className="h-40 w-40 overflow-hidden rounded-full border-4 border-white border-surface bg-background"
+          className="h-40 w-40 overflow-hidden rounded-full border-4 border-white border-surface bg-white"
           data-testid="profile-avatar"
         >
           {avatarUrl ? (
@@ -46,7 +46,7 @@ export function ProfileHero({ coverUrl, avatarUrl, name }: ProfileHeroProps) {
             />
           ) : (
             <div
-              className="flex h-full w-full items-center justify-center text-3xl font-semibold text-muted-foreground"
+              className="flex h-full w-full items-center justify-center text-3xl font-semibold text-muted-foreground bg-white"
               aria-label={`${name} avatar placeholder`}
               role="img"
             >

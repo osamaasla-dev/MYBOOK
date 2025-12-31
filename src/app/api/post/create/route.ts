@@ -17,6 +17,10 @@ import {
   moderateImage,
   moderateVideo,
 } from "@/features/parts/moderation/services";
+import {
+  deleteUploadedMediaInputs,
+  extractUploadedMediaCandidates,
+} from "@/features/parts/post/services/server/mediaCleanup";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,6 +29,11 @@ const ROUTE = "/api/post/create";
 
 export async function POST(request: Request) {
   const { requestId, log } = await getRequestLog({ route: ROUTE });
+  let cleanupUploadedMedia: ((reason: string) => Promise<void>) | null = null;
+  let uploadedMediaCleanupHandled = false;
+  let uploadedMediaCandidates: ReturnType<
+    typeof extractUploadedMediaCandidates
+  > = [];
 
   try {
     log.info("post creating started");
@@ -40,22 +49,22 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validate that user exists in database
-    // const userExists = await prisma.user.findUnique({
-    //   where: { id: session.user.id },
-    //   select: { id: true },
-    // });
-
-    // if (!userExists) {
-    //   log.warn({ userId: session.user.id }, "User not found in database");
-    //   return apiResponse(false, null, "User not found", 404, requestId);
-    // }
-
     const body = await request.json();
+    uploadedMediaCandidates = extractUploadedMediaCandidates(body);
+    cleanupUploadedMedia = async (reason: string) => {
+      if (uploadedMediaCleanupHandled || !uploadedMediaCandidates.length)
+        return;
+      uploadedMediaCleanupHandled = true;
+      await deleteUploadedMediaInputs(uploadedMediaCandidates, log, {
+        reason,
+      });
+    };
+
     const parsed = createPostSchema.safeParse(body);
     if (!parsed.success) {
       const firstIssue = parsed.error.issues?.[0];
       log.warn({ issues: parsed.error.issues }, "Invalid post payload");
+      await cleanupUploadedMedia("create-invalid-payload");
       return apiResponse(
         false,
         null,
@@ -74,6 +83,7 @@ export async function POST(request: Request) {
         const decision = await moderateText(parsed.data.content ?? "", "post");
         if (decision.status === "reject") {
           log.warn({ userId: session.user.id }, "Post text blocked");
+          await cleanupUploadedMedia("create-text-moderation");
           return apiResponse(
             false,
             null,
@@ -102,6 +112,7 @@ export async function POST(request: Request) {
               },
               "Post media blocked"
             );
+            await cleanupUploadedMedia("create-media-moderation");
             return apiResponse(
               false,
               null,
@@ -115,6 +126,7 @@ export async function POST(request: Request) {
     } catch (error) {
       if (error instanceof MissingModerationAPIKeyError) {
         log.error("Moderation key missing, rejecting post");
+        await cleanupUploadedMedia("create-missing-moderation-key");
         return apiResponse(
           false,
           null,
@@ -132,6 +144,7 @@ export async function POST(request: Request) {
           error.status === 429
             ? moderationMessages.rateLimited
             : moderationMessages.failed;
+        await cleanupUploadedMedia("create-moderation-provider-error");
         return apiResponse(
           false,
           null,
@@ -202,6 +215,9 @@ export async function POST(request: Request) {
 
     return apiResponse(true, post, postMessages.created, 201, requestId);
   } catch (error: unknown) {
+    if (cleanupUploadedMedia) {
+      await cleanupUploadedMedia("create-unexpected-error");
+    }
     const err = normalizeError(error);
     log.error({ err, status: err.status }, "Create post handler failed");
     return apiResponse(

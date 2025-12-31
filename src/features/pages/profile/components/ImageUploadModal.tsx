@@ -8,11 +8,16 @@ import { ModalShell } from "@/features/parts/post/components/PostModal/ModalShel
 import { ModalHeader } from "@/features/parts/post/components/PostModal/ModalHeader";
 import { useState } from "react";
 
+type UploadSuccessPayload = {
+  url: string;
+  publicId: string;
+};
+
 interface ImageUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
-  onSuccess: (url: string) => Promise<void>;
+  onSuccess: (payload: UploadSuccessPayload) => Promise<void>;
 }
 
 export function ImageUploadModal({
@@ -57,13 +62,15 @@ export function ImageUploadModal({
         file: mediaPreviews[0].file,
         context: title.toLowerCase().includes("avatar") ? "avatar" : "cover",
       });
-
-      // Get the uploaded URL and pass to onSuccess
-      if (uploadedMedia.asset?.url) {
-        await onSuccess(uploadedMedia.asset.url);
+      console.log(uploadedMedia);
+      const asset = uploadedMedia.asset;
+      if (asset?.url && asset?.publicId) {
+        await onSuccess({ url: asset.url, publicId: asset.publicId });
 
         clearMedia();
         onClose();
+      } else {
+        throw new Error("الصورة المرفوعة تفتقد البيانات اللازمة");
       }
     } catch (error: unknown) {
       const Message = error instanceof Error ? error.message : "Unknown error";

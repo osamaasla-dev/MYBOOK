@@ -6,6 +6,8 @@ export type MediaPreview = {
   type: "image" | "video";
   name: string;
   file: File;
+  originId?: string;
+  publicId?: string | null;
 };
 
 type UseMediaPreviewOptions = {

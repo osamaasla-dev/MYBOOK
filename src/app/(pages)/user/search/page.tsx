@@ -1,12 +1,13 @@
-import { UserSearchPage } from "@/features/search/users/components/UserSearchPage";
+import { SearchResultsPage } from "@/features/parts/search/page/SearchResultsPage";
 
-type SearchRouteProps = {
-  searchParams?: { query?: string };
+type SearchPageProps = {
+  searchParams?: {
+    query?: string;
+  };
 };
 
-export default function UserSearchRoute({ searchParams }: SearchRouteProps) {
-  const initialQuery =
-    typeof searchParams?.query === "string" ? searchParams.query : "";
+export default function UserSearchPage({ searchParams }: SearchPageProps) {
+  const query = searchParams?.query ?? "";
 
-  return <UserSearchPage initialQuery={initialQuery} />;
+  return <SearchResultsPage initialQuery={query} />;
 }
