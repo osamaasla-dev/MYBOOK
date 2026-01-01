@@ -1,4 +1,7 @@
 import { prisma } from "@/lib/prisma";
+import { commentMessages } from "@/lib/messages";
+import { CommentRouteError } from "@/features/parts/postDetails/utils/server/comments";
+import { isBlock } from "@/features/parts/block/utils/server";
 
 import type { ReactionSummary } from "@/features/parts/post/utils/reaction";
 
@@ -28,6 +31,29 @@ export async function deleteComment({
   postAuthorId,
   deletedById,
 }: DeleteCommentParams): Promise<DeleteCommentResult> {
+  const commentMeta = await prisma.comment.findUnique({
+    where: { id: commentId, postId },
+    select: { authorId: true, isDeleted: true },
+  });
+
+  if (!commentMeta || commentMeta.isDeleted) {
+    throw new CommentRouteError(commentMessages.commentNotFound, 404);
+  }
+
+  if (postAuthorId) {
+    const postBlock = await isBlock(deletedById, postAuthorId);
+    if (postBlock.anyBlock) {
+      throw new CommentRouteError(commentMessages.commentNotFound, 404);
+    }
+  }
+
+  if (commentMeta.authorId && commentMeta.authorId !== deletedById) {
+    const commentBlock = await isBlock(deletedById, commentMeta.authorId);
+    if (commentBlock.anyBlock) {
+      throw new CommentRouteError(commentMessages.commentNotFound, 404);
+    }
+  }
+
   const deletedAt = new Date();
 
   const result = await prisma.$transaction(async (tx) => {

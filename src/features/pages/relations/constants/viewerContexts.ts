@@ -51,3 +51,16 @@ export const SENT_FRIEND_REQUEST_VIEWER_CONTEXT: ProfileRouteData["viewer"] = {
   hasIncomingFriendRequest: false,
   hasOutgoingFriendRequest: true,
 };
+
+export const BLOCKED_VIEWER_CONTEXT: ProfileRouteData["viewer"] = {
+  isAuthenticated: true,
+  isSelf: false,
+  isFollowing: false,
+  isFollower: false,
+  canViewFullProfile: false,
+  isBlocked: true,
+  hasPendingFollowRequest: false,
+  isFriend: false,
+  hasIncomingFriendRequest: false,
+  hasOutgoingFriendRequest: false,
+};

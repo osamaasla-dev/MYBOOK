@@ -5,3 +5,4 @@ export * from "./fetchSentFollowRequests";
 export * from "./fetchFriends";
 export * from "./fetchFriendRequests";
 export * from "./fetchSentFriendRequests";
+export * from "./fetchBlocked";

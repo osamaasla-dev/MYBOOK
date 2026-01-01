@@ -10,6 +10,7 @@ import {
 } from "@/features/parts/post/utils/reaction";
 import { CommentRouteError } from "../../../utils/server/comments";
 import type { PostReactionType } from "@/features/parts/post/constants/reactions";
+import { isBlock } from "@/features/parts/block/utils/server";
 
 type PersistCommentReactionParams = {
   commentId: string;
@@ -47,6 +48,11 @@ export async function persistCommentReaction({
     });
 
     if (!comment) {
+      throw new CommentRouteError(commentMessages.commentNotFound, 404);
+    }
+
+    const blockStatus = await isBlock(userId, comment.authorId);
+    if (blockStatus.anyBlock) {
       throw new CommentRouteError(commentMessages.commentNotFound, 404);
     }
 

@@ -8,6 +8,7 @@ export const RELATION_TABS = [
   "friends",
   "friend-requests",
   "sent-friend-requests",
+  "blocked",
 ] as const;
 
 export type RelationTab = (typeof RELATION_TABS)[number];

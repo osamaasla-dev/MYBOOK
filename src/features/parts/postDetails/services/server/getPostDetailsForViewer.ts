@@ -32,7 +32,7 @@ export async function getPostDetailsForViewer({
     viewerId,
   });
 
-  const postRecord = await fetchPostDetails({ postId });
+  const postRecord = await fetchPostDetails({ postId, viewerId });
   if (!postRecord) {
     return null;
   }

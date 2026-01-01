@@ -14,6 +14,7 @@ const TAB_LABELS: Record<RelationTab, string> = {
   friends: "Friends",
   "friend-requests": "Friend Requests",
   "sent-friend-requests": "Sent Friend Requests",
+  blocked: "Blocked Users",
 };
 
 const RELATION_SECTIONS: Array<{
@@ -27,6 +28,10 @@ const RELATION_SECTIONS: Array<{
   {
     title: "Friends",
     tabs: ["friends", "friend-requests", "sent-friend-requests"],
+  },
+  {
+    title: "Privacy & safety",
+    tabs: ["blocked"],
   },
 ];
 

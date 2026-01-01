@@ -3,6 +3,7 @@
 import type { ProfileRouteData } from "../types";
 import { FollowButton } from "@/features/parts/follow/components/FollowButton";
 import { FriendActionButton } from "@/features/parts/addFriend/components/FriendActionButton";
+import { BlockButton } from "@/features/parts/block/components/BlockButton";
 
 type ProfileActionsProps = {
   viewer: ProfileRouteData["viewer"];
@@ -37,6 +38,7 @@ export function ProfileActions({
         profileUsername={profileUsername}
         isBlocked={isBlocked}
       />
+      <BlockButton viewer={viewer} profileUsername={profileUsername} />
     </section>
   );
 }

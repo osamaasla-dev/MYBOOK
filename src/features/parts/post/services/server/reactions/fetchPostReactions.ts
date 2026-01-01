@@ -6,11 +6,7 @@ import {
   type FetchPostReactionsInput,
   type PostReactionsResponse,
 } from "./types";
-import {
-  applyBlockedUsersFilter,
-  buildReactionFilter,
-  type PostReactionWhereInput,
-} from "./filters";
+import { buildReactionFilter, type PostReactionWhereInput } from "./filters";
 import {
   queryPostReactionList,
   queryPostReactionSummary,
@@ -38,11 +34,26 @@ export async function fetchPostReactions({
     "fetchPostReactions started"
   );
 
-  let where: PostReactionWhereInput = {
+  const where: PostReactionWhereInput = {
     postId,
     ...buildReactionFilter(tab),
+    ...(viewerId
+      ? {
+          user: {
+            blockedBy: {
+              none: {
+                blockerId: viewerId,
+              },
+            },
+            blocks: {
+              none: {
+                blockedId: viewerId,
+              },
+            },
+          },
+        }
+      : {}),
   };
-  where = await applyBlockedUsersFilter(where, viewerId);
 
   const [reactions, viewerReactionRecord, postSummary] = await Promise.all([
     queryPostReactionList({ where, cursor, takePlusOne: take + 1 }),

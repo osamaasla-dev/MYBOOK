@@ -1,13 +1,16 @@
 import { prisma } from "@/lib/prisma";
 import type { FeedPostRecord } from "@/features/parts/post/utils";
+import { isBlock } from "@/features/parts/block/utils/server";
 import { postDetailsLogger } from "../../utils/logger";
 
 type FetchPostDetailsInput = {
   postId: string;
+  viewerId: string | null;
 };
 
 export async function fetchPostDetails({
   postId,
+  viewerId,
 }: FetchPostDetailsInput): Promise<FeedPostRecord | null> {
   const log = postDetailsLogger.child({
     func: "fetchPostDetails",
@@ -67,6 +70,17 @@ export async function fetchPostDetails({
   if (!post) {
     log.warn("Post details not found");
     return null;
+  }
+
+  if (viewerId && post.authorId) {
+    const blockStatus = await isBlock(viewerId, post.authorId);
+    if (blockStatus.anyBlock) {
+      log.warn(
+        { viewerId, authorId: post.authorId },
+        "Viewer blocked from fetching post details"
+      );
+      return null;
+    }
   }
 
   log.debug("Fetched post details");

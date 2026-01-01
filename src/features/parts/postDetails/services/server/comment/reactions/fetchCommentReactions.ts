@@ -6,7 +6,6 @@ import { prisma } from "@/lib/prisma";
 import { CommentRouteError } from "@/features/parts/postDetails/utils/server/comments";
 
 import {
-  applyCommentBlockedUsersFilter,
   buildCommentReactionFilter,
   type CommentReactionWhereInput,
 } from "./filters";
@@ -59,14 +58,26 @@ export async function fetchCommentReactions({
 
   const take = Math.min(Math.max(limit, 1), MAX_COMMENT_REACTIONS_LIMIT);
 
-  let where: CommentReactionWhereInput = {
+  const where: CommentReactionWhereInput = {
     commentId,
     ...buildCommentReactionFilter(tab),
+    ...(viewerId
+      ? {
+          user: {
+            blockedBy: {
+              none: {
+                blockerId: viewerId,
+              },
+            },
+            blocks: {
+              none: {
+                blockedId: viewerId,
+              },
+            },
+          },
+        }
+      : {}),
   };
-  where = await applyCommentBlockedUsersFilter(where, viewerId, {
-    requestId,
-    route,
-  });
 
   const [reactions, viewerReactionRecord, summaryRecord] = await Promise.all([
     queryCommentReactionList({ where, cursor, takePlusOne: take + 1 }),

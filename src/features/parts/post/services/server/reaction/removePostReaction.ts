@@ -6,6 +6,7 @@ import {
   broadcastPostMetaEvent,
 } from "../../../utils/realtime";
 import { applyNegativeSignal } from "@/features/parts/interaction/services";
+import { isBlock } from "@/features/parts/block/utils/server";
 
 import type { RemovePostReactionParams, PostReactionResult } from "./types";
 
@@ -15,6 +16,22 @@ export async function removePostReaction({
 }: RemovePostReactionParams): Promise<PostReactionResult> {
   const { result, removedReaction, postAuthorId } = await prisma.$transaction(
     async (tx) => {
+      const post = await tx.post.findUnique({
+        where: { id: postId },
+        select: { authorId: true },
+      });
+
+      if (!post) {
+        throw new Error("Post not found");
+      }
+
+      if (post.authorId) {
+        const blockStatus = await isBlock(userId, post.authorId);
+        if (blockStatus.anyBlock) {
+          throw new Error("Post not found");
+        }
+      }
+
       // 1. Find existing active reaction
       const existing = await tx.postReaction.findFirst({
         where: {
@@ -58,7 +75,7 @@ export async function removePostReaction({
       );
 
       // 4. Update post with new reaction data
-      const post = await tx.post.update({
+      const postUpdate = await tx.post.update({
         where: { id: postId },
         data: {
           reactionsCount: summary.reactionsCount,
@@ -76,8 +93,8 @@ export async function removePostReaction({
           reaction: null,
           operation,
           ...summary,
-          commentsCount: post.commentsCount ?? undefined,
-          sharesCount: post.sharesCount ?? undefined,
+          commentsCount: postUpdate.commentsCount ?? undefined,
+          sharesCount: postUpdate.sharesCount ?? undefined,
         } satisfies PostReactionResult,
         removedReaction,
         postAuthorId: post.authorId,

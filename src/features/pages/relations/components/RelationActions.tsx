@@ -10,11 +10,13 @@ import { FriendActionButton } from "@/features/parts/addFriend/components/Friend
 
 import type { RelationTab, RelationUserSummary } from "../types";
 import {
+  BLOCKED_VIEWER_CONTEXT,
   FRIEND_VIEWER_CONTEXT,
   FOLLOWING_VIEWER_CONTEXT,
   SENT_FRIEND_REQUEST_VIEWER_CONTEXT,
   SENT_REQUEST_VIEWER_CONTEXT,
 } from "../constants/viewerContexts";
+import { BlockButton } from "@/features/parts/block/components/BlockButton";
 
 type RelationActionsProps = {
   tab: RelationTab;
@@ -63,6 +65,13 @@ const ACTION_RENDERERS: Partial<Record<RelationTab, ActionRenderer>> = {
       viewer={SENT_FRIEND_REQUEST_VIEWER_CONTEXT}
       profileUsername={user.username}
       isBlocked={false}
+    />
+  ),
+  blocked: (user) => (
+    <BlockButton
+      viewer={BLOCKED_VIEWER_CONTEXT}
+      profileUsername={user.username}
+      className="w-full min-w-[120px]"
     />
   ),
 };

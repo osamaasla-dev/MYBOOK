@@ -10,6 +10,7 @@ import {
 } from "@/features/parts/post/utils/reaction";
 import { CommentRouteError } from "../../../utils/server/comments";
 import type { PostReactionType } from "@/features/parts/post/constants/reactions";
+import { isBlock } from "@/features/parts/block/utils/server";
 
 type RemoveCommentReactionParams = {
   commentId: string;
@@ -45,6 +46,11 @@ export async function removeCommentReaction({
     });
 
     if (!comment) {
+      throw new CommentRouteError(commentMessages.commentNotFound, 404);
+    }
+
+    const blockStatus = await isBlock(userId, comment.authorId);
+    if (blockStatus.anyBlock) {
       throw new CommentRouteError(commentMessages.commentNotFound, 404);
     }
 

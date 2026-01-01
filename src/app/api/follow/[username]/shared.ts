@@ -14,6 +14,7 @@ import {
 } from "@/features/parts/follow/utils";
 import { extractClientIp } from "@/features/parts/follow/utils/request";
 import { consumeRateLimit } from "@/features/utils/rateLimit";
+import { isBlock } from "@/features/parts/block/utils/server";
 import {
   PROFILE_VIEW_RATE_MAX,
   PROFILE_VIEW_RATE_NAMESPACE,
@@ -76,7 +77,7 @@ export async function prepareFollowAction(
     const clientIp = extractClientIp(request);
     const params = await paramsPromise;
 
-    const limited = await consumeRateLimit({
+    await consumeRateLimit({
       namespace: PROFILE_VIEW_RATE_NAMESPACE,
       identifiers: [
         { key: "user", value: viewerId },
@@ -173,6 +174,19 @@ export async function prepareFollowAction(
     }
 
     const { profile: target, requiresApproval } = validation;
+
+    const blockStatus = await isBlock(viewerId, target.id);
+
+    if (blockStatus.anyBlock) {
+      log.warn(
+        { viewerId, targetId: target.id },
+        `${actionLabel} blocked due to existing block`
+      );
+      return {
+        ok: false,
+        response: apiResponse(false, {}, userMessages.notFound, 404, requestId),
+      };
+    }
 
     return {
       ok: true,

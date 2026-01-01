@@ -6,6 +6,8 @@ import { getRequestLog } from "@/lib/request-log";
 import { userMessages } from "@/lib/messages";
 import { getProfilePosts } from "@/features/pages/profile/services/server/postsTab";
 import { profilePostsQuerySchema } from "@/features/pages/profile/utils/postsTab";
+import { fetchProfileUserByUsername } from "@/features/pages/profile/utils";
+import { isBlock } from "@/features/parts/block/utils/server";
 
 const ROUTE = "/api/profile/posts";
 
@@ -30,6 +32,26 @@ export async function GET(
       cursor: searchParams.get("cursor") || undefined,
       limit: searchParams.get("limit"),
     });
+
+    const profileUser = await fetchProfileUserByUsername(params.username);
+    if (!profileUser) {
+      log.warn(
+        { username: params.username, requestId },
+        "Profile owner not found for posts"
+      );
+      return apiResponse(false, {}, userMessages.notFound, 404, requestId);
+    }
+
+    if (profileUser.id !== session.user.id) {
+      const blockStatus = await isBlock(session.user.id, profileUser.id);
+      if (blockStatus.anyBlock) {
+        log.warn(
+          { viewerId: session.user.id, profileUserId: profileUser.id },
+          "Profile posts blocked by relationship"
+        );
+        return apiResponse(false, {}, userMessages.notFound, 404, requestId);
+      }
+    }
 
     const result = await getProfilePosts({
       username: params.username,

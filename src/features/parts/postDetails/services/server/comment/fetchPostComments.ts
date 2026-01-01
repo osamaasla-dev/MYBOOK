@@ -58,6 +58,22 @@ export async function fetchPostComments({
       postId,
       parentId: parentId ?? null,
       isDeleted: false,
+      ...(viewerId
+        ? {
+            author: {
+              blockedBy: {
+                none: {
+                  blockerId: viewerId,
+                },
+              },
+              blocks: {
+                none: {
+                  blockedId: viewerId,
+                },
+              },
+            },
+          }
+        : {}),
     },
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     cursor: cursor ? { id: cursor } : undefined,

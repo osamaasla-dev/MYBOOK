@@ -12,6 +12,7 @@ import {
   fetchFriends,
   fetchFriendRequests,
   fetchSentFriendRequests,
+  fetchBlocked,
 } from "./fetchers";
 import { clampLimit } from "../schema";
 
@@ -25,6 +26,7 @@ const tabFetchers: Record<RelationTab, TabFetcher> = {
   friends: fetchFriends,
   "friend-requests": fetchFriendRequests,
   "sent-friend-requests": fetchSentFriendRequests,
+  blocked: fetchBlocked,
 };
 
 export async function fetchRelationsList({

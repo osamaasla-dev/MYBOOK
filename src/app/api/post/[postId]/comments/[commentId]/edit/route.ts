@@ -135,6 +135,7 @@ export async function PATCH(request: Request, routeContext: RouteParams) {
     const updatedComment = await updateComment({
       commentId: access.comment.id,
       content: payload.content,
+      actorId: session?.user?.id,
     });
 
     log.info(

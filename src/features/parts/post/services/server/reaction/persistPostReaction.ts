@@ -12,6 +12,7 @@ import {
 } from "../../../utils/realtime";
 import { createPostReactionNotification } from "../reactionNotifications";
 import { recordInteraction } from "@/features/parts/interaction/services";
+import { isBlock } from "@/features/parts/block/utils/server";
 
 import type { PersistPostReactionParams, PostReactionResult } from "./types";
 
@@ -36,6 +37,13 @@ export async function persistPostReaction({
 
     if (!post) {
       throw new Error("Post not found");
+    }
+
+    if (post.authorId) {
+      const blockStatus = await isBlock(userId, post.authorId);
+      if (blockStatus.anyBlock) {
+        throw new Error("Post not found");
+      }
     }
 
     const existingReaction = await tx.postReaction.findFirst({
