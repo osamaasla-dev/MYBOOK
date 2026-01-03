@@ -31,17 +31,24 @@ export function NotificationContent({
       <div
         className="relative h-10 w-10 shrink-0"
         data-testid="navbar-notification-avatar"
+        aria-hidden="true"
       >
         {avatar}
       </div>
 
       <div className="min-w-0 flex-1" data-testid="navbar-notification-body">
         <p className="text-sm font-medium text-foreground">
-          {title}
-          <span className="font-normal text-muted-foreground"> {subtitle}</span>
+          <span data-testid="navbar-notification-title">{title}</span>
+          <span
+            className="font-normal text-muted-foreground"
+            data-testid="navbar-notification-subtitle"
+          >
+            {" "}
+            {subtitle}
+          </span>
         </p>
         <div className="mt-1 text-xs text-muted-foreground">
-          <div>{relativeTime}</div>
+          <div data-testid="navbar-notification-time">{relativeTime}</div>
           {statusLabel && (
             <div
               className={cn(
@@ -50,6 +57,7 @@ export function NotificationContent({
                 statusTone === "success" && "text-emerald-500",
                 statusTone === "danger" && "text-danger"
               )}
+              data-testid="navbar-notification-status"
             >
               {statusLabel}
             </div>
@@ -60,7 +68,8 @@ export function NotificationContent({
       {!isRead && (
         <span
           className="mt-1 inline-flex h-2 w-2 shrink-0 rounded-full bg-primary"
-          aria-label="notification unread"
+          aria-label="Unread notification"
+          data-testid="navbar-notification-unread-indicator"
         />
       )}
     </>

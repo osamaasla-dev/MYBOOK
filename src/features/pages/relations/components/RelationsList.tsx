@@ -1,12 +1,16 @@
 "use client";
 
 import { type RefObject } from "react";
-import { Loader2 } from "lucide-react";
 
-import { QueryError, QueryLoading } from "@/components";
+import { QueryError, QueryLoading, EmptyState } from "@/components";
 
 import type { RelationListItem } from "../types";
-import { RelationListItem as RelationListItemRow } from "./RelationListItem";
+import {
+  RelationsListLoadingMore,
+  RelationsListSentinel,
+  RelationsListItems,
+  RelationsListEnd,
+} from "./RelationsList/index";
 
 type RelationsListProps = {
   items: RelationListItem[];
@@ -18,6 +22,7 @@ type RelationsListProps = {
   onRetry: () => void;
   listRef: RefObject<HTMLDivElement | null>;
   sentinelRef: RefObject<HTMLDivElement | null>;
+  testId?: string;
 };
 
 export function RelationsList({
@@ -30,6 +35,7 @@ export function RelationsList({
   onRetry,
   listRef,
   sentinelRef,
+  testId = "relations-list",
 }: RelationsListProps) {
   const showEmpty = !isLoading && !isError && items.length === 0;
 
@@ -40,45 +46,46 @@ export function RelationsList({
       role="region"
       aria-live="polite"
       aria-busy={isLoading || isFetchingNextPage}
+      aria-label="Relations list"
+      data-testid={testId}
     >
       {isLoading && !items.length && (
-        <div className="px-6 py-12">
-          <QueryLoading message="Loading relations..." />
-        </div>
+        <QueryLoading
+          message="Loading relations..."
+          testId={`${testId}-query-loading`}
+        />
       )}
 
       {isError && (
-        <div className="px-6 py-10">
-          <QueryError message={errorMessage} onRetry={onRetry} />
-        </div>
+        <QueryError
+          message={errorMessage}
+          onRetry={onRetry}
+          testId={`${testId}-query-error`}
+        />
       )}
 
       {showEmpty && (
-        <div className="px-6 py-12 text-center text-sm text-muted-foreground">
-          No entries found for this tab yet.
-        </div>
+        <EmptyState
+          title="No Relations"
+          message="No entries found for this tab yet."
+          testId={`${testId}-empty-state`}
+        />
       )}
 
-      <ul role="list" className="divide-y divide-border/70">
-        {items.map((item) => (
-          <RelationListItemRow key={`${item.tab}-${item.id}`} item={item} />
-        ))}
-      </ul>
+      <RelationsListItems items={items} testId={`${testId}-items`} />
 
       {isFetchingNextPage && (
-        <div className="flex items-center justify-center gap-2 px-4 py-4 text-xs text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-          Loading more...
-        </div>
+        <RelationsListLoadingMore testId={`${testId}-loading-more`} />
       )}
 
       {!hasNextPage && items.length > 0 && (
-        <div className="px-4 py-4 text-center text-xs text-muted-foreground">
-          You have reached the end.
-        </div>
+        <RelationsListEnd testId={`${testId}-end`} />
       )}
 
-      <div ref={sentinelRef} className="h-1 w-full" aria-hidden="true" />
+      <RelationsListSentinel
+        sentinelRef={sentinelRef}
+        testId={`${testId}-sentinel`}
+      />
     </div>
   );
 }

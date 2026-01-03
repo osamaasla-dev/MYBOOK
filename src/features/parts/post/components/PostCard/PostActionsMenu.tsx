@@ -13,17 +13,19 @@ import {
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { cn } from "@/lib/utils";
 import { useDeletePost } from "../../hooks/useDeletePost";
-import { useEditPostModal } from "../../hooks/useEditPostModal";
+import { useEditPostModal } from "../EditPostModalLayer/hooks/useEditPostModal";
 import { FeedPost } from "@/features/pages/home/utils/posts/feed-response";
 
 type PostActionsMenuProps = {
   post: FeedPost;
   triggerClassName?: string;
+  testId?: string;
 };
 
 export function PostActionsMenu({
   post,
   triggerClassName = "",
+  testId,
 }: PostActionsMenuProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -70,17 +72,22 @@ export function PostActionsMenu({
               triggerClassName
             )}
             aria-label="Post actions"
+            data-testid={testId}
+            aria-expanded={isMenuOpen}
+            aria-haspopup="menu"
           >
-            <MoreVertical className="size-4" />
+            <MoreVertical className="size-4" data-testid={`${testId}-icon`} />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
           align="end"
           className="min-w-[140px] border-none bg-white shadow-md"
+          data-testid={`${testId}-content`}
         >
           <DropdownMenuItem
             className="cursor-pointer focus:bg-secondary"
             data-variant="none"
+            data-testid={`${testId}-edit`}
             onSelect={(event) => {
               event.preventDefault();
               setIsMenuOpen(false);
@@ -93,6 +100,7 @@ export function PostActionsMenu({
           <DropdownMenuItem
             className="cursor-pointer focus:bg-secondary"
             data-variant="none"
+            data-testid={`${testId}-delete`}
             onSelect={(event) => {
               event.preventDefault();
               handleConfirmOpenChange(true);

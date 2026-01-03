@@ -2,7 +2,7 @@ import { decideModerationAction } from "@/features/parts/moderation/utils";
 import {
   checkImageModeration,
   checkVideoModeration,
-} from "@/features/parts/moderation/services";
+} from "@/features/parts/moderation/services/server";
 import type { ModerationContext, ModerationDecision } from "@/features/types";
 
 import type { MediaMetadata } from "../types/media";

@@ -1,7 +1,7 @@
 import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
 import { friendMessages } from "@/lib/messages";
-import { cancelFriendRequest } from "@/features/parts/addFriend/services";
+import { cancelFriendRequest } from "@/features/parts/addFriend/services/server";
 import { prepareFriendAction, type FriendRouteContext } from "../shared";
 
 const ROUTE = "/api/add-friend/[username]/cancel-request";

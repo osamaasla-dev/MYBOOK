@@ -10,7 +10,7 @@ import {
 } from "@/components/ui";
 import { ClientSession } from "@/utils/session";
 import { useNotifications } from "../hooks/useNotifications";
-import { useNotificationsRealtime } from "../hooks/useNotificationsRealtime";
+import { useNotificationsRealtime } from "../hooks/realtime/useNotificationsRealtime";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import type { NotificationListItem } from "../types";
 import { useMarkNotificationRead } from "../hooks/useMarkNotificationRead";
@@ -117,6 +117,8 @@ export function Notifications() {
         className="w-80 bg-white p-0"
         sideOffset={12}
         data-testid="navbar-notifications-dropdown"
+        role="dialog"
+        aria-labelledby="notifications-header"
       >
         <NotificationDropdownHeader
           onRefresh={refetch}

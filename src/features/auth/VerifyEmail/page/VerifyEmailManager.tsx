@@ -2,10 +2,10 @@
 
 import { authMessages } from "@/lib/messages";
 import { useSearchParams } from "next/navigation";
-import { useMemo } from "react";
+import { useMemo, Suspense } from "react";
 import { useVerifyEmail } from "../hooks/useVerifyEmail";
 
-export default function VerifyEmailManager() {
+function VerifyEmailManagerInner() {
   const search = useSearchParams();
   const token = useMemo(() => search.get("token") || "", [search]);
   const isPending = useMemo(() => search.get("pending") === "1", [search]);
@@ -19,7 +19,9 @@ export default function VerifyEmailManager() {
             <h1 className="text-xl font-semibold mb-2">
               {authMessages.verify.title.verifying}
             </h1>
-            <p className="text-muted-foreground">{authMessages.verify.info.wait}</p>
+            <p className="text-muted-foreground">
+              {authMessages.verify.info.wait}
+            </p>
           </>
         )}
         {status === "pending" && (
@@ -51,5 +53,13 @@ export default function VerifyEmailManager() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function VerifyEmailManager() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <VerifyEmailManagerInner />
+    </Suspense>
   );
 }

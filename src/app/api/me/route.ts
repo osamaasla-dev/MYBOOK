@@ -2,7 +2,7 @@ import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
 import { prisma } from "@/lib/prisma";
 import { getRequestLog } from "@/lib/request-log";
-import { ServerSession } from "@/utils/session";
+import { validateSession } from "@/features/services/server";
 import { userMessages } from "@/lib/messages";
 import { CurrentUser } from "@/features/types";
 
@@ -13,22 +13,12 @@ export async function GET() {
 
   try {
     log.info(`Navbar user request started`);
-    const session = await ServerSession();
-
-    if (!session?.user?.id) {
-      log.warn(`${userMessages.unauthorized}`);
-      const res = apiResponse(
-        false,
-        {},
-        userMessages.unauthorized,
-        401,
-        requestId
-      );
-      return res;
-    }
+    const session = await validateSession(log, requestId);
+    if (!session.ok) return session.response;
+    const viewer = session.user;
 
     const user: CurrentUser | null = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: viewer.id },
       select: {
         id: true,
         name: true,
@@ -44,7 +34,7 @@ export async function GET() {
       return res;
     }
 
-    log.info({ userId: session.user.id }, `${userMessages.success}`);
+    log.info({ userId: viewer.id }, `${userMessages.success}`);
     const res = apiResponse(true, user, userMessages.success, 200, requestId);
     return res;
   } catch (err) {

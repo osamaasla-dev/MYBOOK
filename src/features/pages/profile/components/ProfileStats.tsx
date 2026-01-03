@@ -11,9 +11,14 @@ const statClasses =
 type ProfileStatsProps = {
   profile: ProfileRouteData["profile"];
   viewer: ProfileRouteData["viewer"];
+  testId?: string;
 };
 
-export function ProfileStats({ profile, viewer }: ProfileStatsProps) {
+export function ProfileStats({
+  profile,
+  viewer,
+  testId = "profile-stats",
+}: ProfileStatsProps) {
   const stats: Array<{ label: string; value: number }> = [
     { label: "Followers", value: profile.followersCount },
     { label: "Following", value: profile.followingCount },
@@ -26,14 +31,15 @@ export function ProfileStats({ profile, viewer }: ProfileStatsProps) {
         className="grid gap-3 sm:grid-cols-3"
         role="list"
         aria-label="Profile statistics"
-        data-testid="profile-stats"
+        data-testid={testId}
       >
         {stats.map((stat) => (
           <div
             key={stat.label}
             className={statClasses}
             role="listitem"
-            aria-label={`${stat.label} ${stat.value.toLocaleString("en-US")}`}
+            aria-label={`${stat.label}: ${stat.value.toLocaleString("en-US")}`}
+            data-testid={`${testId}-${stat.label.toLowerCase()}`}
           >
             <span className="text-2xl font-bold text-primary-dark">
               {stat.value.toLocaleString("ar-EG")}
@@ -47,7 +53,7 @@ export function ProfileStats({ profile, viewer }: ProfileStatsProps) {
 
       {viewer.isSelf && (
         <div className="flex justify-end">
-          <Button asChild>
+          <Button asChild data-testid={`${testId}-relations-button`}>
             <Link href="/user/relations">RELATIONS {">>"}</Link>
           </Button>
         </div>

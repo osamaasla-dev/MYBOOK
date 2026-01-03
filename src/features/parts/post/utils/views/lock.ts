@@ -4,7 +4,7 @@ import type { Logger } from "pino";
 import {
   POST_VIEW_LOCK_NAMESPACE,
   POST_VIEW_LOCK_TTL_SECONDS,
-} from "./constants";
+} from "@/features/parts/ratelimit/constants";
 
 function lockKey(postId: string, viewerKey: string) {
   return `${POST_VIEW_LOCK_NAMESPACE}:${postId}:${viewerKey}`;

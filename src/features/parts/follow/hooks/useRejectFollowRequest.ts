@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 
 import { followMessages } from "@/lib/messages";
 import type { FollowActionInput, FollowApiResponse } from "../types";
-import { rejectFollowRequestApi } from "../services/followApi";
+import { rejectFollowRequestApi } from "../services/client";
 import { relationsQueryKey } from "@/features/pages/relations/hooks/useRelationsInfiniteList";
 import { invalidateNotificationTabQueries } from "@/features/parts/notifications/hooks";
 

@@ -6,7 +6,7 @@ import type {
   FeedPost,
   FeedPostsPage,
 } from "@/features/pages/home/utils/posts/feed-response";
-import { fetchHomeFeedPage } from "../services/posts/feedApi";
+import { fetchHomeFeedPage } from "../services/client";
 
 export type UseHomeFeedOptions = {
   initialPageSize?: number;

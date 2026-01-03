@@ -16,6 +16,20 @@ const postMessages = {
     notAuthorized: "User is not authorized to update this post",
     failed: "Failed to update post",
   },
+  reactions: {
+    fetchSuccess: "Post reactions fetched successfully",
+    fetchFailed: "Failed to fetch post reactions",
+    invalidParams: "Invalid parameters for fetching reactions",
+    notFound: "Post reactions not found",
+    deleteSuccess: "Post reaction deleted successfully",
+    deleteFailed: "Failed to delete post reaction",
+  },
+  details: {
+    fetchSuccess: "Post details fetched successfully",
+    fetchFailed: "Failed to fetch post details",
+    invalidParams: "Invalid postId parameter",
+    notFound: "Post not found",
+  },
   validation: {
     contentRequired: "Post content cannot be empty.",
     contentTooLong: "Post content is too long.",

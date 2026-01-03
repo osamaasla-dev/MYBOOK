@@ -1,14 +1,34 @@
-import { signUpSchema } from "@/features/Auth/SignUp/schemas";
-import { registerUser } from "@/features/Auth/SignUp/utils";
+import { signUpSchema } from "@/features/auth/signup/schemas";
+import { registerUser } from "@/features/auth/signup/utils";
 import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
 import { sendMail } from "@/lib/mail";
 import { authMessages } from "@/lib/messages";
+import { prisma } from "@/lib/prisma";
 import { getRequestLog } from "@/lib/request-log";
 import crypto from "crypto";
 
 export async function POST(request: Request) {
   const { requestId, log } = await getRequestLog({ route: "/api/auth/signup" });
+  let createdUserId: string | null = null;
+
+  const cleanupUser = async () => {
+    if (!createdUserId) return;
+    try {
+      await prisma.user.delete({ where: { id: createdUserId } });
+      log.warn(
+        { userId: createdUserId, requestId },
+        "Signup rolled back after post-registration failure"
+      );
+    } catch (cleanupError) {
+      log.error(
+        { err: cleanupError, userId: createdUserId, requestId },
+        "Failed to cleanup user after signup error"
+      );
+    } finally {
+      createdUserId = null;
+    }
+  };
   try {
     log.info({ requestId }, "Signup request started");
     const body = await request.json();
@@ -59,6 +79,7 @@ export async function POST(request: Request) {
       return res;
     }
 
+    createdUserId = result.user.id;
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const verifyUrl = `${appUrl}/verify-email?token=${verificationToken}`;
     try {
@@ -73,6 +94,7 @@ export async function POST(request: Request) {
         { err: e, userId: result.user.id },
         "Verification email send failed"
       );
+      await cleanupUser();
       const res = apiResponse(
         false,
         {},
@@ -92,6 +114,7 @@ export async function POST(request: Request) {
     );
     return res;
   } catch (err) {
+    await cleanupUser();
     const error = normalizeError(err);
     log.error({ err, status: error.status }, "Signup handler failed");
     const res = apiResponse(

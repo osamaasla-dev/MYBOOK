@@ -2,7 +2,7 @@ import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
 import { friendMessages } from "@/lib/messages";
 
-import { rejectFriendRequest } from "@/features/parts/addFriend/services";
+import { rejectFriendRequest } from "@/features/parts/addFriend/services/server";
 import { prepareFriendAction, type FriendRouteContext } from "../shared";
 
 const ROUTE = "/api/add-friend/[username]/reject-request";

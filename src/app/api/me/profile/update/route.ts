@@ -2,30 +2,20 @@ import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
 import profileMessages from "@/lib/messages/profile";
 import { getRequestLog } from "@/lib/request-log";
-import { ServerSession } from "@/utils/session";
-import {
-  MissingModerationAPIKeyError,
-  ModerationProviderError,
-  moderateImage,
-  moderateText,
-} from "@/features/parts/moderation/services";
-import { consumeRateLimit } from "@/features/utils/rateLimit";
-import { extractClientIp } from "@/features/parts/follow/utils/request";
+import { validateSession } from "@/features/services/server";
+import { checkRateLimit } from "@/features/parts/ratelimit/services";
 import {
   PROFILE_UPDATE_RATE_NAMESPACE,
   PROFILE_UPDATE_RATE_WINDOW_SECONDS,
   PROFILE_UPDATE_RATE_MAX,
-} from "@/features/pages/profile/constants";
+} from "@/features/parts/ratelimit/constants";
 import { updateProfileSchema } from "@/features/pages/profile/schemas";
 import {
-  cleanupProfileMedia,
   deleteUploadedProfileMedia,
   extractUploadedProfileMedia,
-  getProfileMediaIdentifiers,
-  updateUserProfile,
+  moderateProfileContent,
+  processProfileUpdate,
 } from "@/features/pages/profile/services/server";
-import { userMessages } from "@/lib/messages";
-import { deleteProfileCache } from "@/features/pages/profile/utils";
 
 const ROUTE = "/api/me/profile";
 
@@ -37,45 +27,23 @@ export async function PUT(request: Request) {
 
   try {
     log.info("profile update started");
-    const session = await ServerSession();
-    if (!session?.user?.id) {
-      log.warn(userMessages.unauthorized);
-      return apiResponse(
-        false,
-        null,
-        userMessages.unauthorized,
-        401,
-        requestId
-      );
-    }
+    const session = await validateSession(log, requestId);
+    if (!session.ok) return session.response;
+    const viewer = session.user;
 
     // Rate limiting
-    const clientIp = extractClientIp(request);
-    const limited = await consumeRateLimit({
+    const limited = await checkRateLimit({
       namespace: PROFILE_UPDATE_RATE_NAMESPACE,
-      identifiers: [
-        { key: "user", value: session.user.id },
-        { key: "ip", value: clientIp },
-      ],
+      viewerId: viewer.id,
       windowSeconds: PROFILE_UPDATE_RATE_WINDOW_SECONDS,
       maxRequests: PROFILE_UPDATE_RATE_MAX,
+      log,
+      request,
+      requestId,
     });
 
-    if (limited) {
-      log.warn(
-        {
-          userId: session.user.id,
-          ip: clientIp,
-        },
-        profileMessages.update.rateLimitExceeded
-      );
-      return apiResponse(
-        false,
-        null,
-        profileMessages.update.rateLimitExceeded,
-        429,
-        requestId
-      );
+    if (!limited.ok) {
+      return limited.response;
     }
 
     const body = await request.json();
@@ -100,113 +68,29 @@ export async function PUT(request: Request) {
       );
     }
 
-    const { bio, avatarUrl, avatarPublicId, coverUrl, coverPublicId } =
-      parsed.data;
-
-    const currentMedia = await getProfileMediaIdentifiers(session.user.id);
+    const { bio, avatarUrl, coverUrl } = parsed.data;
 
     // Moderate content if provided
-    try {
-      if (bio && bio.trim().length > 0) {
-        const decision = await moderateText(bio, "bio");
-        if (decision.status === "reject") {
-          log.warn(
-            { userId: session.user.id, bio },
-            profileMessages.update.bioBlocked
-          );
-          await cleanupUploadedMedia("profile-bio-moderation");
-          return apiResponse(
-            false,
-            null,
-            profileMessages.update.bioBlocked,
-            422,
-            requestId
-          );
-        }
-      }
-
-      if (avatarUrl) {
-        const decision = await moderateImage(avatarUrl, "avatar");
-        if (decision.status === "reject") {
-          log.warn(
-            { userId: session.user.id, url: avatarUrl },
-            profileMessages.update.avatarBlocked
-          );
-          await cleanupUploadedMedia("profile-avatar-moderation");
-          return apiResponse(
-            false,
-            null,
-            profileMessages.update.avatarBlocked,
-            422,
-            requestId
-          );
-        }
-      }
-
-      if (coverUrl) {
-        const decision = await moderateImage(coverUrl, "cover");
-        if (decision.status === "reject") {
-          log.warn(
-            { userId: session.user.id, url: coverUrl },
-            profileMessages.update.coverBlocked
-          );
-          await cleanupUploadedMedia("profile-cover-moderation");
-          return apiResponse(
-            false,
-            null,
-            profileMessages.update.coverBlocked,
-            422,
-            requestId
-          );
-        }
-      }
-    } catch (error) {
-      if (error instanceof MissingModerationAPIKeyError) {
-        log.error("Moderation key missing, rejecting profile update");
-        await cleanupUploadedMedia("profile-missing-moderation-key");
-        return apiResponse(
-          false,
-          null,
-          profileMessages.update.moderationUnavailable,
-          500,
-          requestId
-        );
-      }
-      if (error instanceof ModerationProviderError) {
-        log.warn(
-          { status: error.status, details: error.details },
-          "Moderation provider error while updating profile"
-        );
-        const friendlyMessage =
-          error.status === 429
-            ? "Too many requests. Please try again later."
-            : "Content moderation service error";
-        await cleanupUploadedMedia("profile-moderation-provider-error");
-        return apiResponse(
-          false,
-          null,
-          friendlyMessage,
-          error.status,
-          requestId
-        );
-      }
-      throw error;
-    }
-
-    // Update user profile
-    await deleteProfileCache(session.user.username);
-    const updatedUser = await updateUserProfile(session.user.id, parsed.data);
-
-    await cleanupProfileMedia({
-      currentMedia,
-      nextAvatarUrl: avatarUrl,
-      nextAvatarPublicId: avatarPublicId,
-      nextCoverUrl: coverUrl,
-      nextCoverPublicId: coverPublicId,
+    const moderationResult = await moderateProfileContent({
+      bio,
+      avatarUrl,
+      coverUrl,
+      userId: viewer.id,
+      requestId,
+      cleanupMedia: cleanupUploadedMedia,
       log,
     });
 
-    log.info({ userId: session.user.id }, profileMessages.update.success);
+    if (!moderationResult.ok) {
+      return moderationResult.response;
+    }
+
+    // Update user profile
+    const updatedUser = await processProfileUpdate({
+      viewer,
+      profileData: parsed.data,
+      log,
+    });
 
     return apiResponse(
       true,

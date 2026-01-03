@@ -14,12 +14,14 @@ export type AcceptRejectFriendButtonsProps = {
   profileUsername: string;
   isBlocked?: boolean;
   className?: string;
+  testId?: string;
 };
 
 export function AcceptRejectFriendButtons({
   profileUsername,
   isBlocked = false,
   className,
+  testId = "accept-reject-friend-buttons",
 }: AcceptRejectFriendButtonsProps) {
   const acceptFriendRequest = useAcceptFriendRequest({ profileUsername });
   const rejectFriendRequest = useRejectFriendRequest({ profileUsername });
@@ -49,7 +51,9 @@ export function AcceptRejectFriendButtons({
   return (
     <div
       className={cn("flex items-center gap-2 justify-center", className)}
-      data-testid="profile-action-friend-request"
+      data-testid={testId}
+      role="group"
+      aria-label={`Friend request actions for ${profileUsername}`}
     >
       <Button
         type="button"
@@ -57,7 +61,8 @@ export function AcceptRejectFriendButtons({
         disabled={acceptDisabled}
         size="sm"
         aria-live="polite"
-        aria-label="accept friend request"
+        aria-label={`Accept friend request from ${profileUsername}`}
+        data-testid={`${testId}-accept`}
         onClick={() => {
           if (acceptDisabled) {
             return;
@@ -74,7 +79,8 @@ export function AcceptRejectFriendButtons({
         disabled={rejectDisabled}
         size="sm"
         aria-live="polite"
-        aria-label="reject friend request"
+        aria-label={`Reject friend request from ${profileUsername}`}
+        data-testid={`${testId}-reject`}
         onClick={() => {
           if (rejectDisabled) {
             return;

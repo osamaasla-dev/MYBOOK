@@ -1,75 +1,31 @@
 "use client";
 
-import { useMutationState } from "@tanstack/react-query";
-
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useAcceptFollowRequest, useRejectFollowRequest } from "../hooks";
-import type { FollowActionInput } from "../types";
+import { useFollowRequestHandlers } from "../hooks/ui/useFollowActionHandlers";
 
 export type FollowRequestActionsProps = {
   username: string;
   layout?: "row" | "column";
   className?: string;
+  testId?: string;
 };
 
 export function FollowRequestActions({
   username,
   layout = "row",
   className,
+  testId = "follow-request-actions",
 }: FollowRequestActionsProps) {
-  const acceptMutation = useAcceptFollowRequest();
-  const rejectMutation = useRejectFollowRequest();
-
-  const sharedAcceptPending = useMutationState({
-    filters: {
-      mutationKey: ["follow-request", "accept"],
-      status: "pending",
-      predicate: (mutation) => {
-        const variables = mutation.state.variables as
-          | FollowActionInput
-          | undefined;
-        return variables?.username === username;
-      },
-    },
-  });
-
-  const sharedRejectPending = useMutationState({
-    filters: {
-      mutationKey: ["follow-request", "reject"],
-      status: "pending",
-      predicate: (mutation) => {
-        const variables = mutation.state.variables as
-          | FollowActionInput
-          | undefined;
-        return variables?.username === username;
-      },
-    },
-  });
-
-  const acceptIsPending =
-    acceptMutation.isPending || sharedAcceptPending.length > 0;
-  const rejectIsPending =
-    rejectMutation.isPending || sharedRejectPending.length > 0;
-
-  const acceptDisabled = acceptIsPending || rejectIsPending;
-  const rejectDisabled = acceptIsPending || rejectIsPending;
-
-  const handleAccept = () => {
-    if (acceptDisabled) {
-      return;
-    }
-
-    acceptMutation.mutate({ username });
-  };
-
-  const handleReject = () => {
-    if (rejectDisabled) {
-      return;
-    }
-
-    rejectMutation.mutate({ username });
-  };
+  // Handle follow request actions and loading states
+  const {
+    handleAccept,
+    handleReject,
+    acceptDisabled,
+    rejectDisabled,
+    acceptIsPending,
+    rejectIsPending,
+  } = useFollowRequestHandlers(username);
 
   return (
     <div
@@ -78,6 +34,9 @@ export function FollowRequestActions({
         layout === "column" ? "flex flex-col" : "flex",
         className
       )}
+      role="group"
+      aria-label="Follow request actions"
+      data-testid={testId}
     >
       <Button
         type="button"
@@ -85,6 +44,8 @@ export function FollowRequestActions({
         variant="accept"
         disabled={acceptDisabled}
         onClick={handleAccept}
+        aria-label={`Accept follow request from ${username}`}
+        data-testid={`${testId}-accept`}
       >
         {acceptIsPending ? "accepting…" : "accept"}
       </Button>
@@ -95,6 +56,8 @@ export function FollowRequestActions({
         variant="reject"
         disabled={rejectDisabled}
         onClick={handleReject}
+        aria-label={`Reject follow request from ${username}`}
+        data-testid={`${testId}-reject`}
       >
         {rejectIsPending ? "rejecting…" : "reject"}
       </Button>

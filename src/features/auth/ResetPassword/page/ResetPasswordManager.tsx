@@ -4,14 +4,14 @@ import { QueryProvider } from "@/components";
 import { authMessages } from "@/lib/messages";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
 import ResetPasswordForm from "../components/ResetPasswordForm";
 import { useResetPassword } from "../hooks/useResetPassword";
 import type { ResetPasswordValues } from "../schemas";
 import { validateResetToken } from "../services";
 import { Button } from "@/components/ui";
 
-export function ResetPasswordManager() {
+function ResetPasswordManagerInner() {
   return (
     <QueryProvider>
       <ResetPasswordInner />
@@ -99,5 +99,13 @@ function ResetPasswordInner() {
         <ResetPasswordForm onSubmit={handleSubmit} loading={isPending} />
       </div>
     </div>
+  );
+}
+
+export function ResetPasswordManager() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ResetPasswordManagerInner />
+    </Suspense>
   );
 }

@@ -10,7 +10,7 @@ export default function UserLayout({ children }: { children: ReactNode }) {
       <PostRealtimeProvider>
         <div className="min-h-screen bg-secondary">
           <Navbar />
-          <main className="mx-auto w-full pt-16 ">{children}</main>
+          <main className="mx-auto w-full pt-18 ">{children}</main>
         </div>
       </PostRealtimeProvider>
     </QueryProvider>

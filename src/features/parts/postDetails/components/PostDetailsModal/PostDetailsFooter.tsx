@@ -13,7 +13,11 @@ export function PostDetailsFooter({ postId, hasPost }: PostDetailsFooterProps) {
   }
 
   return (
-    <footer className="border-t border-border/60 bg-secondary/10 px-2 py-2">
+    <footer
+      className="border-t border-border/60 bg-secondary/10 px-2 py-2"
+      role="contentinfo"
+      data-testid="post-details-footer"
+    >
       <div className="flex items-start gap-2">
         <PostCommentFormAvatar />
         <div className="flex-1">

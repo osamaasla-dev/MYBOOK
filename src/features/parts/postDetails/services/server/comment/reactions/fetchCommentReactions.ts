@@ -22,6 +22,7 @@ import {
 import { MAX_COMMENT_REACTIONS_LIMIT } from "./schema";
 import type { ReactionSummary } from "@/features/parts/post/utils/reaction";
 import type { PostReactionType } from "@/features/parts/post/constants/reactions";
+import { validatePostAccess } from "../../access";
 
 export async function fetchCommentReactions({
   postId,
@@ -42,6 +43,22 @@ export async function fetchCommentReactions({
     { postId, commentId, tab, limit, cursor, viewerId },
     "fetchCommentReactions started"
   );
+
+  // Validate post access before fetching reactions
+  const accessResult = await validatePostAccess({
+    postId,
+    viewerId: viewerId ?? "",
+  });
+  if (!accessResult) {
+    log.warn(
+      { postId, viewerId },
+      "Access denied while fetching comment reactions"
+    );
+    throw new CommentRouteError(
+      "Access denied: Cannot view reactions on this post",
+      404
+    );
+  }
 
   const commentExists = await prisma.comment.findFirst({
     where: { id: commentId, postId, isDeleted: false },

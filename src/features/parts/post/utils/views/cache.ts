@@ -1,7 +1,6 @@
+import { POST_VIEWS_QUEUE_KEY } from "@/features/parts/ratelimit/constants";
 import { redis } from "@/lib/redis";
 import type { Logger } from "pino";
-
-import { POST_VIEWS_QUEUE_KEY } from "./constants";
 
 export type PendingPostViewEntry = {
   postId: string;

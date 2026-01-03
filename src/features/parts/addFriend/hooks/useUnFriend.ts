@@ -8,10 +8,7 @@ import {
 import toast from "react-hot-toast";
 
 import friendMessages from "@/lib/messages/addFriend";
-import {
-  unFriendApi,
-  type UnFriendApiResponse,
-} from "../services/addFriendApi";
+import { unFriendApi, type UnFriendApiResponse } from "../services/client";
 import { profileQueryKey } from "@/features/pages/profile/hooks/useProfile";
 import { RelationTab } from "@/features/pages/relations/types";
 import { relationsQueryKey } from "@/features/pages/relations/hooks/useRelationsInfiniteList";

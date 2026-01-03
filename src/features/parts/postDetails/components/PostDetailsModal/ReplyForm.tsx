@@ -40,6 +40,7 @@ export function ReplyForm({
   const contentValue = watch("content") ?? "";
   const hasError = Boolean(errors.content);
   const hasContent = contentValue.trim().length > 0;
+  const errorMessageId = submitError ? "reply-form-error" : undefined;
 
   const handleFormSubmit = handleSubmit(async (values) => {
     await onSubmit(values.content.trim());
@@ -50,6 +51,10 @@ export function ReplyForm({
     <form
       onSubmit={handleFormSubmit}
       className="mt-2 flex flex-col gap-2 rounded-2xl border border-border/60 bg-secondary p-3 shadow-inner"
+      role="form"
+      aria-label="Reply form"
+      aria-describedby={errorMessageId}
+      data-testid="reply-form"
     >
       <PostCommentTextarea
         contentFieldRegister={register("content")}
@@ -57,9 +62,20 @@ export function ReplyForm({
         disabled={isSubmitting}
         hasError={hasError}
         placeholder="Write a reply..."
+        ariaLabel="Write a reply"
+        ariaRequired
+        ariaDescribedBy={errorMessageId}
       />
       {submitError && (
-        <p className="px-1 text-sm font-medium text-danger">{submitError}</p>
+        <p
+          id={errorMessageId}
+          className="px-1 text-sm font-medium text-danger"
+          role="alert"
+          aria-live="assertive"
+          data-testid="reply-form-error"
+        >
+          {submitError}
+        </p>
       )}
       <div className="flex items-center justify-end gap-2">
         <Button
@@ -68,6 +84,7 @@ export function ReplyForm({
           className="h-fit px-2 py-1"
           onClick={onCancel}
           disabled={isSubmitting}
+          data-testid="reply-form-cancel"
         >
           Cancel
         </Button>
@@ -76,6 +93,7 @@ export function ReplyForm({
           className="h-fit px-3 py-1"
           type="submit"
           disabled={isSubmitting || !hasContent}
+          data-testid="reply-form-submit"
         >
           {isSubmitting ? "Posting..." : "Reply"}
         </Button>

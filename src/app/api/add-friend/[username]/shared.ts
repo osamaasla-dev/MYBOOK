@@ -4,20 +4,17 @@ import { getRequestLog } from "@/lib/request-log";
 import type { Logger } from "pino";
 
 import {
-  fetchProfileUserByUsername,
-  getViewerSession,
-} from "@/features/pages/profile/utils";
+  FRIEND_REQUEST_RATE_NAMESPACE,
+  FRIEND_REQUEST_RATE_WINDOW_SECONDS,
+  FRIEND_REQUEST_RATE_MAX,
+} from "@/features/parts/ratelimit/constants";
+import { fetchProfileUserByUsername } from "@/features/pages/profile/utils";
 import type { ProfileUserRecord } from "@/features/pages/profile/types";
 import { usernameSchema } from "@/features/pages/profile/types";
-import { fetchViewerUsername } from "@/features/parts/follow/utils";
-import { extractClientIp } from "@/features/parts/follow/utils/request";
-import { consumeRateLimit } from "@/features/utils/rateLimit";
 import { isBlock } from "@/features/parts/block/utils/server";
-import {
-  PROFILE_VIEW_RATE_MAX,
-  PROFILE_VIEW_RATE_NAMESPACE,
-  PROFILE_VIEW_RATE_WINDOW_SECONDS,
-} from "@/features/pages/profile/constants";
+
+import { checkRateLimit } from "@/features/parts/ratelimit/services";
+import { validateSession } from "@/features/services/server";
 
 export type FriendRouteParams = { username?: string };
 
@@ -46,53 +43,31 @@ export async function prepareFriendAction(
 
   try {
     log.info("Friend request started");
-    const { viewerId } = await getViewerSession();
-    const clientIp = extractClientIp(request);
+    const session = await validateSession(log, requestId);
+    if (!session.ok) return { ok: false, response: session.response };
+    const viewer = session.user;
     const params = await paramsPromise;
 
-    await consumeRateLimit({
-      namespace: PROFILE_VIEW_RATE_NAMESPACE,
-      identifiers: [
-        { key: "user", value: viewerId },
-        { key: "ip", value: clientIp },
-      ],
-      windowSeconds: PROFILE_VIEW_RATE_WINDOW_SECONDS,
-      maxRequests: PROFILE_VIEW_RATE_MAX,
+    const limited = await checkRateLimit({
+      namespace: FRIEND_REQUEST_RATE_NAMESPACE,
+      viewerId: viewer.id,
+      windowSeconds: FRIEND_REQUEST_RATE_WINDOW_SECONDS,
+      maxRequests: FRIEND_REQUEST_RATE_MAX,
+      log,
+      request,
+      requestId,
     });
-
-    // if (limited) {
-    //   log.warn({ viewerId, clientIp }, "Friend request rate-limited");
-    //   return {
-    //     ok: false,
-    //     response: apiResponse(
-    //       false,
-    //       {},
-    //       userMessages.rateLimited,
-    //       429,
-    //       requestId
-    //     ),
-    //   };
-    // }
-
-    if (!viewerId) {
-      log.warn("Friend request unauthorized");
+    if (!limited.ok) {
       return {
         ok: false,
-        response: apiResponse(
-          false,
-          {},
-          userMessages.unauthorized,
-          401,
-          requestId
-        ),
+        response: limited.response,
       };
     }
 
-    const viewer = await fetchViewerUsername(viewerId);
     const viewerUsername = viewer?.username;
     const viewerName = viewer?.name || "";
     if (!viewerUsername) {
-      log.error({ viewerId }, "Viewer record missing");
+      log.error("Viewer record missing");
       return {
         ok: false,
         response: apiResponse(false, {}, userMessages.failed, 500, requestId),
@@ -115,7 +90,7 @@ export async function prepareFriendAction(
     }
 
     const targetProfile = await fetchProfileUserByUsername(normalizedUsername);
-    const validation = validateFriendTarget(targetProfile, viewerId);
+    const validation = validateFriendTarget(targetProfile, viewer.id);
 
     if (!validation.ok) {
       if (validation.reason === "NOT_FOUND") {
@@ -145,11 +120,11 @@ export async function prepareFriendAction(
       };
     }
 
-    const blockStatus = await isBlock(viewerId, validation.profile.id);
+    const blockStatus = await isBlock(viewer.id, validation.profile.id);
 
     if (blockStatus.anyBlock) {
       log.warn(
-        { viewerId, targetId: validation.profile.id },
+        { viewerId: viewer.id, targetId: validation.profile.id },
         "Friend action blocked due to existing block"
       );
       return {
@@ -163,7 +138,7 @@ export async function prepareFriendAction(
       context: {
         requestId,
         log,
-        viewerId,
+        viewerId: viewer.id,
         viewerName,
         viewerUsername,
         target: validation.profile,

@@ -11,6 +11,7 @@ type EmptyStateProps = {
   actionLabel?: string;
   onAction?: () => void;
   children?: ReactNode;
+  testId?: string;
 };
 
 export function EmptyState({
@@ -21,16 +22,17 @@ export function EmptyState({
   actionLabel,
   onAction,
   children,
+  testId = "empty-state",
 }: EmptyStateProps) {
   const showAction = actionLabel && onAction;
 
   return (
     <div
       className={cn(
-        "flex flex-col items-center gap-4 rounded-2xl border border-border/60 bg-card/80 px-8 py-12 text-center shadow-sm",
+        "flex flex-col items-center gap-4 rounded-2xl border border-border/60 bg-white px-8 py-12 text-center shadow-sm",
         className
       )}
-      data-testid="empty-state"
+      data-testid={testId}
     >
       {icon ? <div className="text-primary">{icon}</div> : null}
       <div className="space-y-2">
@@ -43,7 +45,12 @@ export function EmptyState({
       {children}
 
       {showAction ? (
-        <Button type="button" onClick={onAction} variant="default">
+        <Button
+          type="button"
+          onClick={onAction}
+          variant="default"
+          data-testid={`${testId}-action`}
+        >
           {actionLabel}
         </Button>
       ) : null}

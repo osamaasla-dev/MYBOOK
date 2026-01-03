@@ -2,22 +2,21 @@ import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
 import { getRequestLog } from "@/lib/request-log";
 import { commentMessages, genericMessages, userMessages } from "@/lib/messages";
-import { ServerSession } from "@/utils/session";
 import { validateCuid } from "@/schemas/ids";
-
-import {
-  buildReactionResponsePayload,
-  isReactionRateLimitedForTarget,
-  type ReactionOperation,
-} from "@/features/parts/post/utils/reaction";
+import { checkRateLimit } from "@/features/parts/ratelimit/services";
 import {
   COMMENT_REACTION_MAX_ACTIONS,
   COMMENT_REACTION_RATE_NAMESPACE,
   COMMENT_REACTION_WINDOW_S,
-} from "@/features/parts/postDetails/constants";
+} from "@/features/parts/ratelimit/constants";
+import {
+  buildReactionResponsePayload,
+  type ReactionOperation,
+} from "@/features/parts/post/utils/reaction";
 import { removeCommentReaction } from "@/features/parts/postDetails/services/server/comment";
 import { isCommentRouteError } from "@/features/parts/postDetails/utils/server/comments";
 import { broadcastCommentMetaEvent } from "@/features/parts/post/utils/realtime";
+import { validateSession } from "@/features/services/server";
 
 const ROUTE =
   "/api/post/[postId]/comments/[commentId]/reactions/delete" as const;
@@ -44,43 +43,34 @@ export async function DELETE(_request: Request, context: RouteParams) {
       return apiResponse(false, {}, userMessages.invalidParams, 400, requestId);
     }
 
-    const session = await ServerSession();
-    if (!session?.user?.id) {
-      log.warn("Comment reaction delete attempted without authentication");
-      return apiResponse(
-        false,
-        null,
-        commentMessages.unauthorized,
-        401,
-        requestId
-      );
-    }
+    const session = await validateSession(log, requestId);
+    if (!session.ok) return session.response;
+    const viewer = session.user;
 
-    const rateLimited = await isReactionRateLimitedForTarget({
+    // Rate limiting
+    const limited = await checkRateLimit({
       namespace: COMMENT_REACTION_RATE_NAMESPACE,
-      windowMs: COMMENT_REACTION_WINDOW_S,
-      maxActions: COMMENT_REACTION_MAX_ACTIONS,
-      targetId: validatedCommentId.data,
-      userId: session.user.id,
+      viewerId: viewer.id,
+      windowSeconds: COMMENT_REACTION_WINDOW_S,
+      maxRequests: COMMENT_REACTION_MAX_ACTIONS,
+      log,
+      request: _request,
+      requestId,
     });
 
-    if (rateLimited) {
-      log.warn(
-        { userId: session.user.id, commentId: validatedCommentId.data },
-        "Comment reaction delete rate limited"
-      );
-      return apiResponse(false, null, userMessages.rateLimited, 429, requestId);
+    if (!limited.ok) {
+      return limited.response;
     }
 
     const result = await removeCommentReaction({
       commentId: validatedCommentId.data,
       postId: validatedPostId.data,
-      userId: session.user.id,
+      userId: viewer.id,
     });
 
     void broadcastCommentMetaEvent({
       postId: postId ?? null,
-      initiatorId: session.user.id,
+      initiatorId: viewer.id,
       parentId: result.parentId,
       commentId: commentId ?? null,
       reactionsCount: result.reactionsCount,
@@ -89,7 +79,7 @@ export async function DELETE(_request: Request, context: RouteParams) {
     log.info(
       {
         commentId: validatedCommentId.data,
-        userId: session.user.id,
+        userId: viewer.id,
         operation: result.operation satisfies ReactionOperation,
       },
       "commentReaction.removed"

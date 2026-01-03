@@ -3,14 +3,16 @@ import {
   MAX_POSTS_PER_USER,
   MAX_TOTAL_POSTS,
 } from "../../../utils/posts/post-ranking";
-import type { PostFetchResult } from "../../../utils/posts/post-ranking/types";
+import type {
+  PostFetchResult,
+  PostWithStats,
+  ViewerRelationshipSnapshot,
+} from "../../../utils/posts/post-ranking/types";
 import type { ImportantUserScore } from "../../../utils/posts/user-ranking";
-import {
-  filterPostsByVisibility,
-  groupPostsByAuthor,
-  loadFetchDependencies,
-  queryRecentPosts,
-} from "./fetch/index";
+import { groupPostsByAuthor, queryRecentPosts } from "./fetch/index";
+import { resolveEffectiveVisibility } from "./privacy";
+import { Visibility } from "@prisma/client";
+import { buildViewerRelationshipMap } from "./relationships";
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
@@ -36,25 +38,75 @@ export async function fetchPostsForImportantUsers(
     new Set([...importantUsers.map((user) => user.targetUserId), viewerId])
   );
 
-  const { privacyDefaults, relations } = await loadFetchDependencies(
-    viewerId,
-    authorIds
-  );
+  const relations = await buildViewerRelationshipMap(viewerId, authorIds);
 
   const posts = await queryRecentPosts({
     authorIds,
     since,
     limit: maxPosts,
+    viewerId,
+    relations,
   });
   if (!posts.length) return [];
 
-  const visiblePosts = filterPostsByVisibility({
+  const hydratedPosts = hydratePostsWithPrivacy({
     posts,
     viewerId,
-    privacyDefaults,
     relations,
   });
-  if (!visiblePosts.length) return [];
 
-  return groupPostsByAuthor(visiblePosts, perUserLimit);
+  if (!hydratedPosts.length) return [];
+
+  return groupPostsByAuthor(hydratedPosts, perUserLimit);
+}
+
+type HydrateParams = {
+  posts: Awaited<ReturnType<typeof queryRecentPosts>>;
+  viewerId: string;
+  relations: Map<string, ViewerRelationshipSnapshot>;
+};
+
+function hydratePostsWithPrivacy(params: HydrateParams): PostWithStats[] {
+  const { posts, viewerId, relations } = params;
+
+  return posts.map((post) => {
+    const authorDefaultVisibility =
+      post.authorDefaultVisibility ?? Visibility.PUBLIC;
+    const effectiveVisibility = resolveEffectiveVisibility(
+      post.visibility,
+      post.visibilityPreference,
+      authorDefaultVisibility
+    );
+
+    const relationship =
+      relations.get(post.authorId) ??
+      createDefaultRelationshipSnapshot(viewerId, post.authorId);
+
+    return {
+      id: post.id,
+      authorId: post.authorId,
+      publishedAt: post.publishedAt,
+      reactionsCount: post.reactionsCount,
+      commentsCount: post.commentsCount,
+      sharesCount: post.sharesCount,
+      viewCount: post.viewCount,
+      privacy: {
+        visibility: post.visibility,
+        visibilityPreference: post.visibilityPreference,
+        effectiveVisibility,
+      },
+      viewerRelationship: relationship,
+    };
+  });
+}
+
+function createDefaultRelationshipSnapshot(
+  viewerId: string,
+  authorId: string
+): ViewerRelationshipSnapshot {
+  return {
+    isSelf: viewerId === authorId,
+    isFriend: false,
+    isFollower: false,
+  };
 }

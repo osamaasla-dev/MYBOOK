@@ -2,7 +2,10 @@ import type { Prisma } from "@prisma/client";
 
 import type { PostReactionType } from "../../../constants/reactions";
 import type { ReactionTab } from "./schema";
-import type { ReactionSummary } from "../../../utils/reaction";
+import type {
+  ReactionOperation,
+  ReactionSummary,
+} from "../../../utils/reaction";
 
 export type ReactionUserSummary = {
   id: string;
@@ -49,3 +52,24 @@ export const reactionUserSelect = {
   name: true,
   avatarUrl: true,
 } satisfies Prisma.UserSelect;
+
+export type PersistPostReactionParams = {
+  postId: string;
+  userId: string;
+  reaction: PostReactionType;
+};
+
+export type RemovePostReactionParams = {
+  postId: string;
+  userId: string;
+};
+
+export type PostReactionResult = {
+  reaction: PostReactionType | null;
+  reactionsCount: number;
+  reactionSummary: ReactionSummary;
+  operation: ReactionOperation;
+  commentsCount?: number;
+  sharesCount?: number;
+  latestActivityAt?: Date | string | null;
+};

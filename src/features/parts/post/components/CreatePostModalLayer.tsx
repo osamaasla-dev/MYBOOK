@@ -16,6 +16,7 @@ type PostModalProps = {
   onClose: () => void;
   user: CurrentUser | null | undefined;
   placeholder: string;
+  testId?: string;
 };
 
 export function CreatePostModalLayer({
@@ -23,6 +24,7 @@ export function CreatePostModalLayer({
   onClose,
   user,
   placeholder,
+  testId,
 }: PostModalProps) {
   const resetComposer = usePostStore((state) => state.reset);
 
@@ -63,7 +65,13 @@ export function CreatePostModalLayer({
   });
 
   return (
-    <PostModalShell open={open} onClose={onClose} title="Create Post">
+    <PostModalShell
+      open={open}
+      onClose={onClose}
+      title="Create Post"
+      testId={testId || "create-post-modal"}
+      ariaLabel="Create new post dialog"
+    >
       <PostEditorPanel
         user={user}
         placeholder={placeholder}
@@ -80,6 +88,7 @@ export function CreatePostModalLayer({
         visibilityPreference={visibilityPreference}
         setVisibility={setVisibility}
         setVisibilityPreference={setVisibilityPreference}
+        testId={testId ? `${testId}-editor` : "create-post-editor"}
       />
 
       <PostActions
@@ -87,6 +96,7 @@ export function CreatePostModalLayer({
         isPublishing={isPublishing}
         onPublish={() => publishPost({ canPublish })}
         onResetDraft={handleResetDraft}
+        testId={testId ? `${testId}-actions` : "create-post-actions"}
       />
     </PostModalShell>
   );

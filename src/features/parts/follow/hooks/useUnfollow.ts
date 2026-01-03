@@ -7,7 +7,7 @@ import { profileQueryKey } from "@/features/pages/profile/hooks/useProfile";
 import { relationsQueryKey } from "@/features/pages/relations/hooks/useRelationsInfiniteList";
 import { followMessages } from "@/lib/messages";
 import type { FollowActionInput, FollowApiResponse } from "../types";
-import { unfollowUserApi } from "../services/followApi";
+import { unfollowUserApi } from "../services/client";
 
 export const UNFOLLOW_MUTATION_KEY = ["follow", "unfollow-user"] as const;
 

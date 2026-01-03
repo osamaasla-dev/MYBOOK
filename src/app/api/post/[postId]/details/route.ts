@@ -1,11 +1,11 @@
 import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
 import { getRequestLog } from "@/lib/request-log";
-import { genericMessages, postMessages, userMessages } from "@/lib/messages";
-import { ServerSession } from "@/utils/session";
+import { postMessages, userMessages } from "@/lib/messages";
 import { validateCuid } from "@/schemas/ids";
 import type { FeedPost } from "@/features/pages/home/utils/posts/feed-response";
 import { getPostDetailsForViewer } from "@/features/parts/postDetails/services/server";
+import { validateSession } from "@/features/services/server";
 
 const ROUTE = "/api/post/[postId]/details";
 
@@ -27,39 +27,40 @@ export async function GET(request: Request, context: RouteParams) {
     }
 
     const normalizedPostId = validatedPostId.data;
-    const session = await ServerSession();
-    const viewerId = session?.user?.id ?? null;
+    const session = await validateSession(log, requestId);
+    if (!session.ok) return session.response;
+    const viewer = session.user;
 
     const postDetails = await getPostDetailsForViewer({
       postId: normalizedPostId,
-      viewerId,
+      viewerId: viewer.id,
     });
 
     if (!postDetails) {
-      log.warn(
-        { postId: normalizedPostId },
-        "Post not found for details route"
-      );
-      return apiResponse(false, {}, "Post not found.", 404, requestId);
+      log.warn({ postId: normalizedPostId }, postMessages.notFound);
+      return apiResponse(false, {}, postMessages.notFound, 404, requestId);
     }
 
     const feedPost: FeedPost = postDetails.post;
 
     log.info(
-      { postId: normalizedPostId, viewerId },
-      "Post details request completed"
+      { postId: normalizedPostId, viewerId: viewer.id },
+      postMessages.details.fetchSuccess
     );
 
     return apiResponse(
       true,
       { post: feedPost },
-      genericMessages.success,
+      postMessages.details.fetchSuccess,
       200,
       requestId
     );
   } catch (err) {
     const error = normalizeError(err);
-    log.error({ err: error, status: error.status }, "Post details failed");
+    log.error(
+      { err: error, status: error.status },
+      postMessages.details.fetchFailed
+    );
     return apiResponse(
       false,
       {},

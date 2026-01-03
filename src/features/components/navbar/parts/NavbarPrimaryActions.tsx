@@ -6,7 +6,7 @@ export function NavbarPrimaryActions() {
   return (
     <nav
       className="flex items-center gap-3"
-      aria-label="Primary"
+      aria-label="Primary navigation"
       data-testid="navbar-primary-actions"
     >
       <NavbarHomeLink />

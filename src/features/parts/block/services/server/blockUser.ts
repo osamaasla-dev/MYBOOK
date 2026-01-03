@@ -2,11 +2,11 @@ import { prisma } from "@/lib/prisma";
 import { invalidateProfileCache } from "@/features/pages/profile/utils";
 import { clearImportantUsersCache } from "@/features/pages/home/utils/posts/user-ranking";
 import { clearRankedPostsCache } from "@/features/pages/home/utils/posts/post-ranking/cache";
-import { deleteFollowNotification } from "@/features/parts/follow/services/followNotifications";
-import { deleteFriendNotification } from "@/features/parts/addFriend/services/friendNotifications";
-import { adjustRelationshipSnapshot } from "@/features/parts/interaction/services";
 import { broadcastBlockEvent } from "@/features/parts/block/utils/server";
 import type { ProfileUserRecord } from "@/features/pages/profile/types";
+import { deleteFriendNotification } from "@/features/parts/addFriend/services/server";
+import { adjustRelationshipSnapshot } from "@/features/parts/interaction/services";
+import { deleteFollowNotification } from "@/features/parts/follow/services/server";
 
 export type BlockUserInput = {
   viewerId: string;

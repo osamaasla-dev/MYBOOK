@@ -22,6 +22,7 @@ export type ConfirmDialogProps = {
   onOpenChange?: (open: boolean) => void;
   trigger?: React.ReactNode;
   className?: string;
+  testId?: string;
 };
 
 export function ConfirmDialog({
@@ -37,6 +38,7 @@ export function ConfirmDialog({
   onOpenChange,
   trigger,
   className,
+  testId = "confirm-dialog",
 }: ConfirmDialogProps) {
   const [internalOpen, setInternalOpen] = useState(defaultOpen ?? false);
   const isControlled = open !== undefined;
@@ -71,6 +73,7 @@ export function ConfirmDialog({
             " border-secondary border fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl  shadow-lg outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 bg-white p-5",
             className
           )}
+          data-testid={testId}
         >
           <div className="flex items-start justify-between gap-4 ">
             <div className="space-y-2">
@@ -84,7 +87,10 @@ export function ConfirmDialog({
               ) : null}
             </div>
 
-            <DialogPrimitive.Close className="cursor-pointer rounded-full p-1 text-muted-foreground transition hover:bg-secondary hover:text-foreground">
+            <DialogPrimitive.Close
+              className="cursor-pointer rounded-full p-1 text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+              data-testid={`${testId}-close`}
+            >
               <X className="size-4" />
             </DialogPrimitive.Close>
           </div>
@@ -94,6 +100,7 @@ export function ConfirmDialog({
               variant={confirmVariant}
               onClick={handleConfirmClick}
               disabled={isConfirming}
+              data-testid={`${testId}-confirm`}
             >
               {isConfirming ? "Processing..." : confirmLabel}
             </Button>
@@ -102,6 +109,7 @@ export function ConfirmDialog({
               <Button
                 className="bg-secondary text-foreground hover:bg-secondary/80"
                 disabled={isConfirming}
+                data-testid={`${testId}-cancel`}
               >
                 {cancelLabel}
               </Button>

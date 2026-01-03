@@ -16,9 +16,17 @@ export function NotificationDropdownHeader({
   onTabChange,
 }: NotificationDropdownHeaderProps) {
   return (
-    <div className="flex flex-col gap-2 border-b border-border px-4 py-3">
+    <div
+      className="flex flex-col gap-2 border-b border-border px-4 py-3"
+      data-testid="navbar-notifications-header"
+    >
       <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-primary-dark">Notifications</p>
+        <p
+          id="notifications-header"
+          className="text-sm font-semibold text-primary-dark"
+        >
+          Notifications
+        </p>
         <Button
           type="button"
           variant="link"
@@ -36,13 +44,23 @@ export function NotificationDropdownHeader({
       <Tabs
         value={tab}
         onValueChange={(value) => onTabChange(value as NotificationTab)}
+        role="tablist"
+        aria-label="Notification filters"
       >
-        <TabsList className="w-full flex gap-1">
+        <TabsList
+          className="w-full flex gap-1"
+          role="tablist"
+          data-testid="navbar-notifications-tabs"
+        >
           {NOTIFICATION_TAB_VALUES.map((value) => (
             <TabsTrigger
               key={value}
               value={value}
               className="cursor-pointer rounded-md px-3 py-1 text-xs transition-colors  data-[state=active]:border-primary data-[state=active]:bg-primary/10 hover:border-primary hover:bg-primary/10"
+              role="tab"
+              aria-selected={tab === value}
+              aria-controls={`notifications-${value}-panel`}
+              data-testid={`navbar-notifications-tab-${value}`}
             >
               {value}
             </TabsTrigger>

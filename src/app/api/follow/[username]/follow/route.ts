@@ -2,7 +2,7 @@ import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
 import { followMessages } from "@/lib/messages";
 import { prepareFollowAction, type FollowRouteContext } from "../shared";
-import { followProfile } from "@/features/parts/follow/services";
+import { followProfile } from "@/features/parts/follow/services/server";
 import { adjustRelationshipSnapshot } from "@/features/parts/interaction/services";
 const ROUTE = "/api/follow/[username]/follow";
 

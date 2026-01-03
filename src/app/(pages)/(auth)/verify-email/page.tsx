@@ -1,7 +1,9 @@
 import {
   VerifyEmailManager,
   getVerifyEmailPageMetadata,
-} from "@/features/Auth/VerifyEmail/page";
+} from "@/features/auth/VerifyEmail/page";
+
+export const dynamic = "force-dynamic";
 
 export default function VerifyEmailPage() {
   return <VerifyEmailManager />;

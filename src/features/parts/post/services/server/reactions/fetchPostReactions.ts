@@ -13,6 +13,7 @@ import {
   queryViewerReaction,
 } from "./queries";
 import { mapReactionRecordToItem } from "./serializers";
+import { validatePostAccess } from "@/features/parts/postDetails/services/server";
 
 export async function fetchPostReactions({
   postId,
@@ -23,6 +24,21 @@ export async function fetchPostReactions({
   requestId,
   route,
 }: FetchPostReactionsInput): Promise<PostReactionsResponse> {
+  // Validate post access before fetching reactions
+  const accessResult = await validatePostAccess({
+    postId,
+    viewerId: viewerId ?? null,
+  });
+  if (!accessResult) {
+    return {
+      items: [],
+      nextCursor: null,
+      hasNextPage: false,
+      reactionSummary: null,
+      viewerReaction: null,
+    };
+  }
+
   const take = Math.min(Math.max(limit, 1), MAX_POST_REACTIONS_LIMIT);
   const log = logger.child({
     requestId: requestId ?? "post-reactions:unknown",

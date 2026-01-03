@@ -1,7 +1,7 @@
 import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
 import { followMessages } from "@/lib/messages";
-import { rejectFollowRequest } from "@/features/parts/follow/services";
+import { rejectFollowRequest } from "@/features/parts/follow/services/server";
 import { prepareFollowAction, type FollowRouteContext } from "../shared";
 
 const ROUTE = "/api/follow/[username]/reject-request";

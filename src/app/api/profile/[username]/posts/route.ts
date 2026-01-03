@@ -1,5 +1,4 @@
 import { NextRequest } from "next/server";
-import { ServerSession } from "@/utils/session";
 import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
 import { getRequestLog } from "@/lib/request-log";
@@ -8,24 +7,23 @@ import { getProfilePosts } from "@/features/pages/profile/services/server/postsT
 import { profilePostsQuerySchema } from "@/features/pages/profile/utils/postsTab";
 import { fetchProfileUserByUsername } from "@/features/pages/profile/utils";
 import { isBlock } from "@/features/parts/block/utils/server";
+import { validateSession } from "@/features/services/server";
 
 const ROUTE = "/api/profile/posts";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { username: string } }
+  { params }: { params: Promise<{ username: string }> }
 ) {
   const { requestId, log } = await getRequestLog({ route: ROUTE });
+  const { username } = await params;
 
   try {
     log.info(`Profile posts request started`);
 
-    const session = await ServerSession();
-
-    if (!session?.user?.id) {
-      log.warn(userMessages.unauthorized);
-      return apiResponse(false, {}, userMessages.unauthorized, 401, requestId);
-    }
+    const session = await validateSession(log, requestId);
+    if (!session.ok) return session.response;
+    const viewer = session?.user;
 
     const { searchParams } = new URL(request.url);
     const { cursor, limit } = profilePostsQuerySchema.parse({
@@ -33,20 +31,17 @@ export async function GET(
       limit: searchParams.get("limit"),
     });
 
-    const profileUser = await fetchProfileUserByUsername(params.username);
+    const profileUser = await fetchProfileUserByUsername(username);
     if (!profileUser) {
-      log.warn(
-        { username: params.username, requestId },
-        "Profile owner not found for posts"
-      );
+      log.warn({ username, requestId }, "Profile owner not found for posts");
       return apiResponse(false, {}, userMessages.notFound, 404, requestId);
     }
 
-    if (profileUser.id !== session.user.id) {
-      const blockStatus = await isBlock(session.user.id, profileUser.id);
+    if (profileUser.id !== viewer.id) {
+      const blockStatus = await isBlock(viewer.id, profileUser.id);
       if (blockStatus.anyBlock) {
         log.warn(
-          { viewerId: session.user.id, profileUserId: profileUser.id },
+          { viewerId: viewer.id, profileUserId: profileUser.id },
           "Profile posts blocked by relationship"
         );
         return apiResponse(false, {}, userMessages.notFound, 404, requestId);
@@ -54,8 +49,8 @@ export async function GET(
     }
 
     const result = await getProfilePosts({
-      username: params.username,
-      viewerId: session.user.id,
+      username,
+      viewerId: viewer.id,
       cursor,
       limit,
       log,

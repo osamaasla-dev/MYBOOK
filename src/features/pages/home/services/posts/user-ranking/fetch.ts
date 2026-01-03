@@ -11,7 +11,6 @@ import type {
   ImportantUserScore,
   RawInteractionCandidate,
 } from "@/features/pages/home/utils/posts/user-ranking";
-import { getBlockedUserIds } from "@/features/services/server/blockedUsers";
 
 export async function getImportantUsersForFeed(viewerId: string) {
   if (!viewerId) return [] as ImportantUserScore[];
@@ -29,17 +28,21 @@ export async function getImportantUsersForFeed(viewerId: string) {
   const totalRelations = viewer?.totalInteractedUsers ?? 0;
   const candidateCount = determineCandidateCount(totalRelations);
 
-  const blockedUsers = await getBlockedUserIds(viewerId);
-  const blockedIds = Array.from(blockedUsers);
-
   const sourceUsers = await prisma.userInteractionStats.findMany({
     where: {
       userId: viewerId,
-      ...(blockedIds.length
-        ? {
-            targetUserId: { notIn: blockedIds },
-          }
-        : {}),
+      targetUser: {
+        blockedBy: {
+          none: {
+            blockerId: viewerId,
+          },
+        },
+        blocks: {
+          none: {
+            blockedId: viewerId,
+          },
+        },
+      },
     },
     select: {
       targetUserId: true,

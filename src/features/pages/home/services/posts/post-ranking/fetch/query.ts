@@ -1,5 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import type { PostVisibilityPreference, Visibility } from "@prisma/client";
+import { PostVisibilityPreference, Visibility } from "@prisma/client";
+
+import type { ViewerRelationshipSnapshot } from "@/features/pages/home/utils/posts/post-ranking/types";
+import { buildFeedVisibilityFilters } from "./visibility";
 
 export type RawFetchedPost = {
   id: string;
@@ -11,22 +14,39 @@ export type RawFetchedPost = {
   viewCount: number;
   visibility: Visibility;
   visibilityPreference: PostVisibilityPreference;
+  authorDefaultVisibility: Visibility;
 };
 
-export async function queryRecentPosts(params: {
+type QueryRecentPostsParams = {
   authorIds: string[];
   since: Date;
   limit: number;
-}): Promise<RawFetchedPost[]> {
-  const { authorIds, since, limit } = params;
+  viewerId: string;
+  relations: Map<string, ViewerRelationshipSnapshot>;
+};
+
+export async function queryRecentPosts(
+  params: QueryRecentPostsParams
+): Promise<RawFetchedPost[]> {
+  const { authorIds, since, limit, viewerId, relations } = params;
 
   if (!authorIds.length) {
     return [];
   }
 
+  const visibilityFilters = buildFeedVisibilityFilters({
+    viewerId,
+    authorIds,
+    relations,
+  });
+
+  if (!visibilityFilters.length) {
+    return [];
+  }
+
   const posts = await prisma.post.findMany({
     where: {
-      authorId: { in: authorIds },
+      OR: visibilityFilters,
       publishedAt: { gte: since },
       isDeleted: false,
     },
@@ -41,6 +61,13 @@ export async function queryRecentPosts(params: {
 
       visibility: true,
       visibilityPreference: true,
+      author: {
+        select: {
+          privacySetting: {
+            select: { postsVisibility: true },
+          },
+        },
+      },
     },
     orderBy: {
       publishedAt: "desc",
@@ -48,5 +75,17 @@ export async function queryRecentPosts(params: {
     take: limit,
   });
 
-  return posts;
+  return posts.map((post) => ({
+    id: post.id,
+    authorId: post.authorId,
+    publishedAt: post.publishedAt,
+    reactionsCount: post.reactionsCount,
+    commentsCount: post.commentsCount,
+    sharesCount: post.sharesCount,
+    viewCount: post.viewCount,
+    visibility: post.visibility,
+    visibilityPreference: post.visibilityPreference,
+    authorDefaultVisibility:
+      post.author?.privacySetting?.postsVisibility ?? Visibility.PUBLIC,
+  }));
 }

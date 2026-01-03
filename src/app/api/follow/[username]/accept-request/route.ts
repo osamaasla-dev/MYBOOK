@@ -1,7 +1,7 @@
 import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
 import { followMessages } from "@/lib/messages";
-import { acceptFollowRequest } from "@/features/parts/follow/services";
+import { acceptFollowRequest } from "@/features/parts/follow/services/server";
 import { adjustRelationshipSnapshot } from "@/features/parts/interaction/services";
 import { prepareFollowAction, type FollowRouteContext } from "../shared";
 

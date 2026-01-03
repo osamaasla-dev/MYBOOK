@@ -4,7 +4,7 @@ import {
   checkModeration,
   MissingModerationAPIKeyError,
   ModerationProviderError,
-} from "@/features/parts/moderation/services";
+} from "@/features/parts/moderation/services/server";
 import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
 import { moderationMessages } from "@/lib/messages";

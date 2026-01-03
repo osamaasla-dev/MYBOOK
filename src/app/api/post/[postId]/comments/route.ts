@@ -2,7 +2,6 @@ import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
 import { getRequestLog } from "@/lib/request-log";
 import { commentMessages } from "@/lib/messages";
-import { ServerSession } from "@/utils/session";
 
 import {
   ensureCommentFetchAccess,
@@ -13,6 +12,7 @@ import {
   parseCommentsQueryParams,
   parseCommentsRouteParams,
 } from "@/features/parts/postDetails/utils/server/comments";
+import { validateSession } from "@/features/services/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,8 +31,9 @@ export async function GET(request: Request, routeContext: RouteParams) {
     const { postId } = await routeContext.params;
     const normalizedPostId = parseCommentsRouteParams(postId, log);
 
-    const session = await ServerSession();
-    const viewerId = session?.user?.id ?? null;
+    const session = await validateSession(log, requestId);
+    if (!session.ok) return session.response;
+    const viewer = session.user;
 
     const { searchParams } = new URL(request.url);
     const { cursor, parentId, limit } = parseCommentsQueryParams(
@@ -43,7 +44,7 @@ export async function GET(request: Request, routeContext: RouteParams) {
     await ensureCommentFetchAccess({
       postId: normalizedPostId,
       parentId,
-      viewerId,
+      viewerId: viewer.id,
     });
 
     const result = await fetchPostComments({
@@ -51,7 +52,7 @@ export async function GET(request: Request, routeContext: RouteParams) {
       parentId,
       cursor,
       limit,
-      viewerId,
+      viewerId: viewer.id,
     });
 
     log.info("Fetching comments completed");

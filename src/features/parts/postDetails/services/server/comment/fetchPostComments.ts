@@ -7,6 +7,7 @@ import {
   MAX_LIMIT,
 } from "@/features/parts/postDetails/constants";
 import { ReactionState } from "@prisma/client";
+import { validatePostAccess } from "../access";
 
 type CommentAuthorSummary = {
   id: string;
@@ -51,6 +52,15 @@ export async function fetchPostComments({
   limit = DEFAULT_LIMIT,
   viewerId = null,
 }: FetchPostCommentsInput): Promise<FetchPostCommentsResult> {
+  // Validate post access before fetching comments
+  const accessResult = await validatePostAccess({ postId, viewerId });
+  if (!accessResult) {
+    return {
+      comments: [],
+      nextCursor: null,
+    };
+  }
+
   const take = Math.min(Math.max(limit, 1), MAX_LIMIT);
 
   const comments = await prisma.comment.findMany({

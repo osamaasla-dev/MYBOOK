@@ -2,7 +2,7 @@ import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
 import { relationsMessages } from "@/lib/messages";
 import { getRequestLog } from "@/lib/request-log";
-import { ServerSession } from "@/utils/session";
+import { validateSession } from "@/features/services/server";
 
 import { fetchRelationsList } from "@/features/pages/relations/services/fetchRelations";
 import { parseRelationsQuery } from "@/features/pages/relations/schema";
@@ -14,18 +14,9 @@ export async function GET(request: Request) {
 
   try {
     log.info("Relations fetch started");
-    const session = await ServerSession();
-
-    if (!session?.user?.id) {
-      log.warn(relationsMessages.unauthorized);
-      return apiResponse(
-        false,
-        {},
-        relationsMessages.unauthorized,
-        401,
-        requestId
-      );
-    }
+    const session = await validateSession(log, requestId);
+    if (!session.ok) return session.response;
+    const viewer = session.user;
 
     const url = new URL(request.url);
     const parsedQuery = parseRelationsQuery(url.searchParams);
@@ -47,14 +38,14 @@ export async function GET(request: Request) {
     const { tab, limit, cursor } = parsedQuery.value;
 
     const relations = await fetchRelationsList({
-      userId: session.user.id,
+      userId: viewer.id,
       tab,
       limit,
       cursor,
     });
 
     log.info(
-      { userId: session.user.id, tab, count: relations.items.length },
+      { userId: viewer.id, tab, count: relations.items.length },
       relationsMessages.fetchSuccess
     );
 

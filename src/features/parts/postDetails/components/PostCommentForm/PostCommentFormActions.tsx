@@ -23,6 +23,7 @@ export function PostCommentFormActions({
           aria-label="Clear comment"
           onClick={onClear}
           data-disabled={isDisabled || !hasContent}
+          data-testid="clear-comment-button"
         >
           <Trash2 className="size-4" />
         </button>
@@ -38,6 +39,7 @@ export function PostCommentFormActions({
           disabled={isDisabled || !hasContent}
           aria-label="Post comment"
           data-disabled={isDisabled || !hasContent}
+          data-testid="submit-comment-button"
         >
           {isDisabled ? (
             <span className="text-sm font-semibold">…</span>

@@ -54,11 +54,22 @@ export function PostDetailsContent({
     <section
       ref={scrollContainerRef}
       className="flex-1 overflow-y-auto rounded-none"
+      role="main"
+      aria-label="Post details content"
+      data-testid="post-details-content"
     >
-      {isLoading && <QueryLoading />}
-      {isError && <QueryError onRetry={refetch} />}
+      {isLoading && <QueryLoading data-testid="post-details-loading" />}
+      {isError && (
+        <QueryError onRetry={refetch} data-testid="post-details-error" />
+      )}
 
-      {hasPost && <PostCard post={post} className="rounded-none shadow-none" />}
+      {hasPost && (
+        <PostCard
+          post={post}
+          className="rounded-none shadow-none"
+          data-testid="post-details-post-card"
+        />
+      )}
 
       {hasPost && (
         <PostCommentsSection
@@ -77,7 +88,10 @@ export function PostDetailsContent({
       )}
 
       {!isLoading && !hasPost && !isError && (
-        <div className="rounded-2xl border border-dashed border-border/60 bg-secondary/30 px-4 py-8 text-center text-sm text-muted-foreground">
+        <div
+          className="rounded-2xl border border-dashed border-border/60 bg-secondary/30 px-4 py-8 text-center text-sm text-muted-foreground"
+          data-testid="post-details-unavailable"
+        >
           Post details are unavailable right now.
         </div>
       )}

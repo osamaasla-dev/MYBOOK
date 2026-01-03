@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 
 import { pusherServer } from "@/lib/pusher/server";
-import { getViewerSession } from "@/features/pages/profile/utils";
 import { logger } from "@/lib/logger";
+import { getRequestLog } from "@/lib/request-log";
+import { validateSession } from "@/features/services/server";
 
 type PusherAuthPayload = {
   socket_id?: string;
@@ -13,14 +14,15 @@ const UNAUTHORIZED = NextResponse.json(
   { error: "Unauthorized" },
   { status: 401 }
 );
+const ROUTE = "api/pusher/auth";
 
 export async function POST(request: Request) {
-  try {
-    const { viewerId } = await getViewerSession();
+  const { requestId, log } = await getRequestLog({ route: ROUTE });
 
-    if (!viewerId) {
-      return UNAUTHORIZED;
-    }
+  try {
+    const session = await validateSession(log, requestId);
+    if (!session.ok) return session.response;
+    const viewer = session?.user;
 
     const body = (await request.json()) as PusherAuthPayload;
     const socketId = body.socket_id;
@@ -38,7 +40,7 @@ export async function POST(request: Request) {
     }
 
     const channelOwnerId = channelName.replace("private-user-", "");
-    if (channelOwnerId !== viewerId) {
+    if (channelOwnerId !== viewer.id) {
       return UNAUTHORIZED;
     }
 

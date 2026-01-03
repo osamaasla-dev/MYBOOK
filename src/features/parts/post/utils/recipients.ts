@@ -8,7 +8,6 @@ import {
 
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
-import { getBlockedUserIds } from "@/features/services/server/blockedUsers";
 
 const TOP_PERCENTAGE = 0.1;
 const MAX_RECIPIENTS = 100;
@@ -77,8 +76,6 @@ export async function getPostNotificationRecipients({
     return [];
   }
 
-  const blockedIds = await getBlockedUserIds(authorId);
-
   const effectiveVisibility = await resolveEffectiveVisibility(
     authorId,
     visibility,
@@ -98,11 +95,18 @@ export async function getPostNotificationRecipients({
   const where: Prisma.UserInteractionStatsWhereInput = {
     userId: authorId,
     interactionWeight: { gt: 0 },
-    ...(blockedIds.size
-      ? {
-          targetUserId: { notIn: Array.from(blockedIds) },
-        }
-      : {}),
+    targetUser: {
+      blockedBy: {
+        none: {
+          blockerId: authorId,
+        },
+      },
+      blocks: {
+        none: {
+          blockedId: authorId,
+        },
+      },
+    },
   };
 
   where.isFriend = true;

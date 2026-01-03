@@ -11,7 +11,7 @@ import friendMessages from "@/lib/messages/addFriend";
 import {
   rejectFriendRequestApi,
   type RejectFriendRequestApiResponse,
-} from "../services/addFriendApi";
+} from "../services/client";
 import { profileQueryKey } from "@/features/pages/profile/hooks/useProfile";
 import type { ProfileRouteData } from "@/features/pages/profile/types";
 import { invalidateNotificationTabQueries } from "../../notifications/hooks/notificationQueryUtils";

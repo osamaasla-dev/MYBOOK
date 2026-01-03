@@ -7,7 +7,7 @@ import friendMessages from "@/lib/messages/addFriend";
 import {
   cancelFriendRequestApi,
   type CancelFriendRequestApiResponse,
-} from "../services/addFriendApi";
+} from "../services/client";
 import { profileQueryKey } from "@/features/pages/profile/hooks/useProfile";
 import type { ProfileRouteData } from "@/features/pages/profile/types";
 import { relationsQueryKey } from "@/features/pages/relations/hooks/useRelationsInfiniteList";

@@ -3,9 +3,9 @@ import { normalizeError } from "@/lib/http/normalizeError";
 import { friendMessages } from "@/lib/messages";
 import { prisma } from "@/lib/prisma";
 
-import { acceptFriendRequest } from "@/features/parts/addFriend/services";
 import { adjustRelationshipSnapshot } from "@/features/parts/interaction/services";
 import { prepareFriendAction, type FriendRouteContext } from "../shared";
+import { acceptFriendRequest } from "@/features/parts/addFriend/services/server";
 
 const ROUTE = "/api/add-friend/[username]/accept-request";
 

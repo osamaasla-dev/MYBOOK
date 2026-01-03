@@ -28,6 +28,7 @@ type PostEditorPanelProps = {
   visibilityPreference: PostVisibilityPreference;
   setVisibility: (visibility: Visibility) => void;
   setVisibilityPreference: (preference: PostVisibilityPreference) => void;
+  testId?: string;
 };
 
 export function PostEditorPanel({
@@ -46,6 +47,7 @@ export function PostEditorPanel({
   visibilityPreference,
   setVisibility,
   setVisibilityPreference,
+  testId,
 }: PostEditorPanelProps) {
   const handleEditorChange = (
     event: React.ChangeEvent<HTMLTextAreaElement>
@@ -89,10 +91,18 @@ export function PostEditorPanel({
         visibility={visibility}
         visibilityPreference={visibilityPreference}
         onVisibilityChange={handleVisibilityChange}
+        testId={testId || "post-editor-panel"}
       />
 
       {statusMessage && (
-        <div className="text-danger px-4 text-sm" aria-live="assertive">
+        <div
+          className="text-danger px-4 text-sm"
+          aria-live="assertive"
+          role="alert"
+          data-testid={
+            testId ? `${testId}-status-message` : "post-editor-status-message"
+          }
+        >
           {statusMessage}
         </div>
       )}

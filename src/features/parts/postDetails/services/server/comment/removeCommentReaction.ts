@@ -11,6 +11,7 @@ import {
 import { CommentRouteError } from "../../../utils/server/comments";
 import type { PostReactionType } from "@/features/parts/post/constants/reactions";
 import { isBlock } from "@/features/parts/block/utils/server";
+import { validatePostAccess } from "../access";
 
 type RemoveCommentReactionParams = {
   commentId: string;
@@ -32,6 +33,15 @@ export async function removeCommentReaction({
   postId,
   userId,
 }: RemoveCommentReactionParams): Promise<CommentReactionResult> {
+  // Validate post access before processing
+  const accessResult = await validatePostAccess({ postId, viewerId: userId });
+  if (!accessResult) {
+    throw new CommentRouteError(
+      "Access denied: Cannot remove reaction from comment on this post",
+      404
+    );
+  }
+
   const result = await prisma.$transaction(async (tx) => {
     // 1. Validate comment exists and get author info
     const comment = await tx.comment.findFirst({

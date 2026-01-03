@@ -1,6 +1,6 @@
 "use client";
 
-import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 
 import type { ReactionSummary } from "../utils/reaction";
 import type { PostReactionType } from "../constants/reactions";
@@ -77,8 +77,6 @@ export function usePostReactions({
         viewerReaction: firstPage?.viewerReaction ?? null,
       };
     },
-    refetchOnWindowFocus: true,
     refetchOnReconnect: true,
-    placeholderData: keepPreviousData,
   });
 }

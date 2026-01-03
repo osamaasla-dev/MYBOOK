@@ -2,10 +2,10 @@ import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
 import { userMessages } from "@/lib/messages";
 import { getRequestLog } from "@/lib/request-log";
-import { ServerSession } from "@/utils/session";
 
-import { parseSearchUsersParams } from "@/features/parts/search/utils/searchUsersParams";
-import { fetchSearchableUsers } from "@/features/parts/search/services/server/searchUsersService";
+import { parseSearchUsersParams } from "@/features/pages/search/utils/searchUsersParams";
+import { fetchSearchableUsers } from "@/features/pages/search/services/server/searchUsersService";
+import { validateSession } from "@/features/services/server";
 
 const ROUTE = "/api/search/users/list";
 
@@ -13,19 +13,9 @@ export async function GET(request: Request) {
   const { requestId, log } = await getRequestLog({ route: ROUTE });
 
   try {
-    const session = await ServerSession();
-    const viewerId = session?.user?.id ?? null;
-
-    if (!viewerId) {
-      log.warn("Unauthorized user search list request");
-      return apiResponse(
-        false,
-        { items: [], nextCursor: null },
-        userMessages.unauthorized,
-        401,
-        requestId
-      );
-    }
+    const session = await validateSession(log, requestId);
+    if (!session.ok) return session.response;
+    const viewer = session?.user;
 
     const searchParams = new URL(request.url).searchParams;
     const parsed = parseSearchUsersParams(searchParams);
@@ -43,14 +33,14 @@ export async function GET(request: Request) {
 
     const { query, cursor, limit } = parsed.data;
     const { items, nextCursor } = await fetchSearchableUsers({
-      viewerId,
+      viewerId: viewer.id,
       query,
       cursor,
       limit,
     });
 
     log.info(
-      { viewerId, query, count: items.length, nextCursor },
+      { viewerId: viewer.id, query, count: items.length, nextCursor },
       "User search list completed"
     );
 

@@ -31,7 +31,7 @@ export async function updatePostCommentRequest(
   }
   const endpoint = `/post/${encodeURIComponent(
     postId
-  )}/comments/${encodeURIComponent(payload.commentId)}/edit`;
+  )}/comments/${encodeURIComponent(payload.commentId)}/update`;
   const { data } = await apiPatchR<UpdateCommentResponse>(endpoint, payload);
   return data.comment;
 }

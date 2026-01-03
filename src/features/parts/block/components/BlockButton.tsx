@@ -1,77 +1,42 @@
 "use client";
 
-import { useMutationState } from "@tanstack/react-query";
-
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import type { ProfileRouteData } from "@/features/pages/profile/types";
-
-import {
-  BLOCK_MUTATION_KEY,
-  UNBLOCK_MUTATION_KEY,
-  useBlockUser,
-  useUnblockUser,
-} from "../hooks";
+import { useBlockActionState } from "../hooks/ui/useBlockActionState";
+import { useBlockActionHandlers } from "../hooks/ui/useBlockActionHandlers";
+import { useBlockDialogCopy } from "../hooks/ui/useBlockDialogCopy";
 
 export type BlockButtonProps = {
   viewer: ProfileRouteData["viewer"];
   profileUsername: string;
   className?: string;
+  testId?: string;
 };
 
 export function BlockButton({
   viewer,
   profileUsername,
   className,
+  testId = "profile-action-block",
 }: BlockButtonProps) {
-  const blockMutation = useBlockUser();
-  const unblockMutation = useUnblockUser();
-  const blockPending = useBlockActionPending(
+  // Determine block action state
+  const actionState = useBlockActionState(viewer);
+
+  // Handle block action logic and loading states
+  const { handleConfirm, isPending, isDisabled } = useBlockActionHandlers(
+    viewer,
     profileUsername,
-    BLOCK_MUTATION_KEY
-  );
-  const unblockPending = useBlockActionPending(
-    profileUsername,
-    UNBLOCK_MUTATION_KEY
+    actionState
   );
 
+  // Get dialog copy based on state
+  const dialogCopy = useBlockDialogCopy(actionState, isPending);
+
+  // Don't render for self profile
   if (viewer.isSelf) {
     return null;
   }
-
-  const isBlocked = viewer.isBlocked;
-  const isBlocking = blockMutation.isPending || blockPending.length > 0;
-  const isUnblocking = unblockMutation.isPending || unblockPending.length > 0;
-  const isPending = isBlocked ? isUnblocking : isBlocking;
-  const isDisabled = isPending;
-
-  const handleConfirm = async () => {
-    if (isDisabled) return;
-    if (isBlocked) {
-      unblockMutation.mutate({ username: profileUsername });
-      return;
-    }
-    blockMutation.mutate({ username: profileUsername });
-  };
-
-  const dialogCopy = isBlocked
-    ? {
-        title: "Unblock this user?",
-        description: "They will be able to interact with you again.",
-        confirmLabel: "Unblock",
-        confirmVariant: "default" as const,
-        ariaLabel: "unblock user",
-        buttonText: isPending ? "unblocking…" : "unblock",
-      }
-    : {
-        title: "Block this user?",
-        description:
-          "They won't be able to interact with you or see your content.",
-        confirmLabel: "Block",
-        confirmVariant: "danger" as const,
-        ariaLabel: "block user",
-        buttonText: isPending ? "blocking…" : "block",
-      };
 
   return (
     <ConfirmDialog
@@ -88,7 +53,7 @@ export function BlockButton({
           disabled={isDisabled}
           aria-live="polite"
           aria-label={dialogCopy.ariaLabel}
-          data-testid="profile-action-block"
+          data-testid={testId}
           className={className}
         >
           {dialogCopy.buttonText}
@@ -96,22 +61,4 @@ export function BlockButton({
       }
     />
   );
-}
-
-function useBlockActionPending(
-  username: string,
-  mutationKey: readonly unknown[]
-) {
-  return useMutationState({
-    filters: {
-      mutationKey,
-      status: "pending",
-      predicate: (mutation) => {
-        const variables = mutation.state.variables as
-          | { username: string }
-          | undefined;
-        return variables?.username === username;
-      },
-    },
-  });
 }

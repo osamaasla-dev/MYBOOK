@@ -1,7 +1,9 @@
 import {
   ResetPasswordManager,
   getResetPasswordPageMetadata,
-} from "@/features/Auth/ResetPassword/page";
+} from "@/features/auth/ResetPassword/page";
+
+export const dynamic = "force-dynamic";
 
 export default function ResetPasswordPage() {
   return <ResetPasswordManager />;

@@ -4,18 +4,11 @@ import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
 import { getRequestLog } from "@/lib/request-log";
 import { commentMessages, userMessages } from "@/lib/messages";
-import { ServerSession } from "@/utils/session";
 import { validateCuid } from "@/schemas/ids";
-
-import {
-  ensureCommentDeleteAccess,
-  deleteComment,
-} from "@/features/parts/postDetails/services/server/comment";
-import { applyNegativeSignal } from "@/features/parts/interaction/services/negativeSignal";
-import {
-  broadcastDeleteCommentEvents,
-  isCommentRouteError,
-} from "@/features/parts/postDetails/utils/server/comments";
+import { ensureCommentDeleteAccess } from "@/features/parts/postDetails/services/server/comment";
+import { isCommentRouteError } from "@/features/parts/postDetails/utils/server/comments";
+import { validateSession } from "@/features/services/server";
+import { processCommentDeletion } from "@/features/parts/postDetails/services/server";
 
 const ROUTE = "/api/post/[postId]/comments/[commentId]/delete";
 
@@ -38,68 +31,26 @@ export async function DELETE(request: Request, routeContext: RouteParams) {
       return apiResponse(false, {}, userMessages.invalidParams, 400, requestId);
     }
 
-    const session = await ServerSession();
-    if (!session?.user?.id) {
-      log.warn("Delete comment attempted without authentication");
-      return apiResponse(
-        false,
-        null,
-        commentMessages.unauthorized,
-        401,
-        requestId
-      );
-    }
+    const session = await validateSession(log, requestId);
+    if (!session.ok) return session.response;
+    const viewer = session?.user;
 
     const access = await ensureCommentDeleteAccess({
       commentId: validatedCommentId.data,
       postId: validatedPostId.data,
-      actorId: session.user.id,
+      actorId: viewer.id,
     });
 
-    const result = await deleteComment({
+    const result = await processCommentDeletion({
       commentId: access.comment.id,
       postId: validatedPostId.data,
       parentId: access.comment.parentId,
       postAuthorId: access.post.authorId,
-      deletedById: session.user.id,
+      deletedById: viewer.id,
+      commentAuthorId: access.comment.authorId,
+      requestId,
+      route: ROUTE,
     });
-
-    if (
-      access.comment.authorId &&
-      access.comment.authorId !== session.user.id
-    ) {
-      void applyNegativeSignal({
-        actorId: session.user.id,
-        targetUserId: access.comment.authorId,
-        type: "deleteComment",
-      }).catch((error) => {
-        log.warn(
-          {
-            err: error,
-            actorId: session.user.id,
-            targetUserId: access.comment.authorId,
-          },
-          "Failed to record delete comment negative signal"
-        );
-      });
-    }
-
-    void broadcastDeleteCommentEvents({
-      postId: validatedPostId.data,
-      postAuthorId: access.post.authorId,
-      commentId: access.comment.id,
-      parentId: access.comment.parentId ?? null,
-      commentsCount: result.commentsCount,
-      sharesCount: result.sharesCount,
-      reactionSummary: result.reactionSummary,
-      initiatorId: session.user.id,
-      log,
-    });
-
-    log.info(
-      { commentId: result.id, postId: validatedPostId.data },
-      "Comment deleted successfully"
-    );
 
     return apiResponse(
       true,

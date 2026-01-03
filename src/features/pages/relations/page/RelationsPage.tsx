@@ -1,17 +1,14 @@
 "use client";
 
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useRef } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
-
 import { RELATION_TABS, type RelationTab, isRelationTab } from "../types";
-import { RelationsSidebarNav } from "../components/RelationsSidebarNav";
-import { RelationsList } from "../components/RelationsList";
-import { useRelationsInfiniteList } from "../hooks/useRelationsInfiniteList";
-import { useRelationsRealtime } from "../hooks/useRelationsRealtime";
+import { RelationsSidebarNav, RelationsList } from "../components";
+import { useRelationsRealtime, useRelationsInfiniteList } from "../hooks";
+import { Suspense } from "react";
 
-export function RelationsPage() {
+function RelationsPageInner() {
   useRelationsRealtime();
 
   const searchParams = useSearchParams();
@@ -37,7 +34,7 @@ export function RelationsPage() {
     isFetchingNextPage,
   } = useRelationsInfiniteList({ tab: currentTab, initialLimit: 20 });
 
-  const items = useMemo(() => data?.items ?? [], [data?.items]);
+  const items = data?.items ?? [];
 
   useInfiniteScroll({
     rootRef: listRef,
@@ -65,19 +62,36 @@ export function RelationsPage() {
   );
 
   return (
-    <div className=" bg-white px-4 pt-4 lg:px-8">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-semibold text-primary">Relations</h1>
-        <p className="text-sm text-muted-foreground">
+    <div
+      className="bg-white px-4 pt-4 lg:px-8"
+      data-testid="relations-page"
+      role="main"
+      aria-label="Relations page"
+    >
+      <header className="space-y-1" data-testid="relations-header">
+        <h1
+          className="text-2xl font-semibold text-primary"
+          data-testid="relations-title"
+        >
+          Relations
+        </h1>
+        <p
+          className="text-sm text-muted-foreground"
+          data-testid="relations-description"
+        >
           Review followers, follow requests, and friends in one dashboard.
         </p>
       </header>
 
-      <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start lg:gap-6 h-[calc(100vh-8rem)]">
+      <div
+        className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start lg:gap-6 h-[calc(100vh-8rem)]"
+        data-testid="relations-layout"
+      >
         <RelationsSidebarNav
           value={currentTab}
           onChange={handleTabChange}
           disabled={isFetchingNextPage}
+          testId="relations-sidebar-nav"
         />
 
         <RelationsList
@@ -90,8 +104,17 @@ export function RelationsPage() {
           onRetry={refetch}
           listRef={listRef}
           sentinelRef={sentinelRef}
+          testId="relations-list"
         />
       </div>
     </div>
+  );
+}
+
+export function RelationsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <RelationsPageInner />
+    </Suspense>
   );
 }

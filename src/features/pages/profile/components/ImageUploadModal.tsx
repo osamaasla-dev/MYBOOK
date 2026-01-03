@@ -1,23 +1,20 @@
 "use client";
 
 import { Upload } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
-import { useMediaUpload } from "@/features/parts/media/hooks/useMediaUpload";
-import { useMediaPreview } from "@/features/parts/post/components/PostModal/hooks/useMediaPreview";
 import { ModalShell } from "@/features/parts/post/components/PostModal/ModalShell";
 import { ModalHeader } from "@/features/parts/post/components/PostModal/ModalHeader";
-import { useState } from "react";
 
-type UploadSuccessPayload = {
-  url: string;
-  publicId: string;
-};
+import { useImageUploadModal } from "./ImageUploadModal/hooks/useImageUploadModal";
+import type { UploadSuccessPayload } from "./ImageUploadModal/hooks/useImageUploadModal";
 
 interface ImageUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
   onSuccess: (payload: UploadSuccessPayload) => Promise<void>;
+  testId?: string;
 }
 
 export function ImageUploadModal({
@@ -25,69 +22,23 @@ export function ImageUploadModal({
   onClose,
   title,
   onSuccess,
+  testId = "image-upload-modal",
 }: ImageUploadModalProps) {
-  const mediaUploadMutation = useMediaUpload();
-
-  // State for error message
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  // Create unique key for this modal instance to avoid conflicts
-
-  const { mediaPreviews, appendMedia, removeMedia, clearMedia } =
-    useMediaPreview({
-      isOpen,
-    });
-
-  const [isUpdating, setIsUpdating] = useState(false);
-
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      appendMedia({ file });
-      // Clear error when selecting new file
-      setErrorMessage(null);
-    }
-  };
-
-  const handleConfirm = async () => {
-    if (mediaPreviews.length === 0) return;
-
-    try {
-      // Clear previous error
-      setErrorMessage(null);
-      setIsUpdating(true);
-
-      // Upload the first (and only) image
-      const uploadedMedia = await mediaUploadMutation.mutateAsync({
-        file: mediaPreviews[0].file,
-        context: title.toLowerCase().includes("avatar") ? "avatar" : "cover",
-      });
-      console.log(uploadedMedia);
-      const asset = uploadedMedia.asset;
-      if (asset?.url && asset?.publicId) {
-        await onSuccess({ url: asset.url, publicId: asset.publicId });
-
-        clearMedia();
-        onClose();
-      } else {
-        throw new Error("الصورة المرفوعة تفتقد البيانات اللازمة");
-      }
-    } catch (error: unknown) {
-      const Message = error instanceof Error ? error.message : "Unknown error";
-      console.error("Upload failed:", error);
-      setErrorMessage(Message);
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
-  const handleCancel = () => {
-    clearMedia();
-    setErrorMessage(null);
-    onClose();
-  };
-
-  const isLoading = mediaUploadMutation.isPending;
+  const {
+    mediaPreviews,
+    removeMedia,
+    handleFileSelect,
+    handleConfirm,
+    handleCancel,
+    errorMessage,
+    isLoading,
+    isUpdating,
+  } = useImageUploadModal({
+    isOpen,
+    title,
+    onClose,
+    onSuccess,
+  });
 
   if (!isOpen) return null;
 
@@ -95,7 +46,7 @@ export function ImageUploadModal({
     <ModalShell onClose={onClose} ariaLabel={`${title} modal`}>
       <ModalHeader title={title} onClose={onClose} />
 
-      <div className="p-6 space-y-4">
+      <div className="p-6 space-y-4" data-testid={testId}>
         {/* File Input - Only show if no image selected */}
         {mediaPreviews.length === 0 && (
           <div className="flex justify-center">
@@ -106,9 +57,13 @@ export function ImageUploadModal({
                 onChange={handleFileSelect}
                 className="hidden"
                 disabled={isLoading || isUpdating}
+                aria-label="Select image file"
               />
               <div className="flex flex-col items-center gap-2 rounded-lg border-2 border-dashed border-muted-foreground/25 p-6 hover:border-muted-foreground/50 transition-colors">
-                <Upload className="size-8 text-muted-foreground" />
+                <Upload
+                  className="size-8 text-muted-foreground"
+                  aria-hidden="true"
+                />
                 <span className="text-sm text-muted-foreground">
                   Click to select image
                 </span>
@@ -119,7 +74,7 @@ export function ImageUploadModal({
 
         {/* Preview */}
         {mediaPreviews.length > 0 && (
-          <div className="relative">
+          <div className="relative" data-testid={`${testId}-preview`}>
             <img
               src={mediaPreviews[0].url}
               alt="Preview"
@@ -130,6 +85,8 @@ export function ImageUploadModal({
               className="opacity-50 hover:opacity-100 text-sm p-0 px-1 h-fit absolute top-2 right-2 bg-black text-white cursor-pointer"
               onClick={() => removeMedia(mediaPreviews[0].id)}
               disabled={isLoading}
+              aria-label="Remove image"
+              data-testid={`${testId}-remove-preview`}
             >
               remove
             </Button>
@@ -138,7 +95,12 @@ export function ImageUploadModal({
 
         {/* Error Message */}
         {errorMessage && (
-          <div className="text-red-500 text-sm text-center bg-red-50 p-2 rounded">
+          <div
+            className="text-red-500 text-sm text-center bg-red-50 p-2 rounded"
+            role="alert"
+            aria-live="assertive"
+            data-testid={`${testId}-error`}
+          >
             {errorMessage}
           </div>
         )}
@@ -149,12 +111,14 @@ export function ImageUploadModal({
             className="text-black border-2 border-secondary bg-white hover:bg-secondary/80 cursor-pointer"
             onClick={handleCancel}
             disabled={isLoading || isUpdating}
+            data-testid={`${testId}-cancel`}
           >
             Cancel
           </Button>
           <Button
             onClick={handleConfirm}
             disabled={mediaPreviews.length === 0 || isLoading || isUpdating}
+            data-testid={`${testId}-confirm`}
           >
             {isLoading || isUpdating ? "Processing..." : "Confirm"}
           </Button>

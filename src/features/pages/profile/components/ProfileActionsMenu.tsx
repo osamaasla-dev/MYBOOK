@@ -20,6 +20,7 @@ interface ProfileActionsMenuProps {
   onCoverRemove?: () => void;
   hasAvatar?: boolean;
   hasCover?: boolean;
+  testId?: string;
 }
 
 export function ProfileActionsMenu({
@@ -30,6 +31,7 @@ export function ProfileActionsMenu({
   onCoverRemove,
   hasAvatar,
   hasCover,
+  testId = "profile-actions-menu",
 }: ProfileActionsMenuProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -43,13 +45,15 @@ export function ProfileActionsMenu({
             triggerClassName
           )}
           aria-label="Profile actions"
+          data-testid={testId}
         >
-          <Camera className="size-6" />
+          <Camera className="size-6" aria-hidden="true" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
         className="min-w-[140px] border-none bg-white shadow-md"
+        data-testid={`${testId}-content`}
       >
         <DropdownMenuItem
           className="cursor-pointer focus:bg-secondary"
@@ -58,8 +62,10 @@ export function ProfileActionsMenu({
             setIsMenuOpen(false);
             onAvatarChange?.();
           }}
+          data-testid={`${testId}-change-avatar`}
         >
-          <Image className="mr-2 size-4" />
+          {/* eslint-disable-next-line jsx-a11y/alt-text */}
+          <Image className="mr-2 size-4" aria-hidden="true" />
           Change Avatar
         </DropdownMenuItem>
         <DropdownMenuItem
@@ -70,8 +76,9 @@ export function ProfileActionsMenu({
             onAvatarRemove?.();
           }}
           disabled={!hasAvatar}
+          data-testid={`${testId}-remove-avatar`}
         >
-          <X className="mr-2 size-4" />
+          <X className="mr-2 size-4" aria-hidden="true" />
           Remove Avatar
         </DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -82,8 +89,9 @@ export function ProfileActionsMenu({
             setIsMenuOpen(false);
             onCoverChange?.();
           }}
+          data-testid={`${testId}-change-cover`}
         >
-          <Camera className="mr-2 size-4" />
+          <Camera className="mr-2 size-4" aria-hidden="true" />
           Change Cover
         </DropdownMenuItem>
         <DropdownMenuItem
@@ -94,8 +102,9 @@ export function ProfileActionsMenu({
             onCoverRemove?.();
           }}
           disabled={!hasCover}
+          data-testid={`${testId}-remove-cover`}
         >
-          <X className="mr-2 size-4" />
+          <X className="mr-2 size-4" aria-hidden="true" />
           Remove Cover
         </DropdownMenuItem>
       </DropdownMenuContent>

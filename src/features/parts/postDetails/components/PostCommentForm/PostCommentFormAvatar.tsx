@@ -36,6 +36,7 @@ export function PostCommentFormAvatar({
           "flex animate-pulse items-center justify-center rounded-full bg-muted",
           imageClassName
         )}
+        data-testid="comment-avatar-loading"
       />
     );
   }
@@ -45,6 +46,7 @@ export function PostCommentFormAvatar({
       {...avatarProps}
       className={className}
       imageClassName={imageClassName}
+      data-testid="comment-avatar"
     />
   );
 }

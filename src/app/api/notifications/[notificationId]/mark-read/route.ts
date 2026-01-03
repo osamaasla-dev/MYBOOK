@@ -2,15 +2,13 @@ import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
 import { notificationMessages } from "@/lib/messages";
 import { getRequestLog } from "@/lib/request-log";
-import { ServerSession } from "@/utils/session";
+import { validateSession } from "@/features/services/server";
 import { markNotificationAsRead } from "@/features/parts/notifications/services/server";
 
 const ROUTE = "/api/notifications/[notificationId]/mark-read";
 
 type RouteParams = {
-  params: {
-    notificationId?: string;
-  };
+  params: Promise<{ notificationId: string }>;
 };
 
 export async function POST(_request: Request, { params }: RouteParams) {
@@ -31,26 +29,14 @@ export async function POST(_request: Request, { params }: RouteParams) {
       );
     }
 
-    const session = await ServerSession();
+    const session = await validateSession(log, requestId);
+    if (!session.ok) return session.response;
+    const viewer = session.user;
 
-    if (!session?.user?.id) {
-      log.warn(notificationMessages.unauthorized);
-      return apiResponse(
-        false,
-        {},
-        notificationMessages.unauthorized,
-        401,
-        requestId
-      );
-    }
-
-    const result = await markNotificationAsRead(
-      session.user.id,
-      notificationId
-    );
+    const result = await markNotificationAsRead(viewer.id, notificationId);
 
     log.info(
-      { userId: session.user.id, notificationId, updated: result.count },
+      { userId: viewer.id, notificationId, updated: result.count },
       notificationMessages.markReadSuccess
     );
 

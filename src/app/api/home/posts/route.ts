@@ -1,7 +1,7 @@
 import { apiResponse } from "@/lib/apiResponse";
 import { getRequestLog } from "@/lib/request-log";
-import { ServerSession } from "@/utils/session";
-import { genericMessages, userMessages } from "@/lib/messages";
+import { validateSession } from "@/features/services/server";
+import { genericMessages } from "@/lib/messages";
 import { normalizeError } from "@/lib/http/normalizeError";
 import { getImportantUsersForFeed } from "@/features/pages/home/services/posts/user-ranking";
 import {
@@ -9,6 +9,7 @@ import {
   type FeedPageParams,
 } from "@/features/pages/home/services/posts/post-ranking";
 import { fetchFeedPostsForViewer } from "@/features/pages/home/services/posts/feed";
+import { parseFeedParams } from "@/features/pages/home/services/utils";
 const ROUTE = "/api/home/posts";
 
 export async function GET(request: Request) {
@@ -16,51 +17,26 @@ export async function GET(request: Request) {
 
   try {
     log.info("Feed posts request started");
-    const session = await ServerSession();
-
-    if (!session?.user?.id) {
-      log.warn(userMessages.unauthorized);
-      return apiResponse(false, {}, userMessages.unauthorized, 401, requestId);
-    }
+    const session = await validateSession(log, requestId);
+    if (!session.ok) return session.response;
+    const viewer = session.user;
 
     const { searchParams } = new URL(request.url);
-    const cursorParam = searchParams.get("cursor");
-    const pageSizeParam = searchParams.get("pageSize");
-
-    const cursor = cursorParam ? Number(cursorParam) : undefined;
-    if (cursorParam && Number.isNaN(cursor)) {
-      log.warn("Invalid cursor param");
-      return apiResponse(false, {}, userMessages.invalidParams, 400, requestId);
+    const parsedParams = parseFeedParams(searchParams, log, requestId);
+    if (parsedParams.error) {
+      return parsedParams.error;
     }
 
-    let pageSize: number | undefined;
-    if (pageSizeParam) {
-      const parsed = Number(pageSizeParam);
-      if (Number.isNaN(parsed) || parsed <= 0) {
-        log.warn("Invalid pageSize param");
-        const responsePayload = {
-          posts: [],
-          nextCursor: null,
-        };
-        return apiResponse(
-          false,
-          responsePayload,
-          userMessages.invalidParams,
-          400,
-          requestId
-        );
-      }
-      pageSize = parsed;
-    }
+    const { cursor, pageSize } = parsedParams;
 
-    const importantUsers = await getImportantUsersForFeed(session.user.id);
+    const importantUsers = await getImportantUsersForFeed(viewer.id);
     log.info(
-      { viewerId: session.user.id, importantUsers: importantUsers.length },
+      { viewerId: viewer.id, importantUsers: importantUsers.length },
       "Important users resolved"
     );
 
     const feedParams: FeedPageParams = {
-      viewerId: session.user.id,
+      viewerId: viewer.id,
       importantUsers,
       cursor,
       pageSize,
@@ -69,7 +45,7 @@ export async function GET(request: Request) {
     const page = await getRankedFeedPage(feedParams);
 
     const posts = await fetchFeedPostsForViewer({
-      viewerId: session.user.id,
+      viewerId: viewer.id,
       postIds: page.postsIds,
     });
 
@@ -80,7 +56,7 @@ export async function GET(request: Request) {
 
     log.info(
       {
-        viewerId: session.user.id,
+        viewerId: viewer.id,
         fetchedPosts: posts.length,
         nextCursor: responsePayload.nextCursor,
         cacheHit: page.cacheHit,

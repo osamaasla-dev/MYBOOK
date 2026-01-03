@@ -1,8 +1,10 @@
 import {
   SignUpManager,
   getSignUpPageMetadata,
-} from "@/features/Auth/SignUp/page";
+} from "@/features/auth/signup/page";
 import { getCachedSiteName } from "@/lib/settings";
+
+export const dynamic = "force-dynamic";
 
 export default async function SignupPage() {
   const siteName = await getCachedSiteName();

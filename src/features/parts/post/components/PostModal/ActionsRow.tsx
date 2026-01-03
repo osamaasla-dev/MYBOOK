@@ -15,16 +15,30 @@ export type ComposerActionItem = {
 type ActionsRowProps = {
   actionItems: ComposerActionItem[];
   onFileSelect?: (file: File, action: ComposerActionItem) => void;
+  testId?: string;
 };
 
-export function ActionsRow({ actionItems, onFileSelect }: ActionsRowProps) {
+export function ActionsRow({
+  actionItems,
+  onFileSelect,
+  testId,
+}: ActionsRowProps) {
   return (
-    <div className="flex items-center justify-between rounded-xl border border-dashed border-border p-2">
+    <div
+      className="flex items-center justify-between rounded-xl border border-dashed border-border p-2"
+      role="group"
+      aria-label="Media upload options"
+      data-testid={testId || "actions-row"}
+    >
       <div className="flex items-center gap-2 text-sm font-semibold">
         Add to your post
       </div>
-      <div className="flex items-center gap-3 text-muted-foreground">
-        {actionItems.map((action) => {
+      <div
+        className="flex items-center gap-3 text-muted-foreground"
+        role="group"
+        aria-label="Media upload actions"
+      >
+        {actionItems.map((action, index) => {
           const {
             icon: Icon,
             label,
@@ -32,6 +46,7 @@ export function ActionsRow({ actionItems, onFileSelect }: ActionsRowProps) {
             badgeClassName,
             inputAccept,
             inputId,
+            mediaType,
           } = action;
 
           return (
@@ -39,6 +54,12 @@ export function ActionsRow({ actionItems, onFileSelect }: ActionsRowProps) {
               key={`composer-action-${label}`}
               htmlFor={inputId}
               className={`cursor-pointer rounded-full px-4 py-2 text-sm font-medium transition hover:opacity-90 ${badgeClassName}`}
+              aria-label={`Upload ${mediaType || "file"}: ${label}`}
+              data-testid={
+                testId
+                  ? `${testId}-action-${index}`
+                  : `actions-row-action-${index}`
+              }
             >
               <input
                 type="file"
@@ -51,13 +72,35 @@ export function ActionsRow({ actionItems, onFileSelect }: ActionsRowProps) {
                   onFileSelect?.(file, action);
                   event.target.value = "";
                 }}
+                aria-describedby={
+                  testId
+                    ? `${testId}-action-${index}-description`
+                    : `actions-row-action-${index}-description`
+                }
               />
               <div className="flex items-center gap-2">
                 <Icon
                   className={`size-6 ${iconClassName}`}
                   aria-hidden="true"
+                  data-testid={
+                    testId
+                      ? `${testId}-action-${index}-icon`
+                      : `actions-row-action-${index}-icon`
+                  }
                 />
-                <span className="text-xs font-semibold uppercase tracking-wide">
+                <span
+                  className="text-xs font-semibold uppercase tracking-wide"
+                  id={
+                    testId
+                      ? `${testId}-action-${index}-description`
+                      : `actions-row-action-${index}-description`
+                  }
+                  data-testid={
+                    testId
+                      ? `${testId}-action-${index}-label`
+                      : `actions-row-action-${index}-label`
+                  }
+                >
                   {label}
                 </span>
               </div>

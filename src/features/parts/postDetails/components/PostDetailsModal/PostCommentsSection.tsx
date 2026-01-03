@@ -4,7 +4,7 @@ import { type RefObject } from "react";
 
 import { EmptyState, QueryError, QueryLoading } from "@/components";
 import type { PostCommentListItem } from "../../services/client/fetchPostCommentsApi";
-import { CommentListItem } from "./CommentListItem";
+import { CommentListItem } from "./Comments/CommentListItem";
 
 export type PostCommentsSectionProps = {
   comments: PostCommentListItem[];
@@ -34,12 +34,28 @@ export function PostCommentsSection({
   postId,
 }: PostCommentsSectionProps) {
   return (
-    <div className="bg-secondary/5 px-3 py-4">
-      {areCommentsLoading && <QueryLoading />}
-      {areCommentsError && <QueryError onRetry={onRetry} className="mt-2" />}
+    <div
+      className="bg-secondary/5 px-3 py-4"
+      role="region"
+      aria-label="Comments section"
+      data-testid="post-comments-section"
+    >
+      {areCommentsLoading && <QueryLoading data-testid="comments-loading" />}
+      {areCommentsError && (
+        <QueryError
+          onRetry={onRetry}
+          className="mt-2"
+          data-testid="comments-error"
+        />
+      )}
 
       {!areCommentsLoading && comments.length > 0 && (
-        <ul className="space-y-2">
+        <ul
+          className="space-y-2"
+          role="list"
+          aria-label="Comments list"
+          data-testid="comments-list"
+        >
           {comments.map((comment) => (
             <CommentListItem
               key={comment.id}
@@ -52,12 +68,21 @@ export function PostCommentsSection({
         </ul>
       )}
 
-      {commentsEmpty && <EmptyState title="No comments yet" />}
+      {commentsEmpty && (
+        <EmptyState title="No comments yet" data-testid="comments-empty" />
+      )}
 
-      <div ref={sentinelRef} className="h-1 w-full" />
+      <div
+        ref={sentinelRef}
+        className="h-1 w-full"
+        data-testid="comments-sentinel"
+      />
 
       {isFetchingNextPage && (
-        <p className="mt-2 text-center text-xs text-muted-foreground">
+        <p
+          className="mt-2 text-center text-xs text-muted-foreground"
+          data-testid="comments-loading-more"
+        >
           Loading more comments…
         </p>
       )}
@@ -66,7 +91,10 @@ export function PostCommentsSection({
         !areCommentsLoading &&
         !areCommentsError &&
         !commentsEmpty && (
-          <p className="mt-2 text-center text-xs text-muted-foreground">
+          <p
+            className="mt-2 text-center text-xs text-muted-foreground"
+            data-testid="comments-no-more"
+          >
             No more comments
           </p>
         )}

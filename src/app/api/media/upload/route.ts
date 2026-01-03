@@ -3,7 +3,7 @@ import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
 import { uploadMessages } from "@/lib/messages";
 import { getRequestLog } from "@/lib/request-log";
-import { ServerSession } from "@/utils/session";
+import { validateSession } from "@/features/services/server";
 import { handleMediaUpload } from "@/features/parts/media/utils/handleMediaUpload";
 import { isMediaUploadError } from "@/features/parts/media/utils/errors";
 
@@ -17,8 +17,24 @@ export async function POST(req: Request) {
   const { requestId, log } = await getRequestLog({ route: ROUTE });
   try {
     log.info("Media upload started");
-    const session = await ServerSession();
-    const result = await handleMediaUpload({ req, session, log, requestId });
+    const session = await validateSession(log, requestId);
+    if (!session.ok) return session.response;
+    const viewer = session.user;
+
+    // Pre-upload validation
+    const formData = await req.formData();
+    const file = formData.get("file") as File;
+
+    if (!file) {
+      return apiResponse(false, null, "No file provided", 400, requestId);
+    }
+
+    const result = await handleMediaUpload({
+      formData,
+      userId: viewer.id,
+      log,
+      requestId,
+    });
     if (result.error) return result.error;
     return apiResponse(true, result, uploadMessages.success, 200, requestId);
   } catch (error: unknown) {

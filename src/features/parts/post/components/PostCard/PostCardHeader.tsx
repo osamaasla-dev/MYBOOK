@@ -8,12 +8,14 @@ type PostCardHeaderProps = {
   author: FeedPost["author"];
   timestamp: string | Date;
   post?: FeedPost;
+  testId?: string;
 };
 
 export function PostCardHeader({
   author,
   timestamp,
   post,
+  testId,
 }: PostCardHeaderProps) {
   const formattedTime = timestamp ? formatRelativeTime(timestamp) : null;
   const profileHref = author.username
@@ -26,40 +28,80 @@ export function PostCardHeader({
   const isSelf = author.isSelf;
 
   return (
-    <header className="flex items-start gap-3 px-4">
+    <header className="flex items-start gap-3 px-4" data-testid={testId}>
       {profileHref ? (
-        <Link href={profileHref}>
-          <AvatarBubble name={author.name} avatarUrl={author.avatarUrl} />
+        <Link href={profileHref} data-testid={`${testId}-avatar-link`}>
+          <AvatarBubble
+            name={author.name}
+            avatarUrl={author.avatarUrl}
+            testId={`${testId}-avatar`}
+          />
         </Link>
       ) : (
-        <AvatarBubble name={author.name} avatarUrl={author.avatarUrl} />
+        <AvatarBubble
+          name={author.name}
+          avatarUrl={author.avatarUrl}
+          testId={`${testId}-avatar`}
+        />
       )}
       <div className="flex-1">
-        <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-primary">
+        <div
+          className="flex flex-wrap items-center gap-2 text-sm font-semibold text-primary"
+          data-testid={`${testId}-author-info`}
+        >
           {profileHref ? (
-            <Link href={profileHref}>{author.name}</Link>
+            <Link
+              href={profileHref}
+              data-testid={`${testId}-author-link`}
+              id={`${testId}-author`}
+            >
+              {author.name}
+            </Link>
           ) : (
-            <span>{author.name}</span>
+            <span data-testid={`${testId}-author-name`} id={`${testId}-author`}>
+              {author.name}
+            </span>
           )}
 
           {showRelationshipBadges && (
-            <>
-              <span className="rounded-full border border-border/70 px-2 py-0.5 text-xs font-semibold text-muted-foreground">
+            <div
+              className="flex flex-wrap items-center gap-2"
+              data-testid={`${testId}-badges`}
+            >
+              <span
+                className="rounded-full border border-border/70 px-2 py-0.5 text-xs font-semibold text-muted-foreground"
+                data-testid={`${testId}-following-badge`}
+                aria-label={`Following status: ${followLabel}`}
+              >
                 {followLabel}
               </span>
 
-              <span className="rounded-full border border-border/70 px-2 py-0.5 text-xs font-semibold text-muted-foreground">
+              <span
+                className="rounded-full border border-border/70 px-2 py-0.5 text-xs font-semibold text-muted-foreground"
+                data-testid={`${testId}-friend-badge`}
+                aria-label={`Friend status: ${friendLabel}`}
+              >
                 {friendLabel}
               </span>
-            </>
+            </div>
           )}
         </div>
         {formattedTime && (
-          <p className="text-xs text-muted-foreground">{formattedTime}</p>
+          <p
+            className="text-xs text-muted-foreground"
+            data-testid={`${testId}-timestamp`}
+            aria-label={`Posted ${formattedTime}`}
+          >
+            {formattedTime}
+          </p>
         )}
       </div>
       {isSelf && post && (
-        <PostActionsMenu post={post} triggerClassName="ml-auto" />
+        <PostActionsMenu
+          post={post}
+          triggerClassName="ml-auto"
+          testId={`${testId}-actions-menu`}
+        />
       )}
     </header>
   );

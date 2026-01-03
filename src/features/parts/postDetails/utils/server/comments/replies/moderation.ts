@@ -5,7 +5,7 @@ import {
   MissingModerationAPIKeyError,
   moderateText,
   ModerationProviderError,
-} from "@/features/parts/moderation/services";
+} from "@/features/parts/moderation/services/server";
 
 export async function checkReplyModeration(
   content: string,

@@ -3,8 +3,8 @@
 import { useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 
-import type { UserSearchSuggestion } from "@/features/parts/search/services/client/userSearchApi";
-import { UserSearchBox } from "@/features/parts/search/components/UserSearchBox";
+import type { UserSearchSuggestion } from "@/features/pages/search/services/client/userSearchApi";
+import { UserSearchBox } from "@/features/pages/search/components/UserSearchBox";
 
 export function NavbarSearch() {
   const router = useRouter();
@@ -33,6 +33,8 @@ export function NavbarSearch() {
       className="relative w-full max-w-md"
       ref={containerRef}
       data-testid="navbar-search"
+      role="search"
+      aria-label="Search users"
     >
       <UserSearchBox
         debounceMs={300}

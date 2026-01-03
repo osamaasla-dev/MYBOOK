@@ -7,7 +7,7 @@ import friendMessages from "@/lib/messages/addFriend";
 import {
   type FriendRequestApiResponse,
   sendFriendRequestApi,
-} from "../services/addFriendApi";
+} from "../services/client";
 import { profileQueryKey } from "@/features/pages/profile/hooks/useProfile";
 import type { ProfileRouteData } from "@/features/pages/profile/types";
 import { relationsQueryKey } from "@/features/pages/relations/hooks/useRelationsInfiniteList";
@@ -23,7 +23,7 @@ export function useFriendRequest({ profileUsername }: UseFriendRequestArgs) {
   const queryClient = useQueryClient();
   const queryKey = profileQueryKey(profileUsername);
 
-  return useMutation<FriendRequestApiResponse, Error, void>({
+  return useMutation<FriendRequestApiResponse<"REQUESTED">, Error, void>({
     mutationKey: sendFriendRequestMutationKey(profileUsername),
     mutationFn: () => sendFriendRequestApi({ username: profileUsername }),
     onMutate: async () => {

@@ -3,23 +3,19 @@ import { userMessages } from "@/lib/messages";
 import { getRequestLog } from "@/lib/request-log";
 import type { Logger } from "pino";
 
+import { fetchProfileUserByUsername } from "@/features/pages/profile/utils";
 import {
-  fetchProfileUserByUsername,
-  getViewerSession,
-} from "@/features/pages/profile/utils";
-import {
-  fetchViewerUsername,
   normalizeFollowUsername,
   validateFollowTarget,
 } from "@/features/parts/follow/utils";
-import { extractClientIp } from "@/features/parts/follow/utils/request";
-import { consumeRateLimit } from "@/features/utils/rateLimit";
+import { validateSession } from "@/features/services/server";
+import { checkRateLimit } from "@/features/parts/ratelimit/services";
 import { isBlock } from "@/features/parts/block/utils/server";
 import {
-  PROFILE_VIEW_RATE_MAX,
-  PROFILE_VIEW_RATE_NAMESPACE,
-  PROFILE_VIEW_RATE_WINDOW_SECONDS,
-} from "@/features/pages/profile/constants";
+  FOLLOW_RATE_MAX,
+  FOLLOW_RATE_NAMESPACE,
+  FOLLOW_RATE_WINDOW_SECONDS,
+} from "@/features/parts/ratelimit/constants";
 import type { ProfileUserRecord } from "@/features/pages/profile/types";
 
 export type FollowRouteParams = { username?: string };
@@ -73,52 +69,31 @@ export async function prepareFollowAction(
 
   try {
     log.info(`${actionLabel} request started`);
-    const { viewerId } = await getViewerSession();
-    const clientIp = extractClientIp(request);
+    const session = await validateSession(log, requestId);
+    if (!session.ok) return { ok: false, response: session.response };
+    const viewer = session.user;
     const params = await paramsPromise;
 
-    await consumeRateLimit({
-      namespace: PROFILE_VIEW_RATE_NAMESPACE,
-      identifiers: [
-        { key: "user", value: viewerId },
-        { key: "ip", value: clientIp },
-      ],
-      windowSeconds: PROFILE_VIEW_RATE_WINDOW_SECONDS,
-      maxRequests: PROFILE_VIEW_RATE_MAX,
+    const limited = await checkRateLimit({
+      namespace: FOLLOW_RATE_NAMESPACE,
+      viewerId: viewer.id,
+      windowSeconds: FOLLOW_RATE_WINDOW_SECONDS,
+      maxRequests: FOLLOW_RATE_MAX,
+      log,
+      request,
+      requestId,
     });
-
-    // if (limited) {
-    //   log.warn({ viewerId, clientIp }, `${actionLabel} request rate-limited`);
-    //   return {
-    //     ok: false,
-    //     response: apiResponse(
-    //       false,
-    //       {},
-    //       userMessages.rateLimited,
-    //       429,
-    //       requestId
-    //     ),
-    //   };
-    // }
-
-    if (!viewerId) {
-      log.warn(`${actionLabel} request unauthorized`);
+    if (!limited.ok) {
       return {
         ok: false,
-        response: apiResponse(
-          false,
-          {},
-          userMessages.unauthorized,
-          401,
-          requestId
-        ),
+        response: limited.response,
       };
     }
-    const viewer = await fetchViewerUsername(viewerId);
-    const viewerUsername = viewer?.username;
-    const viewerName = viewer?.name ?? "";
+
+    const viewerUsername = viewer.username;
+    const viewerName = viewer.name ?? "";
     if (!viewerUsername) {
-      log.error({ viewerId }, "Viewer record missing");
+      log.error("Viewer record missing");
       return {
         ok: false,
         response: apiResponse(false, {}, userMessages.failed, 500, requestId),
@@ -141,7 +116,7 @@ export async function prepareFollowAction(
     }
 
     const targetProfile = await fetchProfileUserByUsername(normalizedUsername);
-    const validation = validateFollowTarget(targetProfile, viewerId);
+    const validation = validateFollowTarget(targetProfile, viewer.id);
     if (!validation.ok) {
       switch (validation.reason) {
         case "NOT_FOUND": {
@@ -175,11 +150,11 @@ export async function prepareFollowAction(
 
     const { profile: target, requiresApproval } = validation;
 
-    const blockStatus = await isBlock(viewerId, target.id);
+    const blockStatus = await isBlock(viewer.id, target.id);
 
     if (blockStatus.anyBlock) {
       log.warn(
-        { viewerId, targetId: target.id },
+        { viewerId: viewer.id, targetId: target.id },
         `${actionLabel} blocked due to existing block`
       );
       return {
@@ -193,7 +168,7 @@ export async function prepareFollowAction(
       context: {
         requestId,
         log,
-        viewerId,
+        viewerId: viewer.id,
         viewerName,
         viewerUsername,
         target,

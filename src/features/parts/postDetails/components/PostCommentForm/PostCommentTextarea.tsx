@@ -10,6 +10,9 @@ type PostCommentTextareaProps = {
   hasError: boolean;
   contentValue: string;
   placeholder?: string;
+  ariaLabel?: string;
+  ariaRequired?: boolean;
+  ariaDescribedBy?: string;
 };
 
 export function PostCommentTextarea({
@@ -18,6 +21,9 @@ export function PostCommentTextarea({
   hasError,
   contentValue,
   placeholder,
+  ariaLabel,
+  ariaRequired,
+  ariaDescribedBy,
 }: PostCommentTextareaProps) {
   const autosizeRef = useLimitedAutosizeTextarea({
     value: contentValue,
@@ -42,6 +48,10 @@ export function PostCommentTextarea({
       ref={mergedRef}
       disabled={disabled}
       aria-invalid={hasError}
+      aria-label={ariaLabel}
+      aria-required={ariaRequired}
+      aria-describedby={ariaDescribedBy}
+      data-testid="comment-textarea"
     />
   );
 }

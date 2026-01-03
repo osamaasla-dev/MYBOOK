@@ -8,12 +8,14 @@ type CommentButtonProps = {
   onClick?: () => void;
   onHover?: () => void;
   disabled?: boolean;
+  testId?: string;
 };
 
 export function CommentButton({
   onClick,
   onHover,
   disabled = false,
+  testId,
 }: CommentButtonProps) {
   const handleHover = disabled ? undefined : onHover;
 
@@ -23,10 +25,18 @@ export function CommentButton({
       onClick={disabled ? undefined : onClick}
       onMouseEnter={handleHover}
       onFocus={handleHover}
-      className="flex flex-1 items-center justify-center rounded-md  bg-transparent px-2 py-2 text-xs text-muted-foreground hover:border-primary/40 hover:bg-secondary disabled:opacity-60"
+      className="flex flex-1 items-center justify-center rounded-md  bg-transparent px-2 py-2 text-xs text-muted-foreground hover:bg-secondary "
+      data-testid={testId}
+      aria-label="Comment on post"
     >
-      <MessageCircle className="mr-2 size-4" aria-hidden="true" />
-      <span className="font-semibold">Comment</span>
+      <MessageCircle
+        className="mr-2 size-4"
+        aria-hidden="true"
+        data-testid={`${testId}-icon`}
+      />
+      <span className="font-semibold" data-testid={`${testId}-text`}>
+        Comment
+      </span>
     </Button>
   );
 }

@@ -3,9 +3,10 @@ import { useEffect, useRef, useState } from "react";
 type Props = {
   text: string;
   collapsedLines: number;
+  testId?: string;
 };
 
-export function CollapsibleText({ text, collapsedLines }: Props) {
+export function CollapsibleText({ text, collapsedLines, testId }: Props) {
   const textRef = useRef<HTMLParagraphElement | null>(null);
 
   const [state, setState] = useState({
@@ -45,7 +46,7 @@ export function CollapsibleText({ text, collapsedLines }: Props) {
   const isCollapsed = state.enabled && !expanded;
 
   return (
-    <div className="rounded-2xl bg-muted/20 px-4 py-4">
+    <div className="rounded-2xl bg-muted/20 px-4 py-4" data-testid={testId}>
       <div
         className="relative"
         style={
@@ -53,13 +54,24 @@ export function CollapsibleText({ text, collapsedLines }: Props) {
             ? { maxHeight: state.maxHeight, overflow: "hidden" }
             : undefined
         }
+        data-testid={`${testId}-content`}
       >
-        <p ref={textRef} dir="auto" className="whitespace-pre-wrap">
+        <p
+          ref={textRef}
+          dir="auto"
+          className="whitespace-pre-wrap"
+          data-testid={`${testId}-text`}
+          aria-label={isCollapsed ? "Collapsed text" : "Expanded text"}
+        >
           {text}
         </p>
 
         {isCollapsed && (
-          <span className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-muted/80 to-transparent" />
+          <span
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-muted/80 to-transparent"
+            aria-hidden="true"
+            data-testid={`${testId}-fade`}
+          />
         )}
       </div>
 
@@ -68,8 +80,14 @@ export function CollapsibleText({ text, collapsedLines }: Props) {
           type="button"
           className="cursor-pointer mt-2 px-1 text-sm font-semibold text-primary"
           onClick={() => setExpanded((p) => !p)}
+          data-testid={`${testId}-toggle`}
+          aria-expanded={expanded}
+          aria-controls={`${testId}-content`}
+          aria-label={expanded ? "Show less text" : "Show more text"}
         >
-          {expanded ? "Show less" : "Show more"}
+          <span data-testid={`${testId}-toggle-text`}>
+            {expanded ? "Show less" : "Show more"}
+          </span>
         </button>
       )}
     </div>

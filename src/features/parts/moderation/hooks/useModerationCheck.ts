@@ -7,7 +7,7 @@ import {
 } from "@tanstack/react-query";
 import { ModerationCheckResult } from "../types/moderationTypes";
 import { CheckModerationInput } from "../schemas/checkModerationSchema";
-import { submitModerationRequest } from "../services";
+import { submitModerationRequest } from "../services/client";
 
 export const MODERATION_MUTATION_KEY = ["moderation", "check"] as const;
 

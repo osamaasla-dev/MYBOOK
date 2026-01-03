@@ -1,29 +1,21 @@
 import { updatePost } from "@/features/parts/post/services/server";
-import { createPostSchema } from "@/features/parts/post/schemas";
 import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
-import { postMessages, moderationMessages } from "@/lib/messages";
+import { postMessages } from "@/lib/messages";
 import { getRequestLog } from "@/lib/request-log";
-import { ServerSession } from "@/utils/session";
+import { validateSession } from "@/features/services/server";
+import { checkRateLimit } from "@/features/parts/ratelimit/services";
 import {
-  MissingModerationAPIKeyError,
-  ModerationProviderError,
-  moderateText,
-  moderateImage,
-  moderateVideo,
-} from "@/features/parts/moderation/services";
-import { clearRankedPostsCache } from "@/features/pages/home/utils/posts/post-ranking/cache";
-import { consumeRateLimit } from "@/features/utils/rateLimit";
-import { extractClientIp } from "@/features/parts/follow/utils/request";
-import {
+  POST_UPDATE_RATE_MAX,
   POST_UPDATE_RATE_NAMESPACE,
   POST_UPDATE_RATE_WINDOW_SECONDS,
-  POST_UPDATE_RATE_MAX,
-} from "@/features/parts/post/constants";
+} from "@/features/parts/ratelimit/constants";
 import {
-  deleteUploadedMediaInputs,
-  extractUploadedMediaCandidates,
-} from "@/features/parts/post/services/server/mediaCleanup";
+  moderatePostContent,
+  validatePostPayload,
+} from "@/features/parts/post/services/server";
+import { clearRankedPostsCache } from "@/features/pages/home/utils/posts/post-ranking/cache";
+import { validateCuid } from "@/schemas/ids";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,181 +28,80 @@ type RouteParams = {
 
 export async function PUT(request: Request, routeContext: RouteParams) {
   const { requestId, log } = await getRequestLog({ route: ROUTE });
-  let cleanupUploadedMedia: ((reason: string) => Promise<void>) | null = null;
-  let uploadedMediaCleanupHandled = false;
-  let uploadedMediaCandidates: ReturnType<
-    typeof extractUploadedMediaCandidates
-  > = [];
 
   try {
     log.info("post update started");
-    const session = await ServerSession();
-    if (!session?.user?.id) {
-      log.warn("Update post attempted without authentication");
-      return apiResponse(
-        false,
-        null,
-        postMessages.unauthorized,
-        401,
-        requestId
-      );
-    }
+    const session = await validateSession(log, requestId);
+    if (!session.ok) return session.response;
+    const viewer = session.user;
 
     // Rate limiting
-    const clientIp = extractClientIp(request);
-    const limited = await consumeRateLimit({
+    const limited = await checkRateLimit({
       namespace: POST_UPDATE_RATE_NAMESPACE,
-      identifiers: [
-        { key: "user", value: session.user.id },
-        { key: "ip", value: clientIp },
-      ],
+      viewerId: viewer.id,
       windowSeconds: POST_UPDATE_RATE_WINDOW_SECONDS,
       maxRequests: POST_UPDATE_RATE_MAX,
+      log,
+      request,
+      requestId,
     });
 
-    if (limited) {
-      log.warn(
-        {
-          userId: session.user.id,
-          ip: clientIp,
-        },
-        "Post update rate limit exceeded"
-      );
-      return apiResponse(
-        false,
-        null,
-        "Too many update attempts. Please try again later.",
-        429,
-        requestId
-      );
+    if (!limited.ok) {
+      return limited.response;
     }
 
     const { postId } = await routeContext.params;
-    const body = await request.json();
-    uploadedMediaCandidates = extractUploadedMediaCandidates(body);
-    cleanupUploadedMedia = async (reason: string) => {
-      if (uploadedMediaCleanupHandled || !uploadedMediaCandidates.length)
-        return;
-      uploadedMediaCleanupHandled = true;
-      await deleteUploadedMediaInputs(uploadedMediaCandidates, log, {
-        postId,
-        reason,
-      });
-    };
-
-    const parsed = createPostSchema.safeParse(body);
-    if (!parsed.success) {
-      const firstIssue = parsed.error.issues?.[0];
-      log.warn({ issues: parsed.error.issues }, "Invalid post payload");
-      await cleanupUploadedMedia("update-invalid-payload");
+    const validatedPostId = validateCuid(postId);
+    if (!validatedPostId.success) {
+      log.warn(postMessages.invalidPayload);
       return apiResponse(
         false,
         null,
-        firstIssue?.message ?? postMessages.invalidPayload,
+        postMessages.invalidPayload,
         400,
         requestId
       );
     }
+    const body = await request.json();
+    const payloadResult = await validatePostPayload({
+      body,
+      log,
+      requestId,
+      postId: validatedPostId.data,
+    });
 
-    try {
-      const hasContent = parsed.data.content?.trim().length;
-      const hasMedia =
-        Array.isArray(parsed.data.media) && parsed.data.media.length > 0;
+    if (!payloadResult.ok) {
+      return payloadResult.response;
+    }
 
-      if (hasContent) {
-        const decision = await moderateText(parsed.data.content ?? "", "post");
-        if (decision.status === "reject") {
-          log.warn({ userId: session.user.id }, "Post text blocked");
-          await cleanupUploadedMedia("update-text-moderation");
-          return apiResponse(
-            false,
-            null,
-            moderationMessages.textBlocked,
-            422,
-            requestId
-          );
-        }
-      }
+    // Moderate content if provided
+    const moderationResult = await moderatePostContent({
+      content: payloadResult.data.content,
+      media: payloadResult.data.media,
+      userId: viewer.id,
+      requestId,
+      cleanupMedia: payloadResult.cleanupMedia,
+      log,
+    });
 
-      if (hasMedia) {
-        for (const media of parsed.data.media ?? []) {
-          if (!media?.url) continue;
-
-          const decision =
-            media.type === "video"
-              ? await moderateVideo(media.url, "post")
-              : await moderateImage(media.url, "post");
-
-          if (decision.status === "reject") {
-            log.warn(
-              {
-                userId: session.user.id,
-                mediaType: media.type,
-                url: media.url,
-              },
-              "Post media blocked"
-            );
-            await cleanupUploadedMedia("update-media-moderation");
-            return apiResponse(
-              false,
-              null,
-              moderationMessages.mediaBlocked,
-              422,
-              requestId
-            );
-          }
-        }
-      }
-    } catch (error) {
-      if (error instanceof MissingModerationAPIKeyError) {
-        log.error("Moderation key missing, rejecting post update");
-        await cleanupUploadedMedia("update-missing-moderation-key");
-        return apiResponse(
-          false,
-          null,
-          moderationMessages.missingKey,
-          500,
-          requestId
-        );
-      }
-      if (error instanceof ModerationProviderError) {
-        log.warn(
-          { status: error.status, details: error.details },
-          "Moderation provider error while updating post"
-        );
-        const friendlyMessage =
-          error.status === 429
-            ? moderationMessages.rateLimited
-            : moderationMessages.failed;
-        await cleanupUploadedMedia("update-moderation-provider-error");
-        return apiResponse(
-          false,
-          null,
-          friendlyMessage,
-          error.status,
-          requestId
-        );
-      }
-      throw error;
+    if (!moderationResult.ok) {
+      return moderationResult.response;
     }
 
     const post = await updatePost({
-      postId,
-      authorId: session.user.id,
-      input: parsed.data,
+      postId: validatedPostId.data,
+      authorId: viewer.id,
+      input: payloadResult.data,
       log,
       requestId,
     });
     if (post) {
-      await clearRankedPostsCache(session.user.id);
+      await clearRankedPostsCache(viewer.id);
     }
     log.info(postMessages.update.success);
 
     return apiResponse(true, post, postMessages.update.success, 200, requestId);
   } catch (error: unknown) {
-    if (cleanupUploadedMedia) {
-      await cleanupUploadedMedia("update-unexpected-error");
-    }
     const err = normalizeError(error);
     log.error({ err, status: err.status }, postMessages.update.failed);
     return apiResponse(

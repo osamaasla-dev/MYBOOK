@@ -8,7 +8,7 @@ import {
   type BlockUserActionInput,
   type UnblockUserApiResponse,
   unblockUserApi,
-} from "../services/blockApi";
+} from "../services/client/blockApi";
 import { invalidateBlockRelatedQueries } from "./utils/invalidateBlockQueries";
 
 export const UNBLOCK_MUTATION_KEY = ["block", "unblock-user"] as const;

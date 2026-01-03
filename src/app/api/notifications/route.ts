@@ -2,7 +2,7 @@ import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
 import { notificationMessages } from "@/lib/messages";
 import { getRequestLog } from "@/lib/request-log";
-import { ServerSession } from "@/utils/session";
+import { validateSession } from "@/features/services/server";
 import { fetchUserNotifications } from "@/features/parts/notifications/services/server";
 import { parseNotificationListQuery } from "@/features/parts/notifications/utils";
 
@@ -13,18 +13,9 @@ export async function GET(request: Request) {
 
   try {
     log.info("Notifications fetch started");
-    const session = await ServerSession();
-
-    if (!session?.user?.id) {
-      log.warn(notificationMessages.unauthorized);
-      return apiResponse(
-        false,
-        {},
-        notificationMessages.unauthorized,
-        401,
-        requestId
-      );
-    }
+    const session = await validateSession(log, requestId);
+    if (!session.ok) return session.response;
+    const viewer = session.user;
 
     const url = new URL(request.url);
     const parsedQuery = parseNotificationListQuery(url.searchParams);
@@ -43,14 +34,14 @@ export async function GET(request: Request) {
     const { limit, cursor, tab } = parsedQuery.value;
 
     const notifications = await fetchUserNotifications({
-      userId: session.user.id,
+      userId: viewer.id,
       limit,
       cursor,
       tab,
     });
 
     log.info(
-      { userId: session.user.id, count: notifications.items.length },
+      { userId: viewer.id, count: notifications.items.length },
       notificationMessages.fetchSuccess
     );
 

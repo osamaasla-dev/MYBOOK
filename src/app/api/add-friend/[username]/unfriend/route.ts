@@ -2,7 +2,7 @@ import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
 import { friendMessages } from "@/lib/messages";
 
-import { unFriend } from "@/features/parts/addFriend/services";
+import { unFriend } from "@/features/parts/addFriend/services/server";
 import { adjustRelationshipSnapshot } from "@/features/parts/interaction/services";
 import { prepareFriendAction, type FriendRouteContext } from "../shared";
 import { prisma } from "@/lib/prisma";

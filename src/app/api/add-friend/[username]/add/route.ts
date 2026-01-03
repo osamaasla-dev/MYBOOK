@@ -3,7 +3,7 @@ import { friendMessages } from "@/lib/messages";
 import { normalizeError } from "@/lib/http/normalizeError";
 
 import { prepareFriendAction, type FriendRouteContext } from "../shared";
-import { requestFriendship } from "@/features/parts/addFriend/services";
+import { requestFriendship } from "@/features/parts/addFriend/services/server";
 
 const ROUTE = "/api/add-friend/[username]/add";
 

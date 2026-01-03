@@ -1,10 +1,10 @@
-import { USER_SEARCH_SUGGESTION_LIMIT } from "@/features/parts/search/constants";
-import { fetchSearchableUsers } from "@/features/parts/search/services/server/searchUsersService";
+import { USER_SEARCH_SUGGESTION_LIMIT } from "@/features/pages/search/constants";
+import { fetchSearchableUsers } from "@/features/pages/search/services/server/searchUsersService";
+import { validateSession } from "@/features/services/server";
 import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
 import { userMessages } from "@/lib/messages";
 import { getRequestLog } from "@/lib/request-log";
-import { ServerSession } from "@/utils/session";
 
 const ROUTE = "/api/search/users";
 
@@ -12,19 +12,9 @@ export async function GET(request: Request) {
   const { requestId, log } = await getRequestLog({ route: ROUTE });
 
   try {
-    const session = await ServerSession();
-    const viewerId = session?.user?.id ?? null;
-
-    if (!viewerId) {
-      log.warn("Unauthorized user search suggestions request");
-      return apiResponse(
-        false,
-        { hits: [] },
-        userMessages.unauthorized,
-        401,
-        requestId
-      );
-    }
+    const session = await validateSession(log, requestId);
+    if (!session.ok) return session.response;
+    const viewer = session?.user;
 
     const { searchParams } = new URL(request.url);
     const rawQuery = searchParams.get("query") ?? "";
@@ -42,13 +32,13 @@ export async function GET(request: Request) {
     }
 
     const { items } = await fetchSearchableUsers({
-      viewerId,
+      viewerId: viewer.id,
       query,
       limit: USER_SEARCH_SUGGESTION_LIMIT,
     });
 
     log.info(
-      { query, resultCount: items.length, viewerId },
+      { query, resultCount: items.length, viewerId: viewer.id },
       "User search suggestions completed"
     );
 

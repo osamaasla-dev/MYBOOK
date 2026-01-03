@@ -7,9 +7,10 @@ import type { PostCardContent } from "./types";
 
 type Props = {
   content: PostCardContent;
+  testId?: string;
 };
 
-export function PostCardBody({ content }: Props) {
+export function PostCardBody({ content, testId }: Props) {
   const media = useMemo(() => content.media ?? [], [content.media]);
   const hasImages = useMemo(
     () => media.some((item) => item.type === "IMAGE"),
@@ -18,12 +19,20 @@ export function PostCardBody({ content }: Props) {
   const collapsedLines = hasImages ? 5 : 15;
 
   return (
-    <section className="mt-4 space-y-4 text-base leading-tight">
+    <section
+      className="mt-4 space-y-4 text-base leading-tight"
+      data-testid={testId}
+      aria-label="Post content"
+    >
       {content.text && (
-        <CollapsibleText text={content.text} collapsedLines={collapsedLines} />
+        <CollapsibleText
+          text={content.text}
+          collapsedLines={collapsedLines}
+          testId={`${testId}-text`}
+        />
       )}
 
-      <PostCardMediaGrid items={media} />
+      <PostCardMediaGrid items={media} testId={`${testId}-media`} />
     </section>
   );
 }

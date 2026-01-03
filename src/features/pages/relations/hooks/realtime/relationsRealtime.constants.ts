@@ -1,16 +1,22 @@
-export { USER_CHANNEL_PREFIX } from "@/features/utils/realtime";
+export { USER_CHANNEL_PREFIX } from "@/features/utils/ratelimit";
 import { FRIEND_EVENTS } from "@/features/parts/addFriend/hooks/realtime/friendRealtimeEvents";
 
 import type { RelationTab } from "../../types";
 
 type Tabs = readonly RelationTab[];
 
-const FOLLOW_REQUEST_TABS: Tabs = ["follow-requests", "sent-follow-requests"];
+export const FOLLOW_REQUEST_TABS: Tabs = [
+  "follow-requests",
+  "sent-follow-requests",
+];
 
-const FRIEND_REQUEST_TABS: Tabs = ["friend-requests", "sent-friend-requests"];
+export const FRIEND_REQUEST_TABS: Tabs = [
+  "friend-requests",
+  "sent-friend-requests",
+];
 
-const FRIEND_TABS: Tabs = ["friends"];
-const FOLLOW_TABS: Tabs = ["followers", "following"];
+export const FRIEND_TABS: Tabs = ["friends"];
+export const FOLLOW_TABS: Tabs = ["followers", "following"];
 
 const FOLLOW_EVENTS = {
   REQUESTED: "follow:requested",

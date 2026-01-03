@@ -1,14 +1,20 @@
 import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
 import { getRequestLog } from "@/lib/request-log";
-import { genericMessages, postMessages, userMessages } from "@/lib/messages";
+import { genericMessages, postMessages } from "@/lib/messages";
 import {
   acquirePostViewLock,
-  consumePostViewRateLimit,
   enqueuePendingPostView,
   resolvePostViewIdentity,
 } from "@/features/parts/post/utils/views";
-import { ServerSession } from "@/utils/session";
+import { validateSession } from "@/features/services/server";
+import { checkRateLimit } from "@/features/parts/ratelimit/services";
+import {
+  POST_VIEW_RATE_LIMIT_NAMESPACE,
+  POST_VIEW_RATE_LIMIT_WINDOW_SECONDS,
+  POST_VIEW_RATE_LIMIT_MAX,
+} from "@/features/parts/ratelimit/constants";
+import { validateCuid } from "@/schemas/ids";
 
 const ROUTE = "/api/post/[postId]/view";
 
@@ -22,25 +28,40 @@ export async function POST(request: Request, context: RouteParams) {
   try {
     log.info("increase view started");
     const { postId } = await context.params;
-    if (!postId) {
-      log.warn("Missing postId parameter");
-      return apiResponse(false, {}, userMessages.invalidParams, 400, requestId);
+    const validatedPostId = validateCuid(postId);
+    if (!validatedPostId.success) {
+      log.warn(postMessages.invalidPayload);
+      return apiResponse(
+        false,
+        null,
+        postMessages.invalidPayload,
+        400,
+        requestId
+      );
     }
 
-    const session = await ServerSession();
-    const viewerId = session?.user?.id ?? null;
-    const identity = resolvePostViewIdentity({ request, viewerId });
+    const session = await validateSession(log, requestId);
+    if (!session.ok) return session.response;
+    const viewer = session.user;
+    const identity = resolvePostViewIdentity({ request, viewerId: viewer.id });
 
-    const limited = await consumePostViewRateLimit(identity.viewerKey, {
+    // Rate limiting
+    const limited = await checkRateLimit({
+      namespace: POST_VIEW_RATE_LIMIT_NAMESPACE,
+      viewerId: viewer.id,
+      windowSeconds: POST_VIEW_RATE_LIMIT_WINDOW_SECONDS,
+      maxRequests: POST_VIEW_RATE_LIMIT_MAX,
       log,
+      request,
+      requestId,
     });
-    if (limited) {
-      log.warn({ postId, viewerKey: identity.viewerKey }, "View rate limited");
-      return apiResponse(false, {}, userMessages.rateLimited, 429, requestId);
+
+    if (!limited.ok) {
+      return limited.response;
     }
 
     const hasLock = await acquirePostViewLock(
-      postId,
+      validatedPostId.data,
       identity.viewerKey,
       undefined,
       log
@@ -59,7 +80,7 @@ export async function POST(request: Request, context: RouteParams) {
 
     await enqueuePendingPostView(
       {
-        postId,
+        postId: validatedPostId.data,
         viewerId: identity.viewerId,
         sessionHash: identity.sessionHash,
         ip: identity.ip,

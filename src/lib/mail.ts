@@ -1,6 +1,7 @@
 import { Resend } from "resend";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
+
 let resend: Resend | null = null;
 const getResend = () => {
   if (!resend) resend = new Resend(RESEND_API_KEY);
@@ -22,8 +23,13 @@ export async function sendMail(opts: {
     // default noop: simulate success
     return undefined as unknown as { id: string };
   }
+
+  if (!RESEND_API_KEY) {
+    throw new Error("Missing RESEND_API_KEY environment variable");
+  }
+
   const { data, error } = await getResend().emails.send({
-    from: "onboarding@resend.dev",
+    from: "Acme <onboarding@resend.dev>",
     to: [opts.to],
     subject: opts.subject,
     html: opts.html,

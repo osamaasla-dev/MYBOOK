@@ -1,26 +1,19 @@
-import { createPost } from "@/features/parts/post/services/server";
-import { createPostSchema } from "@/features/parts/post/schemas";
 import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
-import { postMessages, moderationMessages } from "@/lib/messages";
+import { postMessages } from "@/lib/messages";
 import { getRequestLog } from "@/lib/request-log";
-import { ServerSession } from "@/utils/session";
-import { clearRankedPostsCache } from "@/features/pages/home/utils/posts/post-ranking/cache";
-import { broadcastPostCreatedEvent } from "@/features/parts/post/utils/realtime";
-import { getPostNotificationRecipients } from "@/features/parts/post/utils/recipients";
-import { getActor } from "@/features/parts/post/utils/actor";
-import { createPostNotifications } from "@/features/parts/post/services/server/postNotifications";
+import { validateSession } from "@/features/services/server";
+import { checkRateLimit } from "@/features/parts/ratelimit/services";
 import {
-  MissingModerationAPIKeyError,
-  ModerationProviderError,
-  moderateText,
-  moderateImage,
-  moderateVideo,
-} from "@/features/parts/moderation/services";
+  POST_CREATE_RATE_MAX,
+  POST_CREATE_RATE_NAMESPACE,
+  POST_CREATE_RATE_WINDOW_SECONDS,
+} from "@/features/parts/ratelimit/constants";
 import {
-  deleteUploadedMediaInputs,
-  extractUploadedMediaCandidates,
-} from "@/features/parts/post/services/server/mediaCleanup";
+  moderatePostContent,
+  processPostCreation,
+  validatePostPayload,
+} from "@/features/parts/post/services/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,195 +22,64 @@ const ROUTE = "/api/post/create";
 
 export async function POST(request: Request) {
   const { requestId, log } = await getRequestLog({ route: ROUTE });
-  let cleanupUploadedMedia: ((reason: string) => Promise<void>) | null = null;
-  let uploadedMediaCleanupHandled = false;
-  let uploadedMediaCandidates: ReturnType<
-    typeof extractUploadedMediaCandidates
-  > = [];
 
   try {
     log.info("post creating started");
-    const session = await ServerSession();
-    if (!session?.user?.id) {
-      log.warn("Create post attempted without authentication");
-      return apiResponse(
-        false,
-        null,
-        postMessages.unauthorized,
-        401,
-        requestId
-      );
+    const session = await validateSession(log, requestId);
+    if (!session.ok) return session.response;
+    const viewer = session.user;
+
+    // Rate limiting
+    const limited = await checkRateLimit({
+      namespace: POST_CREATE_RATE_NAMESPACE,
+      viewerId: viewer.id,
+      windowSeconds: POST_CREATE_RATE_WINDOW_SECONDS,
+      maxRequests: POST_CREATE_RATE_MAX,
+      log,
+      request,
+      requestId,
+    });
+
+    if (!limited.ok) {
+      return limited.response;
     }
 
     const body = await request.json();
-    uploadedMediaCandidates = extractUploadedMediaCandidates(body);
-    cleanupUploadedMedia = async (reason: string) => {
-      if (uploadedMediaCleanupHandled || !uploadedMediaCandidates.length)
-        return;
-      uploadedMediaCleanupHandled = true;
-      await deleteUploadedMediaInputs(uploadedMediaCandidates, log, {
-        reason,
-      });
-    };
-
-    const parsed = createPostSchema.safeParse(body);
-    if (!parsed.success) {
-      const firstIssue = parsed.error.issues?.[0];
-      log.warn({ issues: parsed.error.issues }, "Invalid post payload");
-      await cleanupUploadedMedia("create-invalid-payload");
-      return apiResponse(
-        false,
-        null,
-        firstIssue?.message ?? postMessages.invalidPayload,
-        400,
-        requestId
-      );
-    }
-
-    try {
-      const hasContent = parsed.data.content?.trim().length;
-      const hasMedia =
-        Array.isArray(parsed.data.media) && parsed.data.media.length > 0;
-
-      if (hasContent) {
-        const decision = await moderateText(parsed.data.content ?? "", "post");
-        if (decision.status === "reject") {
-          log.warn({ userId: session.user.id }, "Post text blocked");
-          await cleanupUploadedMedia("create-text-moderation");
-          return apiResponse(
-            false,
-            null,
-            moderationMessages.textBlocked,
-            422,
-            requestId
-          );
-        }
-      }
-
-      if (hasMedia) {
-        for (const media of parsed.data.media ?? []) {
-          if (!media?.url) continue;
-
-          const decision =
-            media.type === "video"
-              ? await moderateVideo(media.url, "post")
-              : await moderateImage(media.url, "post");
-
-          if (decision.status === "reject") {
-            log.warn(
-              {
-                userId: session.user.id,
-                mediaType: media.type,
-                url: media.url,
-              },
-              "Post media blocked"
-            );
-            await cleanupUploadedMedia("create-media-moderation");
-            return apiResponse(
-              false,
-              null,
-              moderationMessages.mediaBlocked,
-              422,
-              requestId
-            );
-          }
-        }
-      }
-    } catch (error) {
-      if (error instanceof MissingModerationAPIKeyError) {
-        log.error("Moderation key missing, rejecting post");
-        await cleanupUploadedMedia("create-missing-moderation-key");
-        return apiResponse(
-          false,
-          null,
-          moderationMessages.missingKey,
-          500,
-          requestId
-        );
-      }
-      if (error instanceof ModerationProviderError) {
-        log.warn(
-          { status: error.status, details: error.details },
-          "Moderation provider error while creating post"
-        );
-        const friendlyMessage =
-          error.status === 429
-            ? moderationMessages.rateLimited
-            : moderationMessages.failed;
-        await cleanupUploadedMedia("create-moderation-provider-error");
-        return apiResponse(
-          false,
-          null,
-          friendlyMessage,
-          error.status,
-          requestId
-        );
-      }
-      throw error;
-    }
-
-    const post = await createPost({
-      authorId: session.user.id,
-      input: parsed.data,
+    const payloadResult = await validatePostPayload({
+      body,
+      log,
+      requestId,
     });
-    if (post) {
-      await clearRankedPostsCache(session.user.id);
+
+    if (!payloadResult.ok) {
+      return payloadResult.response;
     }
-    log.info(
-      { postId: post.id, userId: session.user.id },
-      "Post created successfully"
-    );
 
-    try {
-      const recipients = await getPostNotificationRecipients({
-        authorId: session.user.id,
-        visibility: post.visibility,
-        visibilityPreference: post.visibilityPreference,
-        requestId,
-        ROUTE,
-      });
+    // Moderate content if provided
+    const moderationResult = await moderatePostContent({
+      content: payloadResult.data.content,
+      media: payloadResult.data.media,
+      userId: viewer.id,
+      requestId,
+      cleanupMedia: payloadResult.cleanupMedia,
+      log,
+    });
 
-      if (recipients.length) {
-        const authorRecord = await getActor(session.user.id);
-        const authorName = authorRecord?.name ?? session.user.name ?? "Someone";
-        const authorUsername = authorRecord?.username ?? null;
-
-        await Promise.all([
-          createPostNotifications({
-            actorId: session.user.id,
-            postId: post.id,
-            authorName,
-            authorUsername,
-            recipientIds: recipients,
-            requestId,
-            ROUTE,
-          }),
-          broadcastPostCreatedEvent({
-            postId: post.id,
-            authorId: session.user.id,
-            authorName,
-            recipientIds: recipients,
-          }),
-        ]);
-        log.info(
-          { postId: post.id, recipients: recipients.length },
-          "Post created event broadcasted"
-        );
-      } else {
-        log.warn({ postId: post.id }, "No post notification recipients found");
-      }
-    } catch (broadcastError) {
-      log.error(
-        { error: broadcastError, postId: post.id },
-        "Failed to broadcast post created event"
-      );
+    if (!moderationResult.ok) {
+      return moderationResult.response;
     }
+
+    // Create the post and handle notifications
+    const post = await processPostCreation({
+      viewer,
+      postData: payloadResult.data,
+      requestId,
+      ROUTE,
+      log,
+    });
 
     return apiResponse(true, post, postMessages.created, 201, requestId);
   } catch (error: unknown) {
-    if (cleanupUploadedMedia) {
-      await cleanupUploadedMedia("create-unexpected-error");
-    }
     const err = normalizeError(error);
     log.error({ err, status: err.status }, "Create post handler failed");
     return apiResponse(

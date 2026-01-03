@@ -1,5 +1,5 @@
 import { pusherServer } from "@/lib/pusher/server";
-import { buildUserChannel } from "@/features/utils/realtime";
+import { buildUserChannel } from "@/features/utils/ratelimit";
 
 import { postRealtimeLogger } from "./logger";
 import type { PostReactionType } from "../../constants/reactions";

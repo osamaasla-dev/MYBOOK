@@ -1,7 +1,9 @@
 import {
   ForgotPasswordManager,
   getForgotPasswordPageMetadata,
-} from "@/features/Auth/ForgotPassword/page";
+} from "@/features/auth/forgotPassword/page";
+
+export const dynamic = "force-dynamic";
 
 export default function ForgotPasswordPage() {
   return <ForgotPasswordManager />;

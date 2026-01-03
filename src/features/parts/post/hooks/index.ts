@@ -7,3 +7,4 @@ export * from "./useRemovePostReaction";
 export * from "./ui/usePostViewObserver";
 export * from "./usePrefetchPostReactions";
 export * from "./usePostRealtime";
+export * from "./usePostReactions";

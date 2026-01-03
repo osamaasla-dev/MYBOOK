@@ -1,5 +1,5 @@
 import { pusherServer } from "@/lib/pusher/server";
-import { buildUserChannel } from "@/features/utils/realtime";
+import { buildUserChannel } from "@/features/utils/ratelimit";
 
 import { POST_SHARE_EVENT } from "../../events/postShareEvent";
 import type { ReactionSummary } from "../reaction";

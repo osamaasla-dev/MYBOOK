@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react";
 import type { NotificationListItem } from "@/features/parts/notifications/types";
 
 import { NotificationItem } from "./NotificationItem";
-import { QueryError, QueryLoading } from "@/components";
+import { QueryError, QueryLoading, EmptyState } from "@/components";
 
 type NotificationListProps = {
   items: NotificationListItem[];
@@ -17,6 +17,7 @@ type NotificationListProps = {
   listRef: RefObject<HTMLDivElement | null>;
   sentinelRef: RefObject<HTMLDivElement | null>;
   onSelectNotification: (notification: NotificationListItem) => void;
+  testId?: string;
 };
 
 export function NotificationList({
@@ -30,6 +31,7 @@ export function NotificationList({
   listRef,
   sentinelRef,
   onSelectNotification,
+  testId = "navbar-notifications",
 }: NotificationListProps) {
   const showEmptyState = !isLoading && !isError && items.length === 0;
 
@@ -40,31 +42,43 @@ export function NotificationList({
       role="region"
       aria-live="polite"
       aria-busy={isLoading || isFetchingNextPage}
-      data-testid="navbar-notifications-scroll"
+      aria-label="Notifications list"
+      data-testid={testId}
     >
-      {isLoading && <QueryLoading />}
+      {isLoading && (
+        <QueryLoading
+          message="Loading notifications..."
+          testId={`${testId}-loading`}
+        />
+      )}
 
-      {isError && <QueryError message={errorMessage} onRetry={onRetry} />}
+      {isError && (
+        <QueryError
+          message={errorMessage}
+          onRetry={onRetry}
+          testId={`${testId}-error`}
+        />
+      )}
 
       {showEmptyState && (
-        <div
-          className="px-4 py-10 text-center text-sm text-muted-foreground"
-          data-testid="navbar-notifications-empty"
-        >
-          No new notifications.
-        </div>
+        <EmptyState
+          title="No new notifications"
+          message="You're all caught up!"
+          testId={`${testId}-empty`}
+        />
       )}
 
       <ul
         role="list"
-        aria-label="Notification list"
-        data-testid="navbar-notifications-list"
+        aria-label="Notification items"
+        data-testid={`${testId}-list`}
       >
         {items.map((notification) => (
           <NotificationItem
             key={notification.id}
             notification={notification}
             onSelect={onSelectNotification}
+            testId={`${testId}-item-${notification.id}`}
           />
         ))}
       </ul>
@@ -72,7 +86,9 @@ export function NotificationList({
       {isFetchingNextPage && (
         <div
           className="flex items-center justify-center gap-2 px-4 py-3 text-xs text-muted-foreground"
-          data-testid="navbar-notifications-fetching-more"
+          data-testid={`${testId}-fetching-more`}
+          role="status"
+          aria-live="polite"
         >
           <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
           Loading more...
@@ -82,7 +98,9 @@ export function NotificationList({
       {!hasNextPage && items.length > 0 && (
         <div
           className="px-4 py-3 text-center text-xs text-muted-foreground"
-          data-testid="navbar-notifications-end"
+          data-testid={`${testId}-end`}
+          role="status"
+          aria-live="polite"
         >
           No more notifications.
         </div>
@@ -92,7 +110,7 @@ export function NotificationList({
         ref={sentinelRef}
         className="h-1 w-full"
         aria-hidden="true"
-        data-testid="navbar-notifications-scroll-sentinel"
+        data-testid={`${testId}-sentinel`}
       />
     </div>
   );

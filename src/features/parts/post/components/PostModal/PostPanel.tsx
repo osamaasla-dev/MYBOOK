@@ -30,6 +30,7 @@ type PostPanelProps = {
     visibility: Visibility;
     visibilityPreference: PostVisibilityPreference;
   }) => void;
+  testId?: string;
 };
 
 export function PostPanel({
@@ -45,6 +46,7 @@ export function PostPanel({
   visibility,
   visibilityPreference,
   onVisibilityChange,
+  testId,
 }: PostPanelProps) {
   const displayName = useMemo(
     () => user?.name || user?.username || "User",
@@ -59,7 +61,12 @@ export function PostPanel({
   }, [user?.name, user?.username]);
 
   return (
-    <div className="p-4">
+    <div
+      className="p-4"
+      data-testid={testId || "post-panel"}
+      role="region"
+      aria-label="Post creation form"
+    >
       <div className="flex flex-col gap-2">
         <ProfileRow
           user={user}
@@ -68,6 +75,7 @@ export function PostPanel({
           visibility={visibility}
           visibilityPreference={visibilityPreference}
           onVisibilityChange={onVisibilityChange}
+          testId={testId ? `${testId}-profile` : "post-panel-profile"}
         />
 
         <div className="mt-10 mb-3 min-h-[110px] max-h-[250px] max-w-full overflow-y-auto">
@@ -77,16 +85,26 @@ export function PostPanel({
               value={contentValue}
               onChange={onContentChange}
               placeholder={placeholder}
+              data-testid={testId ? `${testId}-editor` : "post-panel-editor"}
+              aria-required="true"
+              aria-describedby={
+                testId ? `${testId}-editor-help` : "post-panel-editor-help"
+              }
             />
 
             <MediaPreviewList
               previews={mediaPreviews}
               onRemove={onRemoveMedia}
+              testId={testId ? `${testId}-media` : "post-panel-media"}
             />
           </div>
         </div>
 
-        <ActionsRow actionItems={actionItems} onFileSelect={onFileSelect} />
+        <ActionsRow
+          actionItems={actionItems}
+          onFileSelect={onFileSelect}
+          testId={testId ? `${testId}-actions` : "post-panel-actions"}
+        />
       </div>
     </div>
   );

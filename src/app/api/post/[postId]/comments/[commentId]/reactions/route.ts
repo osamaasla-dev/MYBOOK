@@ -2,11 +2,11 @@ import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
 import { commentMessages, genericMessages, userMessages } from "@/lib/messages";
 import { getRequestLog } from "@/lib/request-log";
-import { ServerSession } from "@/utils/session";
 import { validateCuid } from "@/schemas/ids";
 
 import { fetchCommentReactions } from "@/features/parts/postDetails/services/server/comment";
 import { commentReactionsQuerySchema } from "@/features/parts/postDetails/services/server/comment/reactions/schema";
+import { validateSession } from "@/features/services/server";
 
 const ROUTE = "/api/post/[postId]/comments/[commentId]/reactions" as const;
 
@@ -29,7 +29,10 @@ export async function GET(request: Request, context: RouteParams) {
       return apiResponse(false, {}, userMessages.invalidParams, 400, requestId);
     }
 
-    const session = await ServerSession();
+    const session = await validateSession(log, requestId);
+    if (!session.ok) return session.response;
+    const viewer = session.user;
+
     const url = new URL(request.url);
 
     const parsedQuery = commentReactionsQuerySchema.safeParse({
@@ -61,7 +64,7 @@ export async function GET(request: Request, context: RouteParams) {
       tab,
       limit,
       cursor,
-      viewerId: session?.user?.id ?? null,
+      viewerId: viewer.id,
       requestId,
       route: ROUTE,
     });
@@ -72,7 +75,7 @@ export async function GET(request: Request, context: RouteParams) {
         commentId: validatedCommentId.data,
         tab,
         count: reactions.items.length,
-        viewerId: session?.user?.id ?? null,
+        viewerId: viewer.id,
       },
       "Comment reactions fetched"
     );

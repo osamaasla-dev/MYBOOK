@@ -10,6 +10,7 @@ type QueryErrorProps = {
   className?: string;
   onRetry?: () => void;
   retryLabel?: string;
+  testId?: string;
 };
 
 export function QueryError({
@@ -18,6 +19,7 @@ export function QueryError({
   className,
   onRetry,
   retryLabel = "Retry",
+  testId = "query-error",
 }: QueryErrorProps) {
   const generatedId = useId();
   const titleId = `${generatedId}-title`;
@@ -30,9 +32,9 @@ export function QueryError({
       aria-live="assertive"
       aria-labelledby={titleId}
       aria-describedby={descriptionId}
-      data-testid="query-error"
+      data-testid={testId}
       className={cn(
-        "flex flex-col gap-3 rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3 text-[var(--color-foreground)] shadow-sm",
+        "flex flex-col gap-3 rounded-lg border border-destructive/40 bg-white px-4 py-3 text-foreground shadow-sm",
         className
       )}
     >
@@ -58,7 +60,7 @@ export function QueryError({
         <Button
           type="button"
           onClick={onRetry}
-          data-testid="query-error-retry"
+          data-testid={`${testId}-retry`}
           className="self-start"
         >
           {retryLabel}

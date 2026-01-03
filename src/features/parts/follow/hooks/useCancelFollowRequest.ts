@@ -8,7 +8,7 @@ import { profileQueryKey } from "@/features/pages/profile/hooks/useProfile";
 import { relationsQueryKey } from "@/features/pages/relations/hooks/useRelationsInfiniteList";
 import { followMessages } from "@/lib/messages";
 import type { FollowActionInput, FollowApiResponse } from "../types";
-import { cancelFollowRequestApi } from "../services/followApi";
+import { cancelFollowRequestApi } from "../services/client";
 
 const RELATION_TABS_TO_INVALIDATE = [
   "follow-requests",

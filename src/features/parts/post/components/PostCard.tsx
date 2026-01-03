@@ -16,8 +16,13 @@ import { FeedPost } from "@/features/pages/home/utils/posts/feed-response";
 type PostCardProps = {
   post: FeedPost;
   className?: string;
+  testId?: string;
 };
-export function PostCard({ post, className }: PostCardProps) {
+export function PostCard({
+  post,
+  className,
+  testId = "post-card",
+}: PostCardProps) {
   const { targetRef } = usePostViewObserver({
     postId: post.postId,
     threshold: VIEW_THRESHOLD,
@@ -35,13 +40,20 @@ export function PostCard({ post, className }: PostCardProps) {
     <article
       ref={targetRef}
       className={cn("rounded-xl  bg-white shadow-sm pt-4 ", className)}
+      data-testid={`${testId}-${post.postId}`}
+      aria-labelledby={`${testId}-${post.postId}-author`}
+      role="article"
     >
       <PostCardHeader
         author={post.author}
         timestamp={post.publishedAt}
         post={post}
+        testId={`${testId}-${post.postId}-header`}
       />
-      <PostCardBody content={post.content} />
+      <PostCardBody
+        content={post.content}
+        testId={`${testId}-${post.postId}-body`}
+      />
       <PostCardFooter
         postId={post.postId}
         stats={{
@@ -53,6 +65,7 @@ export function PostCard({ post, className }: PostCardProps) {
         }}
         onCommentClick={handleOpenDetails}
         isDetailsOpen={isDetailsOpen}
+        testId={`${testId}-${post.postId}-footer`}
       />
     </article>
   );

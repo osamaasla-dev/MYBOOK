@@ -1,4 +1,4 @@
-import { buildUserChannel } from "@/features/utils/realtime";
+import { buildUserChannel } from "@/features/utils/ratelimit";
 import { pusherServer } from "@/lib/pusher/server";
 import {
   POST_META_EVENT,

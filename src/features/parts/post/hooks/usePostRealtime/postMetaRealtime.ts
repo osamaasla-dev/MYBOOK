@@ -3,7 +3,7 @@
 import { useCallback, useMemo } from "react";
 import type { QueryClient } from "@tanstack/react-query";
 
-import { buildUserChannel } from "@/features/utils/realtime";
+import { buildUserChannel } from "@/features/utils/ratelimit";
 import { usePusherChannel } from "@/hooks/usePusherChannel";
 
 import {

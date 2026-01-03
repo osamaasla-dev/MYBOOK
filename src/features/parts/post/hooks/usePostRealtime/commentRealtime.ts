@@ -68,7 +68,7 @@ export function usePostDetailCommentRealtime({
       console.log("Comment deleted event received:", payload.commentId);
       applyPostDetailCommentDeletedUpdate(queryClient, payload, currentUserId);
     },
-    [queryClient]
+    [currentUserId, queryClient]
   );
 
   usePusherChannel<PostDetailCommentDeletedEventPayload>({
@@ -83,7 +83,7 @@ export function usePostDetailCommentRealtime({
       console.log("Comment updated event received:", payload.commentId);
       applyPostDetailCommentEditedUpdate(queryClient, payload, currentUserId);
     },
-    [queryClient]
+    [currentUserId, queryClient]
   );
 
   usePusherChannel<PostDetailCommentUpdatedEventPayload>({
@@ -98,7 +98,7 @@ export function usePostDetailCommentRealtime({
       console.log("Comment meta event received:", payload.commentId);
       applyCommentMetaUpdate(queryClient, payload, currentUserId);
     },
-    [queryClient]
+    [currentUserId, queryClient]
   );
 
   usePusherChannel<CommentMetaEventPayload>({

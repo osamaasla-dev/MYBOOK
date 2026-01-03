@@ -21,6 +21,10 @@ export function PostCommentForm(props: PostCommentFormProps) {
     <form
       onSubmit={onSubmit}
       className="flex flex-col rounded-2xl border border-border/60 bg-secondary p-3 shadow-inner"
+      role="form"
+      aria-label="Comment form"
+      data-testid="post-comment-form"
+      noValidate
     >
       <div className="flex flex-col gap-2">
         <PostCommentTextarea
@@ -28,10 +32,22 @@ export function PostCommentForm(props: PostCommentFormProps) {
           contentValue={contentValue}
           disabled={isDisabled}
           hasError={hasContentError}
+          placeholder="Write something thoughtful…"
+          ariaLabel="Comment content"
+          ariaRequired={true}
+          ariaDescribedBy={hasContentError ? "comment-error" : undefined}
         />
 
         {moderationError && (
-          <p className="text-sm font-medium text-danger">{moderationError}</p>
+          <p
+            id="comment-error"
+            className="text-sm font-medium text-danger"
+            role="alert"
+            aria-live="polite"
+            data-testid="comment-error-message"
+          >
+            {moderationError}
+          </p>
         )}
 
         <PostCommentFormActions

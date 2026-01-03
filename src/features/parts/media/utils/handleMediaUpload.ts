@@ -1,6 +1,6 @@
 import type { Logger } from "pino";
 
-import type { MediaAssetPayload, SessionLike } from "../types/media";
+import type { MediaAssetPayload } from "../types/media";
 import { parseUploadInputs } from "./parseUploadInputs";
 import { getFileBuffer } from "./getFileBuffer";
 import { uploadToCloudinary } from "./uploadToCloudinary";
@@ -11,31 +11,18 @@ import moderationMessages from "@/lib/messages/moderation";
 import { apiResponse } from "@/lib/apiResponse";
 
 type HandleMediaUploadParams = {
-  req: Request;
-  session: SessionLike;
+  formData: FormData;
+  userId: string;
   log: Logger;
   requestId: string;
 };
 
 export async function handleMediaUpload({
-  req,
-  session,
+  formData,
+  userId,
   log,
   requestId,
 }: HandleMediaUploadParams) {
-  const userId = session?.user?.id;
-  if (!userId)
-    return {
-      error: apiResponse(
-        false,
-        null,
-        moderationMessages.mediaBlocked,
-        422,
-        requestId
-      ),
-    };
-
-  const formData = await req.formData();
   const inputs = parseUploadInputs(formData, userId);
   const buffer = await getFileBuffer(inputs.file);
   const tempFolder = `${inputs.baseFolder}/pending/${inputs.folderType}`;

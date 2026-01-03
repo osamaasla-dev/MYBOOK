@@ -9,12 +9,14 @@ type ProfileActionsProps = {
   viewer: ProfileRouteData["viewer"];
   restrictions: ProfileRouteData["restrictions"];
   profileUsername: ProfileRouteData["profile"]["username"];
+  testId?: string;
 };
 
 export function ProfileActions({
   viewer,
   restrictions,
   profileUsername,
+  testId = "profile-actions",
 }: ProfileActionsProps) {
   const isBlocked =
     viewer.isBlocked || restrictions?.reason === "PROFILE_BLOCKED";
@@ -26,7 +28,7 @@ export function ProfileActions({
     <section
       className="flex flex-wrap gap-3 px-5"
       aria-label="Profile actions"
-      data-testid="profile-actions"
+      data-testid={testId}
     >
       <FollowButton
         viewer={viewer}

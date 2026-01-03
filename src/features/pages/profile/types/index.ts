@@ -1,7 +1,6 @@
 import z from "zod";
 
 export type ProfileViewerContext = {
-  isAuthenticated: boolean;
   isSelf: boolean;
   isFollowing: boolean;
   isFollower: boolean;

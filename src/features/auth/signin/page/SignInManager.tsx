@@ -1,10 +1,11 @@
 "use client";
 import { LoadingSpinner } from "@/components";
-import SignInForm from "@/features/Auth/SignIn/components/SignInForm";
+import SignInForm from "@/features/auth/signin/components/SignInForm";
 import Link from "next/link";
 import { useSignIn } from "../hooks/useSignIn";
+import { Suspense } from "react";
 
-export default function SignInManager({ siteName }: { siteName: string }) {
+function SignInManagerInner({ siteName }: { siteName: string }) {
   const { loading, handleSignIn } = useSignIn();
 
   return (
@@ -49,5 +50,13 @@ export default function SignInManager({ siteName }: { siteName: string }) {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignInManager({ siteName }: { siteName: string }) {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SignInManagerInner siteName={siteName} />
+    </Suspense>
   );
 }

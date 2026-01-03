@@ -9,5 +9,13 @@ type FeedItemProps = {
 };
 
 export function FeedItem({ post }: FeedItemProps) {
-  return <PostCard post={post} />;
+  return (
+    <article
+      data-testid={`feed-item-${post.postId}`}
+      role="article"
+      aria-labelledby={`feed-item-title-${post.postId}`}
+    >
+      <PostCard post={post} />
+    </article>
+  );
 }
