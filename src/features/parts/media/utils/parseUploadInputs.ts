@@ -1,7 +1,7 @@
 import { MediaUploadError } from "./errors";
 import type { MediaUploadInputs, MediaResourceType } from "../types/media";
-import type { ModerationContext } from "@/features/types";
 import { VALID_RESOURCE_TYPES } from "../constants";
+import { ModerationContext } from "../../moderation/types/moderationTypes";
 
 export function parseUploadInputs(
   formData: FormData,

@@ -58,7 +58,7 @@ export function PostEditorPanel({
     setContentValue(event.target.value);
   };
 
-  const handleMediaSelect = (file: File, _action: ComposerActionItem) => {
+  const handleMediaSelect = (file: File) => {
     if (statusMessage) {
       setStatusMessage(null);
     }

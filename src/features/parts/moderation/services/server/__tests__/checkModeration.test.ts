@@ -1,10 +1,10 @@
-import type {
+import { MODERATION_CHANNEL_NAME } from "../../../constants";
+import {
   ModerationAPIResponse,
+  ModerationContext,
   ModerationDecision,
   ModerationEvaluation,
-  ModerationContext,
-} from "@/features/types";
-import { MODERATION_CHANNEL_NAME } from "../../../constants";
+} from "../../../types/moderationTypes";
 
 type DecideModerationAction = (
   context: ModerationContext,

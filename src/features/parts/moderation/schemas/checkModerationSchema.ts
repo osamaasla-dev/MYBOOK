@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-import { MODERATION_CONTEXTS } from "@/features/types";
 import { moderationMessages } from "@/lib/messages";
+import { MODERATION_CONTEXTS } from "../types/moderationTypes";
 
 export const checkModerationSchema = z.object({
   content: z
