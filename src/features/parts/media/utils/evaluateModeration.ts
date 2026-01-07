@@ -3,7 +3,10 @@ import {
   checkImageModeration,
   checkVideoModeration,
 } from "@/features/parts/moderation/services/server";
-import type { ModerationContext, ModerationDecision } from "@/features/types";
+import type {
+  ModerationContext,
+  ModerationDecision,
+} from "../../moderation/types/moderationTypes";
 
 import type { MediaMetadata } from "../types/media";
 

@@ -3,7 +3,7 @@
 import { useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import type { SignUpInput } from "../schemas";
-import { signUp } from "../services";
+import { signUp } from "../services/client";
 
 export function useSignUp() {
   return useMutation<{ message: string }, Error, SignUpInput>({

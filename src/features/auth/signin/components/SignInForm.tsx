@@ -23,7 +23,7 @@ export default function SignInForm({
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="space-y-4 w-full max-w-md mx-auto p-6 bg-primary-light rounded shadow"
+      className="space-y-4 w-full max-w-md mx-auto p-6 bg-white rounded shadow"
       data-testid="signin-form"
     >
       <div>
@@ -61,12 +61,23 @@ export default function SignInForm({
           aria-describedby="password-error"
         />
         {errors.password && (
-          <p className="text-danger text-xs mt-1" id="password-error" role="alert">
+          <p
+            className="text-danger text-xs mt-1"
+            id="password-error"
+            role="alert"
+          >
             {String(errors.password.message)}
           </p>
         )}
       </div>
-      <Button type="submit" disabled={loading} className="w-full text-white" data-testid="signin-submit" aria-disabled={loading}>
+      <Button
+        type="submit"
+        disabled={loading}
+        className="w-full text-white"
+        data-testid="signin-button"
+        aria-disabled={loading}
+        aria-label="Submit sign in form"
+      >
         {loading ? "Loading..." : "Sign In"}
       </Button>
     </form>

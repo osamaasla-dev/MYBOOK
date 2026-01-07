@@ -13,27 +13,31 @@ function VerifyEmailManagerInner() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[var(--color-primary-light)] to-[var(--color-primary)] px-4">
-      <div className="max-w-md w-full bg-white shadow rounded p-6 text-center">
+      <div
+        className="max-w-md w-full bg-white shadow rounded p-6 text-center"
+        role="status"
+        aria-live="polite"
+      >
         {status === "verifying" && (
-          <>
+          <div data-testid="verify-status-verifying">
             <h1 className="text-xl font-semibold mb-2">
               {authMessages.verify.title.verifying}
             </h1>
             <p className="text-muted-foreground">
               {authMessages.verify.info.wait}
             </p>
-          </>
+          </div>
         )}
         {status === "pending" && (
-          <>
+          <div data-testid="verify-status-pending">
             <h1 className="text-xl font-semibold mb-2">
               {authMessages.verify.title.pending}
             </h1>
             <p className="text-foreground">{message}</p>
-          </>
+          </div>
         )}
         {status === "success" && (
-          <>
+          <div data-testid="verify-status-success">
             <h1 className="text-xl font-semibold text-success mb-2">
               {authMessages.verify.title.success}
             </h1>
@@ -41,15 +45,15 @@ function VerifyEmailManagerInner() {
             <p className="text-muted-foreground mt-2">
               {authMessages.verify.info.redirecting}
             </p>
-          </>
+          </div>
         )}
         {status === "error" && (
-          <>
+          <div data-testid="verify-status-error">
             <h1 className="text-xl font-semibold text-danger mb-2">
               {authMessages.verify.title.error}
             </h1>
             <p className="text-foreground">{message}</p>
-          </>
+          </div>
         )}
       </div>
     </div>

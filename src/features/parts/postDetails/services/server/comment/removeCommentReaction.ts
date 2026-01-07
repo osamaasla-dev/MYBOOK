@@ -13,7 +13,7 @@ import type { PostReactionType } from "@/features/parts/post/constants/reactions
 import { isBlock } from "@/features/parts/block/utils/server";
 import { validatePostAccess } from "../access";
 
-type RemoveCommentReactionParams = {
+export type RemoveCommentReactionParams = {
   commentId: string;
   postId: string;
   userId: string;

@@ -1,4 +1,3 @@
-import { NextRequest } from "next/server";
 import { apiResponse } from "@/lib/apiResponse";
 import { normalizeError } from "@/lib/http/normalizeError";
 import { getRequestLog } from "@/lib/request-log";
@@ -12,7 +11,7 @@ import { validateSession } from "@/features/services/server";
 const ROUTE = "/api/profile/posts";
 
 export async function GET(
-  request: NextRequest,
+  request: Request,
   { params }: { params: Promise<{ username: string }> }
 ) {
   const { requestId, log } = await getRequestLog({ route: ROUTE });

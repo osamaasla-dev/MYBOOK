@@ -12,7 +12,7 @@ import { CommentRouteError } from "../../../utils/server/comments";
 import type { PostReactionType } from "@/features/parts/post/constants/reactions";
 import { isBlock } from "@/features/parts/block/utils/server";
 
-type PersistCommentReactionParams = {
+export type PersistCommentReactionParams = {
   commentId: string;
   postId: string;
   userId: string;

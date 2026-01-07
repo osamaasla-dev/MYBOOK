@@ -28,7 +28,9 @@ export default function ForgotPasswordForm({
       className={`max-w-md w-full bg-white rounded shadow p-6 space-y-4 ${className}`}
       data-testid="forgot-password-form"
     >
-      <h1 className="text-2xl font-bold">Forgot Password</h1>
+      <h1 className="text-2xl font-bold" id="forgot-password-heading">
+        Forgot Password
+      </h1>
       <p className="text-sm text-muted-foreground">
         Enter your email and we will send you a reset link.
       </p>
@@ -47,12 +49,23 @@ export default function ForgotPasswordForm({
           aria-describedby="forgot-email-error"
         />
         {errors.email && (
-          <p className="text-danger text-xs mt-1" id="forgot-email-error" role="alert">
+          <p
+            className="text-danger text-xs mt-1"
+            id="forgot-email-error"
+            role="alert"
+          >
             {String(errors.email.message)}
           </p>
         )}
       </div>
-      <Button type="submit" disabled={loading} className="w-full text-white" data-testid="forgot-submit" aria-disabled={loading}>
+      <Button
+        type="submit"
+        disabled={loading}
+        className="w-full text-white"
+        data-testid="forgot-submit"
+        aria-disabled={loading}
+        aria-label="Send reset link"
+      >
         {loading ? "Sending..." : "Send reset link"}
       </Button>
       <div className="text-center">

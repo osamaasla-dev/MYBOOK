@@ -103,12 +103,12 @@ export async function fetchCommentReactions({
   ]);
 
   let nextCursor: string | null = null;
-  if (reactions.length > take) {
+  if (reactions && reactions.length > take) {
     const nextItem = reactions.pop();
     nextCursor = nextItem?.id ?? null;
   }
 
-  const items = reactions.map(mapCommentReactionRecordToItem);
+  const items = (reactions || []).map(mapCommentReactionRecordToItem);
 
   log.info(
     {

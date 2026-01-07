@@ -22,9 +22,17 @@ export function NameFields({ register, errors, loading }: Props) {
           {...register("firstName")}
           disabled={loading}
           autoComplete="given-name"
+          data-testid="first-name-input"
+          aria-invalid={!!errors.firstName}
+          aria-describedby="first-name-error"
         />
         {errors.firstName && (
-          <p className="text-danger text-xs mt-1">
+          <p
+            className="text-danger text-xs mt-1"
+            id="first-name-error"
+            role="alert"
+            aria-live="assertive"
+          >
             {String(errors.firstName.message)}
           </p>
         )}
@@ -39,9 +47,17 @@ export function NameFields({ register, errors, loading }: Props) {
           {...register("lastName")}
           disabled={loading}
           autoComplete="family-name"
+          data-testid="last-name-input"
+          aria-invalid={!!errors.lastName}
+          aria-describedby="last-name-error"
         />
         {errors.lastName && (
-          <p className="text-danger text-xs mt-1">
+          <p
+            className="text-danger text-xs mt-1"
+            id="last-name-error"
+            role="alert"
+            aria-live="assertive"
+          >
             {String(errors.lastName.message)}
           </p>
         )}

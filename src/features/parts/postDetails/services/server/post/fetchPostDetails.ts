@@ -3,7 +3,7 @@ import type { FeedPostRecord } from "@/features/parts/post/utils";
 import { isBlock } from "@/features/parts/block/utils/server";
 import { postDetailsLogger } from "../../../utils/logger";
 
-type FetchPostDetailsInput = {
+export type FetchPostDetailsInput = {
   postId: string;
   viewerId: string | null;
 };

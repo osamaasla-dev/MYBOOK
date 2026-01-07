@@ -1,5 +1,5 @@
 import { apiPostR } from "@/lib/api";
-import type { SignUpInput } from "../schemas";
+import type { SignUpInput } from "../../schemas";
 
 export const signUp = async (
   values: SignUpInput

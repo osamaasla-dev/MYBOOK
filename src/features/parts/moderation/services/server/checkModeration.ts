@@ -7,7 +7,7 @@ import type {
   ModerationCheckResult,
   ModerationContext,
   ModerationDecision,
-} from "@/features/types";
+} from "../../types/moderationTypes";
 
 export class MissingModerationAPIKeyError extends Error {
   constructor() {

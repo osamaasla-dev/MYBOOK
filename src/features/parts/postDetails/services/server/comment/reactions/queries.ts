@@ -41,7 +41,6 @@ export async function queryCommentReactionList({
     ...(cursor
       ? {
           cursor: { id: cursor },
-          skip: 1,
         }
       : {}),
     select: {

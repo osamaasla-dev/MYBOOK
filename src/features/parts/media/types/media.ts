@@ -1,7 +1,7 @@
-import type {
+import {
   ModerationContext,
   ModerationDecisionStatus,
-} from "@/features/types";
+} from "../../moderation/types/moderationTypes";
 
 export type MediaResourceType = "image" | "video" | "auto";
 

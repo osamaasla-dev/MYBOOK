@@ -50,6 +50,8 @@ export function PasswordFields({ register, errors, loading, control }: Props) {
           disabled={loading}
           autoComplete="new-password"
           aria-describedby="password-help"
+          data-testid="password-input"
+          aria-invalid={!!errors.password}
         />
         <div className="mt-2">
           <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
@@ -85,9 +87,17 @@ export function PasswordFields({ register, errors, loading, control }: Props) {
           {...register("confirmPassword")}
           disabled={loading}
           autoComplete="new-password"
+          data-testid="confirm-password-input"
+          aria-invalid={!!errors.confirmPassword}
+          aria-describedby="signup-confirm-password-error"
         />
         {errors.confirmPassword && (
-          <p className="text-danger text-xs mt-1">
+          <p
+            className="text-danger text-xs mt-1"
+            id="signup-confirm-password-error"
+            role="alert"
+            aria-live="assertive"
+          >
             {String(errors.confirmPassword.message)}
           </p>
         )}

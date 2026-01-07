@@ -8,7 +8,7 @@ import { postDetailsLogger } from "../../../utils/logger";
 import { fetchViewerPostReaction } from "./fetchViewerPostReaction";
 import { validatePostAccess } from "../access";
 
-type GetPostDetailsForViewerInput = {
+export type GetPostDetailsForViewerInput = {
   postId: string;
   viewerId: string | null;
 };

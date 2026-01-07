@@ -1,6 +1,7 @@
 import { Resend } from "resend";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const SENDER_EMAIL = process.env.SENDER_EMAIL;
 
 let resend: Resend | null = null;
 const getResend = () => {
@@ -28,8 +29,12 @@ export async function sendMail(opts: {
     throw new Error("Missing RESEND_API_KEY environment variable");
   }
 
+  if (!SENDER_EMAIL) {
+    throw new Error("Missing SENDER_EMAIL environment variable");
+  }
+
   const { data, error } = await getResend().emails.send({
-    from: "Acme <onboarding@resend.dev>",
+    from: SENDER_EMAIL,
     to: [opts.to],
     subject: opts.subject,
     html: opts.html,

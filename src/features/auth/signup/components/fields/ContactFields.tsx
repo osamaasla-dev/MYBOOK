@@ -11,7 +11,7 @@ type Props = {
 
 export function ContactFields({ register, errors, loading }: Props) {
   return (
-    <div className="grid grid-cols-1 gap-4">
+    <div className="grid grid-cols-1 gap-4 ">
       <div>
         <Label htmlFor="email" className="mb-1 block">
           Email
@@ -22,9 +22,17 @@ export function ContactFields({ register, errors, loading }: Props) {
           {...register("email")}
           disabled={loading}
           autoComplete="email"
+          data-testid="email-input"
+          aria-invalid={!!errors.email}
+          aria-describedby="signup-email-error"
         />
         {errors.email && (
-          <p className="text-danger text-xs mt-1">
+          <p
+            className="text-danger text-xs mt-1"
+            id="signup-email-error"
+            role="alert"
+            aria-live="assertive"
+          >
             {String(errors.email.message)}
           </p>
         )}
@@ -40,9 +48,17 @@ export function ContactFields({ register, errors, loading }: Props) {
           disabled={loading}
           autoComplete="tel"
           placeholder="+201234567890"
+          data-testid="phone-input"
+          aria-invalid={!!errors.phone}
+          aria-describedby="signup-phone-error"
         />
         {errors.phone && (
-          <p className="text-danger text-xs mt-1">
+          <p
+            className="text-danger text-xs mt-1"
+            id="signup-phone-error"
+            role="alert"
+            aria-live="assertive"
+          >
             {String(errors.phone.message)}
           </p>
         )}
